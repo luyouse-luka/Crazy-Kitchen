@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CustomerCard",
+  "description": "一张顾客卡。机制层（order）受封闭词表约束、引擎据此判定成败；表演层（identity/lines）自由文本、玩家用来笑。可直接作为 Anthropic output_config 的 json_schema 使用。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "order", "identity", "mood", "lines", "arc"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^c_[0-9]{4,6}$"
+    },
+
+    "order": {
+      "description": "机制层。lines.order 可以用任何离谱的说法描述这里的食材和火候，但不能引入这里没有的要求 —— 玩家只要满足了这些字段，判定就必须成功。",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "banned", "doneness", "patience"],
+      "properties": {
+        "required": {
+          "description": "必须含 bun 与 patty（骨架食材），且不得与 banned 相交。相交这条 schema 拦不住，靠 logic/order.ts 的 validateOrderSpec 逐张过。",
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["bun", "patty", "cheese", "lettuce", "tomato", "onion", "pickle", "bacon"]
+          }
+        },
+        "banned": {
+          "description": "不得含 bun 或 patty —— 禁掉骨架食材就不成其为汉堡。",
+          "type": "array",
+          "maxItems": 6,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["cheese", "lettuce", "tomato", "onion", "pickle", "bacon"]
+          }
+        },
+        "doneness": {
+          "type": "string",
+          "enum": ["rare", "medium", "well"]
+        },
+        "patience": {
+          "description": "秒。引擎倒计时；具体取值范围由 M1 的难度曲线表标定，这里只兜底。",
+          "type": "integer",
+          "minimum": 15,
+          "maximum": 120
+        }
+      }
+    },
+
+    "identity": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 10
+    },
+
+    "mood": {
+      "type": "string",
+      "enum": [
+        "cheerful",
+        "grumpy",
+        "anxious",
+        "dreamy",
+        "menacing",
+        "heartbroken",
+        "manic",
+        "deadpan"
+      ]
+    },
+
+    "lines": {
+      "description": "表演层。字数上限不是排版洁癖：玩家一边跑冰箱一边烤肉，没有一秒能读长台词。笑点必须压进 order 那一句 —— 那句玩家必须读，不读做不出来。",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["greet", "order", "wait_nudge", "praise", "complain"],
+      "properties": {
+        "greet": { "type": "string", "minLength": 1, "maxLength": 12 },
+        "order": {
+          "description": "主笑点载体。必须是 order 字段的人话包装，不得引入机制层不存在的要求（不能点词表外的东西、不能提摆盘、不能说「你猜我要什么」）。",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30
+        },
+        "wait_nudge": { "type": "string", "minLength": 1, "maxLength": 15 },
+        "praise": { "type": "string", "minLength": 1, "maxLength": 20 },
+        "complain": { "type": "string", "minLength": 1, "maxLength": 20 }
+      }
+    },
+
+    "arc": {
+      "description": "长线剧情。null = 单次出现的散客。同一 series_id 的卡按 chapter 排序、由 unlock_day 控制出现时机（GDD §8）。",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["series_id", "chapter", "unlock_day"],
+          "properties": {
+            "series_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,31}$" },
+            "chapter": { "type": "integer", "minimum": 1 },
+            "unlock_day": { "type": "integer", "minimum": 1 }
+          }
+        }
+      ]
+    }
+  }
+}

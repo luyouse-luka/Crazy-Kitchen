@@ -32,6 +32,45 @@
 
 </details>
 
+## 📍 当前断点（2026-08-07 · 每轮收工更新这一段）
+
+**M0 线 B 与线 C 的 C1 已完成，线 A 一步没动（那是你的活），C2 卡在 API key。**
+
+下次开工第一件事：**线 A 的 A1 前置已经解掉了 —— git repo 建好了，你可以直接开始 A2。**
+
+| | 状态 |
+|---|---|
+| **线 A（你）** | ⬜ 全部未开始。A1 的前置（Unison ignore + git repo）已由我做完，见下方「需要你操作」 |
+| **线 B（我）** | ✅ B1–B7 全部完成。`pnpm check` 全绿：铁律① 0 命中 · typecheck 无错 · 82 个测试通过 |
+| **线 C（我）** | ✅ C1 完成（`pipeline/` 配置已重建）。⛔ **C2 卡在 `ANTHROPIC_API_KEY` 未设置** —— 这是 go/no-go 闸门，200 张卡约 $2.5 |
+
+**本轮落盘的文件**（`project/kitchen-chaos/` 下）：
+
+```
+.gitignore · package.json · pnpm-workspace.yaml · tsconfig.json · vitest.config.ts
+game/assets/logic/  types.ts · vec2.ts · collision.ts · recipe.ts · order.ts · API.md
+game/assets/logic/__tests__/  vec2 · collision · recipe · order · fixtures · schema （6 个 .test.ts）
+game/assets/logic/__tests__/fixtures/customers.json   ← 21 张手写顾客卡
+pipeline/  dimensions.json · customer.schema.json · README.md
+```
+
+仓库外还改了两份 Unison 配置（服务器上的源，**需要你手动应用到两端**，见下）。
+
+### ⚠ 需要你操作的三件事
+
+1. **应用 Unison ignore** —— 我只能改服务器上的源副本，实际生效的两份在你的机器上：
+   - WSL 端 `~/.unison/sync.prf` ← 服务器 `/home/ly/.unison/sync.prf` 已加好，拷过去
+   - Windows 端 `C:\Users\12255\.unison\sync-server.prf` ← 服务器 `/home/ly/unison-setup/sync-server.prf` 已加好，拷过去
+   - 加的是 `ignore = Path project/kitchen-chaos`（整个项目改走 git）
+   - ⏰ **等 GitHub repo 建好、Windows 端 clone 完之后再应用**，否则本地拿不到服务器上的新文件
+2. **建 GitHub private repo** —— 服务器上 `gh` CLI 没装，这一步只能你来。
+   建好后告诉我 repo 地址，我加 remote 并推首次提交（SSH 有两个账号别名：默认 `github.com` = devmtc-1，
+   `github-luyouse` = luyouse-luka，用哪个你定）
+3. **`ANTHROPIC_API_KEY`** —— C2 生成 200 张卡要用。这是 M0 的 go/no-go 闸门，
+   比线 A 的任何一步都重要（工程卡住只是慢，方向错了是三个月）
+
+---
+
 ## ✅ 已定
 
 - **引擎 = Cocos Creator 3.8**
@@ -933,20 +972,20 @@ iOS 高性能模式免费、无 DAU 门槛、无主体限制；iOS 内存上限 
 
 | # | 做什么 |
 |---|---|
-| B1 | 找到 Unison 配置加 ignore；服务器起 git repo 和 `.gitignore`（含 `library/ temp/ build/ profiles/ native/`）<br>📍 配置位置与语法**已在 §9 核实**，直接照做即可 |
-| B2 | 仓库根 `package.json` + `vitest.config.ts` |
-| B3 | `types.ts` · `vec2.ts` · `collision.ts` + 单测 |
-| B4 | `recipe.ts` · `order.ts` + 单测 —— 把「一个汉堡怎么算做对了」写死并测通 |
-| B5 | 手写 20 张顾客卡进 `__tests__/fixtures/` |
-| B6 | `API.md` 首版 |
+| B1 | ✅ **已完成** git repo + `.gitignore` 建好并首次提交；两份 Unison 配置已加 `ignore = Path project/kitchen-chaos`（**服务器侧的源，需你手动应用到两端**，见「当前断点」） |
+| B2 | ✅ **已完成** 仓库根 `package.json` + `vitest.config.ts` + `tsconfig.json` + `pnpm-workspace.yaml`；`pnpm check` = 铁律① + typecheck + 测试 |
+| B3 | ✅ **已完成** `types.ts` · `vec2.ts` · `collision.ts` + 52 个单测（含 `rotateY` 相机相对映射、圆-AABB 角落不误判、推出后不再重叠） |
+| B4 | ✅ **已完成** `recipe.ts` · `order.ts` + 28 个单测（火候三档边界、required/banned 相交、错误项列全不短路） |
+| B5 | ✅ **已完成** `__tests__/fixtures/customers.json` —— **21 张**手写卡，8 种 mood 全覆盖，含一条 3 章 arc |
+| B6 | ✅ **已完成** `logic/API.md` 首版 |
 | B7 | ✅ **已完成（2026-08-07）** 本方案落盘 `project/kitchen-chaos/ROADMAP.md`；同步改 `GDD.md`（引擎/美术结案、竖屏→横屏）、修 `docs/ai-customer-v1.md` 失效清单 |
 
 ### 线 C · 我（顾客卡验证）—— ⛔ 本周真正的重点
 
 | # | 做什么 |
 |---|---|
-| C1 | 重建 `pipeline/`：`dimensions.json`（**敏感值一开始就剔除**）+ `customer.schema.json` |
-| C2 | Opus 5 + Batch 生成 200 张（约 $2.5，跑批可放夜里） |
+| C1 | ✅ **已完成** `pipeline/dimensions.json`（24×22×8×21 ≈ 8.9 万种组合，敏感值已剔除）+ `customer.schema.json`（draft 2020-12）+ `README.md`。schema 有 9 个测试守着，含 6 条「必须被拒」的活性守卫 |
+| C2 | ⛔ **卡住：`ANTHROPIC_API_KEY` 未设置**。Opus 5 + Batch 生成 200 张（约 $2.5，跑批可放夜里）。脚本刻意还没写——等真要跑时再写，避免堆半截实现 |
 | C3 | 按三条判据打分，**把 200 张原文交给你读** |
 
 > **这一周结束时，最重要的产出不是「真机上跑起来了」，而是「你读完 200 张卡，

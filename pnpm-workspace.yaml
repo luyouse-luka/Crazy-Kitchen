@@ -1,0 +1,6 @@
+# pnpm 11 把「放行 build script」从 package.json 挪到了这里，字段名是 allowBuilds。
+# 不放行的话 pnpm install 以 ERR_PNPM_IGNORED_BUILDS 退出 1，
+# 连带让所有 `pnpm run <script>` 失败 —— 它们会先跑一次依赖检查。
+# esbuild 是 vitest 的 TS 转译器。
+allowBuilds:
+  esbuild: true

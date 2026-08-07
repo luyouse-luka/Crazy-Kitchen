@@ -1,0 +1,17 @@
+{
+  "//": "仅供仓库根的 vitest 与 pnpm typecheck 使用。Cocos 用的是 game/tsconfig.json，两者互不干扰。",
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2020"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "types": ["vitest/globals"]
+  },
+  "include": ["game/assets/logic/**/*.ts", "vitest.config.ts"]
+}

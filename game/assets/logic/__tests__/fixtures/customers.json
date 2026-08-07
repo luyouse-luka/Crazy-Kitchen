@@ -1,0 +1,296 @@
+[
+  {
+    "id": "c_0001",
+    "order": { "required": ["bun", "patty", "lettuce"], "banned": ["cheese", "bacon"], "doneness": "medium", "patience": 45 },
+    "identity": "唐朝穿越者",
+    "mood": "anxious",
+    "lines": {
+      "greet": "此乃何朝何代？",
+      "order": "劳烦小二，去芝士与培根，肉五分熟，妾身要瘦",
+      "wait_nudge": "小二，久候矣。",
+      "praise": "此物胜过御膳房。",
+      "complain": "本宫说了不要芝士。"
+    },
+    "arc": null
+  },
+  {
+    "id": "c_0002",
+    "order": { "required": ["bun", "patty", "pickle"], "banned": ["onion"], "doneness": "well", "patience": 35 },
+    "identity": "退休特工",
+    "mood": "deadpan",
+    "lines": {
+      "greet": "别回头。",
+      "order": "全熟。加酸黄瓜。洋葱有味道，会暴露位置。",
+      "wait_nudge": "目标已进入视野。",
+      "praise": "任务完成。干净。",
+      "complain": "你暴露了我们。"
+    },
+    "arc": null
+  },
+  {
+    "id": "c_0003",
+    "order": { "required": ["bun", "patty", "cheese", "lettuce"], "banned": ["pickle"], "doneness": "medium", "patience": 50 },
+    "identity": "幼儿园老师",
+    "mood": "cheerful",
+    "lines": {
+      "greet": "小朋友们好呀。",
+      "order": "要芝士要生菜，酸黄瓜太酸小朋友不吃，肉五分熟哦",
+      "wait_nudge": "小朋友们等急啦。",
+      "praise": "满分！贴小红花。",
+      "complain": "老师说了不要酸黄瓜。"
+    },
+    "arc": null
+  },
+  {
+    "id": "c_0004",
+    "order": { "required": ["bun", "patty"], "banned": [], "doneness": "well", "patience": 60 },
+    "identity": "末日幸存者",
+    "mood": "heartbroken",
+    "lines": {
+      "greet": "还……还有热的？",
+      "order": "什么都不用加。就面包和肉，全熟。跟从前一样。",
+      "wait_nudge": "我等了十二年。",
+      "praise": "和记忆里一样。",
+      "complain": "算了。至少是热的。"
+    },
+    "arc": null
+  },
+  {
+    "id": "c_0005",
+    "order": { "required": ["bun", "patty", "cheese", "bacon"], "banned": [], "doneness": "rare", "patience": 40 },
+    "identity": "选秀练习生",
+    "mood": "manic",
+    "lines": {
+      "greet": "看镜头！比个心！",
+      "order": "芝士培根都给我上，肉要三分熟，这条视频得爆",
+      "wait_nudge": "我的粉丝在等。",
+      "praise": "这波直接出道！",
+      "complain": "这剪不进正片啊。"
+    },
+    "arc": null
+  },
+  {
+    "id": "c_0006",
+    "order": { "required": ["bun", "patty"], "banned": ["lettuce"], "doneness": "well", "patience": 25 },
+    "identity": "外卖骑手",
+    "mood": "anxious",
+    "lines": {
+      "greet": "快快快！超时了！",
+      "order": "别加生菜，会出水泡软面包。全熟，我三分钟后走",
+      "wait_nudge": "差评要扣我钱！",
+      "praise": "还能赶上下一单。",
+      "complain": "这单我算白跑了。"
+    },
+    "arc": null
+  },
+  {
+    "id": "c_0007",
+    "order": { "required": ["bun", "patty", "tomato", "lettuce"], "banned": ["bacon", "cheese"], "doneness": "medium", "patience": 55 },
+    "identity": "家用机器人",
+    "mood": "deadpan",
+    "lines": {
+      "greet": "检测到人类厨师。",
+      "order": "营养建议：番茄生菜必选，培根芝士排除，蛋白质五分熟",
+      "wait_nudge": "等待时长已记录。",
+      "praise": "营养评分：九十七。",
+      "complain": "检测到违规配料。"
+    },
+    "arc": null
+  },
+  {
+    "id": "c_0008",
+    "order": { "required": ["bun", "patty"], "banned": [], "doneness": "well", "patience": 70 },
+    "identity": "门口的老张",
+    "mood": "heartbroken",
+    "lines": {
+      "greet": "老板……行行好。",
+      "order": "啥都不用加，面包夹肉就中，烤透点，我牙口不好",
+      "wait_nudge": "不急不急，你先忙。",
+      "praise": "这份情我记着。",
+      "complain": "没事，能吃就行。"
+    },
+    "arc": { "series_id": "lao_zhang", "chapter": 1, "unlock_day": 1 }
+  },
+  {
+    "id": "c_0009",
+    "order": { "required": ["bun", "patty", "cheese"], "banned": [], "doneness": "medium", "patience": 55 },
+    "identity": "老张",
+    "mood": "cheerful",
+    "lines": {
+      "greet": "老板！我上班了！",
+      "order": "今儿我请客，加个芝士，五分熟，头一回自个儿掏钱",
+      "wait_nudge": "不着急，慢慢来。",
+      "praise": "比头回那顿还香。",
+      "complain": "没事儿，你忙你的。"
+    },
+    "arc": { "series_id": "lao_zhang", "chapter": 2, "unlock_day": 3 }
+  },
+  {
+    "id": "c_0010",
+    "order": { "required": ["bun", "patty", "bacon", "cheese"], "banned": [], "doneness": "well", "patience": 50 },
+    "identity": "老张和工友",
+    "mood": "cheerful",
+    "lines": {
+      "greet": "带兄弟来撑场子！",
+      "order": "来最好的！培根芝士都加上，全熟，今儿我买单",
+      "wait_nudge": "不慌，我跟他吹会儿。",
+      "praise": "看吧，我说这儿好。",
+      "complain": "唉，我在兄弟跟前夸过。"
+    },
+    "arc": { "series_id": "lao_zhang", "chapter": 3, "unlock_day": 10 }
+  },
+  {
+    "id": "c_0011",
+    "order": { "required": ["bun", "patty", "tomato"], "banned": ["onion"], "doneness": "rare", "patience": 45 },
+    "identity": "探店博主",
+    "mood": "manic",
+    "lines": {
+      "greet": "这家能出片吗？",
+      "order": "番茄摆上镜好看吧？洋葱会掉粉吧？三分熟够嫩吗？",
+      "wait_nudge": "这段还能剪吗？",
+      "praise": "这条能上热门吧？",
+      "complain": "这怎么发得出去？"
+    },
+    "arc": null
+  },
+  {
+    "id": "c_0012",
+    "order": { "required": ["bun", "patty", "onion"], "banned": ["tomato"], "doneness": "well", "patience": 30 },
+    "identity": "深夜代驾",
+    "mood": "grumpy",
+    "lines": {
+      "greet": "还开着呐，太好了。",
+      "order": "多来点洋葱提神，番茄别放，湿哒哒的，肉烤透",
+      "wait_nudge": "后半夜还有三单。",
+      "praise": "这下能撑到天亮。",
+      "complain": "吃了更犯困了。"
+    },
+    "arc": null
+  },
+  {
+    "id": "c_0013",
+    "order": { "required": ["bun", "patty", "cheese"], "banned": ["pickle", "onion"], "doneness": "medium", "patience": 60 },
+    "identity": "考古学家",
+    "mood": "dreamy",
+    "lines": {
+      "greet": "此物形制古朴。",
+      "order": "取乳酪一片，去酸黄瓜与葱，肉炙至半生，汉代之法",
+      "wait_nudge": "静候片刻无妨。",
+      "praise": "堪比出土之珍。",
+      "complain": "考据有误，惜哉。"
+    },
+    "arc": null
+  },
+  {
+    "id": "c_0014",
+    "order": { "required": ["bun", "patty", "lettuce", "tomato"], "banned": ["cheese"], "doneness": "well", "patience": 50 },
+    "identity": "健身教练",
+    "mood": "cheerful",
+    "lines": {
+      "greet": "今天练了吗？",
+      "order": "生菜番茄双份，芝士热量太高去掉，肉全熟，蛋白质要够",
+      "wait_nudge": "顺便做组深蹲。",
+      "praise": "这才叫增肌餐。",
+      "complain": "这一口白练一周。"
+    },
+    "arc": null
+  },
+  {
+    "id": "c_0015",
+    "order": { "required": ["bun", "patty", "bacon", "cheese", "pickle"], "banned": [], "doneness": "well", "patience": 65 },
+    "identity": "相亲刚失败",
+    "mood": "grumpy",
+    "lines": {
+      "greet": "一个人也能吃吧？",
+      "order": "全给我加上行吗？培根芝士酸黄瓜，全熟，还有谁管我",
+      "wait_nudge": "反正也没人等我。",
+      "praise": "至少你没嫌弃我。",
+      "complain": "今天真是没一件顺的。"
+    },
+    "arc": null
+  },
+  {
+    "id": "c_0016",
+    "order": { "required": ["bun", "patty", "cheese"], "banned": ["tomato", "lettuce"], "doneness": "medium", "patience": 55 },
+    "identity": "小学生",
+    "mood": "dreamy",
+    "lines": {
+      "greet": "我攒了一周零花钱。",
+      "order": "不要番茄不要生菜，绿的红的都不吃，加芝士，五分熟",
+      "wait_nudge": "我妈快来接我了。",
+      "praise": "比学校食堂好一百倍。",
+      "complain": "我说了不吃青的。"
+    },
+    "arc": null
+  },
+  {
+    "id": "c_0017",
+    "order": { "required": ["bun", "patty", "onion", "pickle"], "banned": ["lettuce"], "doneness": "well", "patience": 35 },
+    "identity": "的哥老李",
+    "mood": "grumpy",
+    "lines": {
+      "greet": "老规矩，快点啊。",
+      "order": "洋葱酸黄瓜加足，生菜没味儿别放，全熟，我赶下趟",
+      "wait_nudge": "表还跳着呢。",
+      "praise": "这才叫实在。",
+      "complain": "下回我换一家。"
+    },
+    "arc": null
+  },
+  {
+    "id": "c_0018",
+    "order": { "required": ["bun", "patty", "bacon"], "banned": ["onion"], "doneness": "rare", "patience": 28 },
+    "identity": "剧组场务",
+    "mood": "manic",
+    "lines": {
+      "greet": "开机了！快点！",
+      "order": "培根加满洋葱全撤，主角待会儿要特写，三分熟，快",
+      "wait_nudge": "导演在片场骂人。",
+      "praise": "这条过了！收工！",
+      "complain": "这镜头得重拍。"
+    },
+    "arc": null
+  },
+  {
+    "id": "c_0019",
+    "order": { "required": ["bun", "patty", "lettuce"], "banned": ["bacon", "pickle"], "doneness": "medium", "patience": 45 },
+    "identity": "相声演员",
+    "mood": "deadpan",
+    "lines": {
+      "greet": "我先垫个话。",
+      "order": "生菜要，培根酸黄瓜不要，五分熟——这叫三翻四抖",
+      "wait_nudge": "这包袱抖太久了。",
+      "praise": "这段能进园子。",
+      "complain": "砸挂砸自己身上了。"
+    },
+    "arc": null
+  },
+  {
+    "id": "c_0020",
+    "order": { "required": ["bun", "patty", "cheese", "tomato"], "banned": ["onion"], "doneness": "rare", "patience": 50 },
+    "identity": "天文爱好者",
+    "mood": "dreamy",
+    "lines": {
+      "greet": "今晚有流星雨。",
+      "order": "番茄芝士像火星和月亮，洋葱不要，肉三分熟就够",
+      "wait_nudge": "云层要过来了。",
+      "praise": "和那年那场一样。",
+      "complain": "错过窗口期了。"
+    },
+    "arc": null
+  },
+  {
+    "id": "c_0021",
+    "order": { "required": ["bun", "patty", "cheese"], "banned": ["onion"], "doneness": "well", "patience": 40 },
+    "identity": "夜班保安",
+    "mood": "menacing",
+    "lines": {
+      "greet": "这么晚还开着。",
+      "order": "老规矩，不要洋葱，我得跟人说话。全熟，别出声。",
+      "wait_nudge": "监控里都看着呢。",
+      "praise": "今晚这班值了。",
+      "complain": "我记住这事了。"
+    },
+    "arc": null
+  }
+]

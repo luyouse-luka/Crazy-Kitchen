@@ -1,0 +1,19 @@
+{
+  "name": "kitchen-chaos",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "疯狂后厨 —— 仅供逻辑层测试与内容管线使用，不进 Cocos 构建",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "check:no-engine": "! grep -rn \"from 'cc'\\|from \\\"cc\\\"\" game/assets/logic/ && echo 'OK: logic/ 零引擎依赖'",
+    "check": "pnpm run check:no-engine && pnpm run typecheck && pnpm run test"
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
