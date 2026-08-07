@@ -34,27 +34,35 @@
 
 ## 📍 当前断点（2026-08-07 · 每轮收工更新这一段）
 
-**M0 线 B 与线 C 的 C1 已完成，线 A 一步没动（那是你的活），C2 卡在 API key。**
+**M0 线 B、线 C 的 C1、以及整个 M1 已完成。线 A 一步没动（那是你的活），C2 卡在 API key。**
 
 下次开工第一件事：**线 A 的 A1 前置已经解掉了 —— git repo 建好了，你可以直接开始 A2。**
 
 | | 状态 |
 |---|---|
 | **线 A（你）** | ⬜ 全部未开始。A1 的前置（Unison ignore + git repo）已由我做完，见下方「需要你操作」 |
-| **线 B（我）** | ✅ B1–B7 全部完成。`pnpm check` 全绿：铁律① 0 命中 · typecheck 无错 · 82 个测试通过 |
+| **线 B（我）** | ✅ B1–B7 全部完成 |
 | **线 C（我）** | ✅ C1 完成（`pipeline/` 配置已重建）。⛔ **C2 卡在 `ANTHROPIC_API_KEY` 未设置** —— 这是 go/no-go 闸门，200 张卡约 $2.5 |
+| **M1（我）** | ✅ 全部完成。崩点、旋钮效力、20 天难度曲线都有实测数字，见 M1 那一节 |
 
-**本轮落盘的文件**（`project/kitchen-chaos/` 下）：
+`pnpm check` 全绿：铁律① 0 命中 · typecheck 无错 · **131 个测试通过** ·
+铁律② 10 万帧堆增长 −181KB（完全平坦）。
+
+**已落盘的文件**（`project/kitchen-chaos/` 下）：
 
 ```
 .gitignore · package.json · pnpm-workspace.yaml · tsconfig.json · vitest.config.ts
-game/assets/logic/  types.ts · vec2.ts · collision.ts · recipe.ts · order.ts · API.md
-game/assets/logic/__tests__/  vec2 · collision · recipe · order · fixtures · schema （6 个 .test.ts）
+game/assets/logic/  types · vec2 · collision · recipe · order · rng · sim · difficulty · API.md
+game/assets/logic/__tests__/  上述各一份 .test.ts + fixtures + schema + memory（10 个）
 game/assets/logic/__tests__/fixtures/customers.json   ← 21 张手写顾客卡
 pipeline/  dimensions.json · customer.schema.json · README.md
+tools/sim-cli.ts                                      ← pnpm sim crash|sweep|curve|day
 ```
 
 仓库外还改了两份 Unison 配置（服务器上的源，**需要你手动应用到两端**，见下）。
+
+**M1 最该记住的一条**：⚠ **M4 的「升级项·设备」别做成「多一个烤炉」** ——
+实测烤炉不是瓶颈，跑腿才是，玩家感觉不到。做成「烤得更快」或「工位更近」才有效。
 
 ### ⚠ 需要你操作的三件事
 
@@ -63,9 +71,16 @@ pipeline/  dimensions.json · customer.schema.json · README.md
    - Windows 端 `C:\Users\12255\.unison\sync-server.prf` ← 服务器 `/home/ly/unison-setup/sync-server.prf` 已加好，拷过去
    - 加的是 `ignore = Path project/kitchen-chaos`（整个项目改走 git）
    - ⏰ **等 GitHub repo 建好、Windows 端 clone 完之后再应用**，否则本地拿不到服务器上的新文件
-2. **建 GitHub private repo** —— 服务器上 `gh` CLI 没装，这一步只能你来。
-   建好后告诉我 repo 地址，我加 remote 并推首次提交（SSH 有两个账号别名：默认 `github.com` = devmtc-1，
-   `github-luyouse` = luyouse-luka，用哪个你定）
+2. **建 GitHub private repo** —— ⏸ **2026-08-07 暂缓，你决定先不建**。
+   账号已定：**luyouse-luka**，对应 SSH 别名 `github-luyouse`（`~/.ssh/config`）。
+   想建的时候网页上建个 private repo，然后：
+   ```bash
+   cd /home/ly/project/kitchen-chaos
+   git remote add origin git@github-luyouse:luyouse-luka/<repo名>.git
+   git push -u origin main
+   ```
+   服务器没装 `gh` CLI，所以建仓库那一步只能在网页做。
+   **在此之前本地 commit 照常，历史不会丢** —— 但服务器是共用的，别拖太久。
 3. **`ANTHROPIC_API_KEY`** —— C2 生成 200 张卡要用。这是 M0 的 go/no-go 闸门，
    比线 A 的任何一步都重要（工程卡住只是慢，方向错了是三个月）
 
@@ -625,16 +640,53 @@ project/kitchen-chaos/
 
 #### 具体做什么
 
-- [ ] `logic/sim.ts`：无头跑完整一局。输入=参数表，输出=文本时间线 + 统计
-- [ ] 写一个**贪心「理想玩家」**：永远去处理最紧急的那一单，走位零失误、按键零延迟
-- [ ] **局长固定 3–4 分钟**（一天 = 一关，学胡闹厨房），所有参数在这个时长内标定
-- [ ] 扫参数空间：顾客耐心 / 客流间隔 / 工位间距离 / 单个操作耗时 / 同时在场上限
-- [ ] 找到那条线：**理想玩家刚好应付得过来 = 难度上限**；真人一定比它差，压力就是从这个差里来的
-- [ ] 定三星评分线：几分算一星、二星、三星（三星要**理想玩家也得打起精神**才够得着）
-- [ ] 产出一张难度曲线表（第 1 天 → 第 20 天各参数取值），交给 M3/M4 直接用
+- [x] ✅ `logic/sim.ts`：无头跑完整一局。输入=参数表，输出=文本时间线 + 统计
+- [x] ✅ 贪心「理想玩家」：永远去处理最紧急的那一单，走位零失误、按键零延迟、**不齐不上菜**
+- [x] ✅ 局长固定 210s，所有参数在这个时长内标定
+- [x] ✅ 扫参数空间：`pnpm sim sweep interval|patience|spread|slots|extras|speed|interact`
+- [x] ✅ 定三星评分线（`difficulty.ts` 的 `starsFor`）
+- [x] ✅ 难度曲线表 `logic/difficulty.ts` —— M3/M4 直接调 `difficultyForDay(day)`
 
-**M1 验收**：一条命令跑出「第 N 天、理想玩家的完成率与差评率」曲线，
-且能明确回答**「同时几单开始崩」**。
+**M1 验收：两条都过。** `pnpm sim curve` 一条命令出曲线；`pnpm sim crash` 回答崩点。
+
+#### 实测结论（2026-08-07，每点 32 局取平均）
+
+**⛔ 崩点：同时 3 单。** 理想玩家在同时 1 单时完成 93%（还空闲 14 秒）、2 单 79%、
+**3 单跌到 52%**、4 单 29%。真人会更早崩。
+
+这个数字精确印证了本节开头那道时间预算题：基准布局下做一单约 15 秒，
+15 × 3 = 45 秒 = 顾客耐心，临界点正好落在这里。**公式是对的，不是拍脑袋。**
+
+**旋钮效力排序**（从基准 53% 出发的完成率跨度）：
+
+| 旋钮 | 跨度 | 结论 |
+|---|---|---|
+| 工位间距 0.5→2 | 89% → 6% | 最强。**适合做 M4 的升级项**（花钱买「工位更近」），不适合做难度曲线 |
+| 客流间隔 25→6s | 89% → 16% | 主旋钮，手感最平滑，曲线用它 |
+| 额外配料数 0→4 | 75% → 9% | 极陡，加一样掉 20pt+。只能在最后几天慢慢加 |
+| 单次操作耗时 0.2→1s | 72% → 7% | 手感参数，不该拿来调难度 |
+| **顾客耐心 90→25s** | **63% → 40%** | ⚠ **最弱，只有 23pt** |
+
+**三条反直觉的发现，直接影响 M2/M3/M4 的设计：**
+
+1. **顾客耐心几乎调不动难度。** 砍 3.6 倍只掉 23pt —— 瓶颈是玩家的**操作吞吐量**，
+   不是顾客肯等多久。客流 12 秒来一个、做一单要 15 秒，队伍必然堆积，给再多耐心也做不完。
+   **想调难度别先动耐心。**
+2. **多加烤炉是无效升级。** 基准火候（3/6/9/13s）下烤一块肉比玩家跑一趟还快，
+   烤炉根本不是瓶颈 —— **跑腿才是**。1 个槽位和 4 个槽位完成率几乎一样（多槽还略差，
+   因为要多盯一个计时器）。⚠ **M4「升级项·设备」如果做成「多一个烤炉」，玩家会感觉不到。
+   应该做成「烤得更快」或「工位更近」。**（把火候窗口 ×5 后多槽立刻显效，
+   证明这是参数取值问题不是调度写坏了）
+3. **`bannedChance` 只压真人、不压理想玩家。** 理想玩家不会放错，所以这一维怎么加
+   都不影响难度曲线；但它是真人的主要出错源。**这是唯一一个能单向增加真人压力的旋钮。**
+
+**难度曲线**（`difficulty.ts`）：第 1→20 天，理想玩家完成率全程落在目标带内
+（教学期 1–3 天 ≥92%，之后 78%–98%）。曲线只动客流间隔、耐心、同时上限、配料数、禁料概率，
+**不动工位间距**（那是升级项）。
+
+> 关于「理想玩家」的保守性：它不预判（肉快好了不会提前往烤炉走）、不做全局最优调度，
+> 所以给出的是难度上限的**下界** —— 真实上限只会更高。M3 拿真人数据回来后，
+> 偏差大说明该改的是操作和 UI，不是难度数值。
 
 > 这不是过度设计，是把《PlateUp!》《胡闹厨房》这类游戏的数值策划工作前置。
 > 顺带：`sim.ts` 后面还会被复用两次——铁律②的 10000 帧内存测试跑的就是它，

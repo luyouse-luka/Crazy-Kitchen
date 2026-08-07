@@ -13,5 +13,5 @@
     "skipLibCheck": true,
     "types": ["vitest/globals"]
   },
-  "include": ["game/assets/logic/**/*.ts", "vitest.config.ts"]
+  "include": ["game/assets/logic/**/*.ts", "tools/**/*.ts", "vitest.config.ts"]
 }

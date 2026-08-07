@@ -9,11 +9,13 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "check:no-engine": "! grep -rn \"from 'cc'\\|from \\\"cc\\\"\" game/assets/logic/ && echo 'OK: logic/ 零引擎依赖'",
-    "check": "pnpm run check:no-engine && pnpm run typecheck && pnpm run test"
+    "check": "pnpm run check:no-engine && pnpm run typecheck && pnpm run test",
+    "sim": "vite-node tools/sim-cli.ts --"
   },
   "devDependencies": {
     "ajv": "^8.20.0",
     "typescript": "^5.9.3",
+    "vite-node": "^6.0.0",
     "vitest": "^3.2.4"
   }
 }

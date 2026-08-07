@@ -6,5 +6,8 @@ export default defineConfig({
   test: {
     include: ['game/assets/logic/**/__tests__/**/*.test.ts'],
     environment: 'node',
+    // 铁律②的内存测试要能主动触发 GC，否则读到的 heapUsed 全是 GC 时机的噪声
+    pool: 'forks',
+    poolOptions: { forks: { execArgv: ['--expose-gc'] } },
   },
 })
