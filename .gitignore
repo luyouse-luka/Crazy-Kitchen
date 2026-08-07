@@ -1,0 +1,29 @@
+# ─── Cocos Creator 3.8 本地重建产物 ───
+# 这几个目录是编辑器每台机器各自生成的，进仓库会天天冲突（ROADMAP §4 / §6.5）
+game/library/
+game/temp/
+game/build/
+game/profiles/
+game/native/
+game/local/
+
+# ⚠ .meta 文件必须进仓库，不要在这里 ignore
+# 它存节点 uuid 映射，删了引用全断，场景里所有拖好的引用会变空（ROADMAP §6.5）
+
+# ─── Node ───
+node_modules/
+.pnpm-store/
+coverage/
+
+# ─── 内容管线产出（未验收的中间产物不进仓库）───
+# 验收通过后再手动拷进 game/assets/resources/
+pipeline/out/
+
+# ─── 编辑器 / 系统 ───
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
