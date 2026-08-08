@@ -32,15 +32,17 @@
 
 </details>
 
-## 📍 当前断点（2026-08-07 · 每轮收工更新这一段）
+## 📍 当前断点（2026-08-08 · 每轮收工更新这一段）
 
 **M0 线 B、线 C 的 C1、以及整个 M1 已完成。线 A 一步没动（那是你的活），C2 卡在 API key。**
 
-下次开工第一件事：**线 A 的 A1 前置已经解掉了 —— git repo 建好了，你可以直接开始 A2。**
+**2026-08-08**：GitHub repo `luyouse-luka/Crazy-Kitchen` 已建，服务器端 remote 已配并验证连通，
+**但还没 push**（等你发话）。Unison 两端的 ignore 行仍需你手动拷 —— 服务器上的
+`.unison/` / `unison-setup/` 本身就在 ignore 列表里，我改了也传不过去。切换顺序有讲究，见下。
 
 | | 状态 |
 |---|---|
-| **线 A（你）** | ⬜ 全部未开始。A1 的前置（Unison ignore + git repo）已由我做完，见下方「需要你操作」 |
+| **线 A（你）** | ⬜ 全部未开始。A1 的前置已备好（repo 已建 + remote 已配），见下方「需要你操作」 |
 | **线 B（我）** | ✅ B1–B7 全部完成 |
 | **线 C（我）** | ✅ C1 完成（`pipeline/` 配置已重建）。⛔ **C2 卡在 `ANTHROPIC_API_KEY` 未设置** —— 这是 go/no-go 闸门，200 张卡约 $2.5 |
 | **M1（我）** | ✅ 全部完成。崩点、旋钮效力、20 天难度曲线都有实测数字，见 M1 那一节 |
@@ -64,25 +66,68 @@ tools/sim-cli.ts                                      ← pnpm sim crash|sweep|c
 **M1 最该记住的一条**：⚠ **M4 的「升级项·设备」别做成「多一个烤炉」** ——
 实测烤炉不是瓶颈，跑腿才是，玩家感觉不到。做成「烤得更快」或「工位更近」才有效。
 
-### ⚠ 需要你操作的三件事
+### ⚠ 需要你操作的事
 
-1. **应用 Unison ignore** —— 我只能改服务器上的源副本，实际生效的两份在你的机器上：
-   - WSL 端 `~/.unison/sync.prf` ← 服务器 `/home/ly/.unison/sync.prf` 已加好，拷过去
-   - Windows 端 `C:\Users\12255\.unison\sync-server.prf` ← 服务器 `/home/ly/unison-setup/sync-server.prf` 已加好，拷过去
-   - 加的是 `ignore = Path project/kitchen-chaos`（整个项目改走 git）
-   - ⏰ **等 GitHub repo 建好、Windows 端 clone 完之后再应用**，否则本地拿不到服务器上的新文件
-2. **建 GitHub private repo** —— ⏸ **2026-08-07 暂缓，你决定先不建**。
-   账号已定：**luyouse-luka**，对应 SSH 别名 `github-luyouse`（`~/.ssh/config`）。
-   想建的时候网页上建个 private repo，然后：
+1. **GitHub repo** —— ✅ **2026-08-08 已建**：`luyouse-luka/Crazy-Kitchen`。
+   服务器端 remote 已配好并验证连通（`git ls-remote` 通过），**尚未 push**。
+
+   ⚠ **remote URL 用的是 `github-luyouse-user`，不是你给的 `github.com`**，也不是本文档
+   之前写错的 `github-luyouse`。这台服务器上三个 host 各自绑不同身份，实测：
+
+   | Host | `ssh -T` 返回的身份 | 能不能用 |
+   |---|---|---|
+   | `github.com` | `Hi devmtc-1!` | ❌ 另一个账号 |
+   | `github-luyouse` | `Hi luyouse-luka/vue-taskHub!` | ❌ **仓库级 deploy key**，只对 vue-taskHub 有效 |
+   | `github-luyouse-user` | `Hi luyouse-luka!` | ✅ **账号级 key，跨仓库** |
+
+   带斜杠的返回值（`账号/仓库名`）是 deploy key 的标志。所以：
+
    ```bash
-   cd /home/ly/project/kitchen-chaos
-   git remote add origin git@github-luyouse:luyouse-luka/<repo名>.git
-   git push -u origin main
+   git remote add origin git@github-luyouse-user:luyouse-luka/Crazy-Kitchen.git
    ```
-   服务器没装 `gh` CLI，所以建仓库那一步只能在网页做。
-   **在此之前本地 commit 照常，历史不会丢** —— 但服务器是共用的，别拖太久。
+
+   > 同一个坑 ai-learning 项目已经踩过一次并纠正过（笔记原话：「SSH 别名是
+   > `github-luyouse-user`，不是笔记里写的 `github-luyouse`」），本文档 v1.3 又抄了错的那份。
+
+2. **应用 Unison ignore** —— 我只能改服务器上的**源副本**，实际生效的两份在你的机器上。
+   服务器上 `.unison/`、`unison-setup/`、`server-sync/` 三个目录**本身就在 ignore 列表里**，
+   所以我改了也不会自动同步过去，必须手动拷。
+
+   | 端 | 实际生效的文件 | 从服务器哪份拷 | 落地路径 |
+   |---|---|---|---|
+   | **WSL**（用户名 `luyouse`） | `~/.unison/sync.prf` | `/home/ly/.unison/sync.prf` | `/home/luyouse/project/kitchen-chaos` |
+   | **Windows** | `C:\Users\12255\.unison\sync-server.prf` | `/home/ly/unison-setup/sync-server.prf` | `C:\Users\12255\server-sync\project\kitchen-chaos` |
+
+   两份服务器源副本都已加 `ignore = Path project/kitchen-chaos`（已核实各 1 处命中）。
+   另外三份 prf 不受影响：`eurocave-sync.prf` 有 `path = project/EuroCave` 限定，
+   两份 `server-sync.prf` 的远端根是 `/home/ly/server-sync` 子目录，都够不着本项目。
+
+   ⚠ **拷之前先处理本地那份"孤儿拷贝"** —— ignore 生效前 Unison 一直在同步本项目，
+   所以上面两个落地路径下**已经各有一份没有 `.git` 的拷贝**（`.git` 本来就被 ignore）。
+   直接在原地 `git clone` 会因目录非空而失败。正确顺序见下。
+
 3. **`ANTHROPIC_API_KEY`** —— C2 生成 200 张卡要用。这是 M0 的 go/no-go 闸门，
    比线 A 的任何一步都重要（工程卡住只是慢，方向错了是三个月）
+
+#### 切换到 git 工作流的正确顺序
+
+顺序错了会丢东西，按这个来：
+
+```
+① 服务器 push（我来，等你说）
+       ↓
+② 本地把孤儿拷贝改名备份：project/kitchen-chaos → kitchen-chaos.unison-bak
+       ↓
+③ 本地 git clone git@github-luyouse-user:luyouse-luka/Crazy-Kitchen.git kitchen-chaos
+       ↓
+④ 确认 clone 出来的内容齐了，再启用两端的 ignore 行
+       ↓
+⑤ 确认之后才删 .unison-bak
+```
+
+**②③ 之间不要跑 Unison** —— 那会儿本地是空目录而服务器有文件，`prefer=newer` 会把整个项目
+重新灌回来，白忙。④ 放在 ③ 之后是因为：ignore 一旦生效，本地就再也拿不到服务器的更新了，
+必须先让 git 接上手。
 
 ---
 
