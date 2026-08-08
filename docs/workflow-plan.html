@@ -1,0 +1,1299 @@
+<title>疯狂后厨 · 双人协作流程计划</title>
+
+<style>
+  :root {
+    --ground:        #EDF0F0;
+    --surface:       #F8FAFA;
+    --surface-2:     #E2E8E8;
+    --border:        #CFD8D8;
+    --border-strong: #AFBBBB;
+    --ink:           #141A1B;
+    --ink-2:         #3B4647;
+    --muted:         #667273;
+    --accent:        #0C6072;
+    --accent-soft:   #D7E9ED;
+    --ok:            #47761D;
+    --ok-soft:       #E1EDD6;
+    --warn:          #9E5D00;
+    --warn-soft:     #F5E6CA;
+    --block:         #A32F26;
+    --block-soft:    #F4DDDB;
+
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang SC",
+            "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+            "Liberation Mono", monospace;
+
+    --maxw: 62rem;
+    --r: 3px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:        #0F1516;
+      --surface:       #171F20;
+      --surface-2:     #202A2B;
+      --border:        #2B3637;
+      --border-strong: #3E4B4C;
+      --ink:           #E6ECEC;
+      --ink-2:         #BFC9C9;
+      --muted:         #8A9899;
+      --accent:        #52B2C7;
+      --accent-soft:   #113740;
+      --ok:            #9AC873;
+      --ok-soft:       #1D2D16;
+      --warn:          #E0A340;
+      --warn-soft:     #33260E;
+      --block:         #E38079;
+      --block-soft:    #351A17;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:        #0F1516;
+    --surface:       #171F20;
+    --surface-2:     #202A2B;
+    --border:        #2B3637;
+    --border-strong: #3E4B4C;
+    --ink:           #E6ECEC;
+    --ink-2:         #BFC9C9;
+    --muted:         #8A9899;
+    --accent:        #52B2C7;
+    --accent-soft:   #113740;
+    --ok:            #9AC873;
+    --ok-soft:       #1D2D16;
+    --warn:          #E0A340;
+    --warn-soft:     #33260E;
+    --block:         #E38079;
+    --block-soft:    #351A17;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.8;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 1.25rem 6rem;
+  }
+
+  /* ─────────── 排版基座 ─────────── */
+
+  h1, h2, h3, h4 { text-wrap: balance; margin: 0; line-height: 1.35; }
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+
+  h3 { font-size: 1.0625rem; font-weight: 700; letter-spacing: -0.01em; }
+  h4 { font-size: 0.9375rem; font-weight: 700; }
+
+  p { margin: 0; }
+
+  a { color: var(--accent); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.85em;
+    background: var(--surface-2);
+    padding: 0.1em 0.4em;
+    border-radius: var(--r);
+    word-break: break-word;
+  }
+
+  pre {
+    font-family: var(--mono);
+    font-size: 0.8125rem;
+    line-height: 1.75;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 0.9rem 1rem;
+    margin: 0;
+    overflow-x: auto;
+    tab-size: 2;
+  }
+
+  pre code { background: none; padding: 0; font-size: inherit; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .lede { color: var(--ink-2); }
+
+  .note { font-size: 0.9375rem; color: var(--muted); }
+
+  strong { font-weight: 700; }
+
+  /* ─────────── 顶部状态条 ─────────── */
+
+  .masthead {
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    padding: 2.75rem 0 0;
+    margin-bottom: 3rem;
+  }
+
+  .masthead-inner {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+  }
+
+  .title-row { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  h1 {
+    font-size: clamp(1.75rem, 5vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+
+  .subtitle { color: var(--muted); font-size: 0.9375rem; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: var(--r) var(--r) 0 0;
+    overflow: hidden;
+  }
+
+  .stat {
+    background: var(--surface);
+    padding: 0.9rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .stat-v {
+    font-family: var(--mono);
+    font-size: 1.375rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .stat-l {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+
+  .stat[data-tone="ok"]    .stat-v { color: var(--ok); }
+  .stat[data-tone="block"] .stat-v { color: var(--block); }
+  .stat[data-tone="warn"]  .stat-v { color: var(--warn); }
+
+  /* ─────────── 区块 ─────────── */
+
+  section.block { margin-top: 3.25rem; }
+
+  .block-hd {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  /* ─────────── 告警块 ─────────── */
+
+  .alert {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--warn);
+    background: var(--surface);
+    border-radius: var(--r);
+    padding: 1.1rem 1.25rem;
+  }
+
+  .alert[data-tone="block"] { border-left-color: var(--block); }
+  .alert[data-tone="accent"] { border-left-color: var(--accent); }
+
+  .alert h3 { font-size: 1rem; }
+  .alert p { font-size: 0.9375rem; color: var(--ink-2); }
+
+  /* ─────────── 分工两栏 ─────────── */
+
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  @media (max-width: 46rem) {
+    .split { grid-template-columns: 1fr; }
+  }
+
+  /* ─────────── 泳道时间轴 ─────────── */
+
+  .phase {
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    background: var(--surface);
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+  }
+
+  .phase-hd {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.75rem;
+    padding: 0.85rem 1.1rem;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mcode {
+    font-family: var(--mono);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--surface);
+    background: var(--ink);
+    padding: 0.15rem 0.45rem;
+    border-radius: var(--r);
+  }
+
+  .phase[data-state="done"]   .mcode { background: var(--ok); }
+  .phase[data-state="active"] .mcode { background: var(--accent); }
+
+  .phase-hd .wk {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  .lanes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  @media (max-width: 46rem) {
+    .lanes { grid-template-columns: 1fr; }
+  }
+
+  .lane {
+    background: var(--surface);
+    padding: 1rem 1.1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .lane-hd {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .who {
+    font-family: var(--mono);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.12rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+  }
+
+  .who-you { color: var(--accent); }
+  .who-ai  { color: var(--muted); }
+
+  .st {
+    font-size: 0.75rem;
+    font-family: var(--mono);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .lane[data-state="done"]    .st { color: var(--ok); }
+  .lane[data-state="blocked"] .st { color: var(--block); }
+  .lane[data-state="now"]     .st { color: var(--accent); }
+  .lane[data-state="todo"]    .st { color: var(--muted); }
+
+  .lane ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.9375rem;
+    color: var(--ink-2);
+  }
+
+  .lane li::marker { color: var(--border-strong); }
+
+  /* ─────────── 闸门（横跨两道） ─────────── */
+
+  .gate {
+    display: flex;
+    gap: 0.9rem;
+    align-items: flex-start;
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--warn);
+    background: var(--warn-soft);
+    border-radius: var(--r);
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .gate[data-kind="blocked"] {
+    border-left-color: var(--block);
+    background: var(--block-soft);
+  }
+
+  .gate-tag {
+    font-family: var(--mono);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--warn);
+    white-space: nowrap;
+    padding-top: 0.3rem;
+  }
+
+  .gate[data-kind="blocked"] .gate-tag { color: var(--block); }
+
+  .gate-body { display: flex; flex-direction: column; gap: 0.3rem; }
+  .gate-body strong { font-size: 0.9375rem; }
+  .gate-body p { font-size: 0.875rem; color: var(--ink-2); }
+
+  /* ─────────── 步骤（A 线） ─────────── */
+
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    counter-reset: none;
+  }
+
+  .step {
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .step-hd {
+    display: flex;
+    align-items: baseline;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+    padding: 0.8rem 1.1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+
+  .acode {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 0.1rem 0.4rem;
+    border-radius: var(--r);
+  }
+
+  .step-hd .tag {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--warn);
+    white-space: nowrap;
+  }
+
+  .step-body {
+    padding: 1rem 1.1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    font-size: 0.9375rem;
+    color: var(--ink-2);
+  }
+
+  .step-body ul, .step-body ol {
+    margin: 0;
+    padding-left: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .step-body li::marker { color: var(--border-strong); }
+
+  .judge {
+    display: flex;
+    gap: 0.6rem;
+    align-items: baseline;
+    border-top: 1px dashed var(--border-strong);
+    padding-top: 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .judge-l {
+    font-family: var(--mono);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--ok);
+    white-space: nowrap;
+  }
+
+  /* ─────────── 通用卡片 ─────────── */
+
+  .card {
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    background: var(--surface);
+    padding: 1.1rem 1.25rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .card ul {
+    margin: 0;
+    padding-left: 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.9375rem;
+    color: var(--ink-2);
+  }
+
+  .card li::marker { color: var(--border-strong); }
+
+  .stack { display: flex; flex-direction: column; gap: 1rem; }
+
+  /* ─────────── 表格 ─────────── */
+
+  .tw { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--r); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+    background: var(--surface);
+  }
+
+  th, td {
+    text-align: left;
+    padding: 0.65rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  th {
+    font-size: 0.75rem;
+    font-family: var(--mono);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--surface-2);
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* ─────────── 页脚 ─────────── */
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.875rem;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="title-row">
+      <span class="eyebrow">Crazy Kitchen · 执行计划 · 2026-08-08</span>
+      <h1>疯狂后厨 · 双人协作流程</h1>
+      <p class="subtitle">
+        微信小游戏 · Cocos Creator 3.8 · 横屏 1280×720 ·
+        <code>luyouse-luka/Crazy-Kitchen</code>
+      </p>
+    </div>
+
+    <div class="stats">
+      <div class="stat" data-tone="ok">
+        <span class="stat-v">131</span>
+        <span class="stat-l">测试通过 · 全绿</span>
+      </div>
+      <div class="stat" data-tone="ok">
+        <span class="stat-v">M1</span>
+        <span class="stat-l">已完成（提前）</span>
+      </div>
+      <div class="stat" data-tone="block">
+        <span class="stat-v">M0</span>
+        <span class="stat-l">闸门未过</span>
+      </div>
+      <div class="stat" data-tone="warn">
+        <span class="stat-v">0 / 8</span>
+        <span class="stat-l">线 A 步骤完成</span>
+      </div>
+      <div class="stat">
+        <span class="stat-v">6–8</span>
+        <span class="stat-l">月 · 现实工期</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ═══════════ 现在的错位 ═══════════ -->
+  <section class="block" style="margin-top:0">
+    <div class="alert" data-tone="block">
+      <span class="eyebrow">当前状态判断</span>
+      <h3>工程线跑到了 M1，但 M0 的闸门一条都没过</h3>
+      <p>
+        M0 的验收是四条：真机跑得起空场景 · 知道还剩多少 MB · <code>vitest</code> 全绿 ·
+        <strong>200 张卡读完你自己想继续做</strong>。目前只有第三条成立。
+      </p>
+      <p>
+        M1 不依赖 M0，所以先做掉不算违规。但<strong>再往前走不动了</strong> ——
+        M2 的活基本都在 Cocos 里，而线 A 一步没动。
+        所以现在唯一正确的动作是<strong>回头补 M0</strong>，不是往下推。
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════ 协作模型 ═══════════ -->
+  <section class="block">
+    <div class="block-hd">
+      <span class="eyebrow">协作模型</span>
+      <h2>谁能做什么，谁做不了什么</h2>
+    </div>
+
+    <div class="split">
+      <div class="card">
+        <div class="lane-hd">
+          <span class="who who-you">你</span>
+          <span class="note">Windows · 编辑器 · 真机</span>
+        </div>
+        <ul>
+          <li>编辑器摆场景、建 prefab、调材质</li>
+          <li>在 Inspector 里<strong>拖引用</strong>（AI 只能写 <code>@property</code> 声明，拖不了）</li>
+          <li>真机测手感、凭手感调数值</li>
+          <li>视觉判断「这个动作好不好看」</li>
+          <li>构建、上传、审核、软著</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="lane-hd">
+          <span class="who who-ai">AI</span>
+          <span class="note">服务器 · 纯代码</span>
+        </div>
+        <ul>
+          <li><code>logic/</code> 全部代码 + 单元测试</li>
+          <li><code>scripts/</code> 里的 Cocos 组件 <code>.ts</code></li>
+          <li>逻辑梳理、状态机设计、性能优化</li>
+          <li>代码驱动的动画参数</li>
+          <li>内容管线 <code>pipeline/</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="alert" data-tone="accent" style="margin-top:1rem">
+      <h3>AI 看不见你的编辑器</h3>
+      <p>
+        凡是「节点在场景里叫什么、挂在哪一层」这类信息，要么按命名约定，要么你说。
+        约定：工位 <code>Station_Fridge</code> · 角色 <code>Prefab_Chef</code> ·
+        UI <code>UI_Joystick</code> · 挂载点 <code>Anchor_Hand</code>。
+        <strong>对不上的时候是你改名字，不是 AI 改代码</strong> —— 代码有测试兜底，场景没有。
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════ 立刻要做：线 A ═══════════ -->
+  <section class="block">
+    <div class="block-hd">
+      <span class="eyebrow">现在就做 · 线 A 详细步骤</span>
+      <h2>跑通空项目的完整发布链路</h2>
+    </div>
+
+    <p class="lede" style="margin-bottom:1.25rem">
+      <strong>先跑通链路，再写一行游戏代码。</strong>这条链路卡住，后面全白搭。
+      A2 → A4 有严格先后，A5–A8 可以穿插。
+    </p>
+
+    <div class="steps">
+
+      <article class="step">
+        <div class="step-hd">
+          <span class="acode">A2</span>
+          <h3>把工程接到本地</h3>
+          <span class="tag">有个坑</span>
+        </div>
+        <div class="step-body">
+          <p>clone 到 <strong>Unison 同步范围之外</strong>，从此这个项目只认 git：</p>
+<pre><code>git clone https://github.com/luyouse-luka/Crazy-Kitchen.git D:\dev\Crazy-Kitchen</code></pre>
+          <p>首次会弹浏览器登录 <code>luyouse-luka</code>。放在 <code>D:\dev\</code> 之后，
+             Unison 碰不到你的工作副本，那两份旧的同步副本备份完就可以删。</p>
+
+          <div class="alert" data-tone="block">
+            <h4>⚠ Cocos 新建项目会和已有的 <code>game/</code> 撞车</h4>
+            <p>
+              仓库里已经有 <code>game/assets/logic/</code>（20 个文件），但<strong>没有 Cocos 工程文件</strong>。
+              而 Cocos Dashboard 新建项目要求目标目录是空的 —— 直接建会被拒。
+            </p>
+            <p>做法是先把 logic 挪开，建完再挪回来：</p>
+<pre><code>cd D:\dev\Crazy-Kitchen
+ren game game_tmp
+
+# → 这时用 Cocos Dashboard 新建 3D 空项目，路径选
+#   D:\dev\Crazy-Kitchen\game
+# → 建完先关掉编辑器，再执行下面两行
+
+move game_tmp\assets\logic game\assets\logic
+rmdir /s game_tmp</code></pre>
+            <p>
+              然后用编辑器<strong>打开</strong>（不是新建）<code>D:\dev\Crazy-Kitchen\game</code>，
+              它会为 <code>assets/logic/</code> 下每个 <code>.ts</code> 生成 <code>.meta</code>。
+              <strong>这些 <code>.meta</code> 必须 commit</strong> —— 它存 uuid 映射，
+              删了场景里拖好的引用会全部变空。
+            </p>
+          </div>
+
+          <div class="judge">
+            <span class="judge-l">判据</span>
+            <span>编辑器资源管理器里能看到 <code>assets/logic</code>，且 <code>git status</code> 里出现一批新的 <code>.meta</code>。</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="step">
+        <div class="step-hd">
+          <span class="acode">A3</span>
+          <h3>装 Cocos Creator 3.8</h3>
+        </div>
+        <div class="step-body">
+          <p>
+            从 Cocos Dashboard 安装。版本必须是 <strong>3.8.x</strong> —— 方案里所有 API、
+            构建面板选项、目录结构都是按 3.8 写的，3.9 / 2.x 对不上。
+          </p>
+          <div class="judge">
+            <span class="judge-l">判据</span>
+            <span>Dashboard 的编辑器列表里 3.8.x 显示已安装。</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="step">
+        <div class="step-hd">
+          <span class="acode">A4</span>
+          <h3>建项目 → 构建 → 真机扫码</h3>
+          <span class="tag">本周最高优先级</span>
+        </div>
+        <div class="step-body">
+          <p>
+            用 <strong>3D 空模板</strong>。建完第一件事设分辨率与朝向：
+            <code>项目 → 项目设置 → 项目数据</code> 里设计分辨率填 <strong>1280 × 720</strong>；
+            朝向在<strong>构建微信小游戏</strong>面板里另有一个「设备方向 / Orientation」，
+            两处都要是<strong>横屏 Landscape</strong>。
+          </p>
+          <p class="note">
+            （菜单位置以你实际装的 3.8.x 为准，如果对不上按「设计分辨率」「Orientation」两个关键词找。）
+          </p>
+          <p>然后跑完整条链路，一环都不能省：</p>
+          <ol>
+            <li>编辑器 <code>项目 → 构建发布</code> → 平台选<strong>微信小游戏</strong> → 构建</li>
+            <li>用<strong>微信开发者工具</strong>打开构建产物 → 能跑</li>
+            <li>开发者工具里点<strong>预览</strong> → <strong>手机扫码 → 真机上能跑</strong></li>
+          </ol>
+          <div class="alert" data-tone="accent">
+            <p>
+              <strong>卡 2–3 天是正常的。</strong>第一次做证书 / AppID / 构建配置几乎人人卡，
+              方案里提前写明了这一点，不是你不行。
+              <strong>卡超过两个晚上就停下来问 AI</strong> —— 这是它在这个项目里最能帮上忙的地方。
+            </p>
+          </div>
+          <div class="judge">
+            <span class="judge-l">判据</span>
+            <span><strong>手机上</strong>看到 Cocos 空场景。开发者工具里跑起来<strong>不算数</strong>。</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="step">
+        <div class="step-hd">
+          <span class="acode">A5</span>
+          <h3>记下包体真实数字</h3>
+        </div>
+        <div class="step-body">
+          <p>
+            构建产物里找 <code>cocos-js</code> 的大小，以及主包总大小，两个数都记下来。
+          </p>
+          <p>
+            方案 §2.4 现在用的 <strong>2.2–2.8MB 是从 2D 项目外推的估值</strong>，
+            要用你这个真数替换。<strong>这个数定了后面所有资源预算</strong>：
+            分包策略、字体子集大小、顾客卡首包带几张，全从它推。
+          </p>
+          <div class="judge">
+            <span class="judge-l">判据</span>
+            <span>两个数字写进 ROADMAP，估值那行划掉。总量红线 16MB / 安全线 15MB。</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="step">
+        <div class="step-hd">
+          <span class="acode">A6</span>
+          <h3>AppID + iOS 高性能模式</h3>
+        </div>
+        <div class="step-body">
+          <ul>
+            <li>微信公众平台注册<strong>小游戏 AppID</strong>（个人主体，免费）</li>
+            <li>
+              开通高性能模式：<code>能力地图 → 研发能力 → 生产提效包</code>，
+              然后 <code>game.json</code> 加 <code>iOSHighPerformance: true</code>
+            </li>
+          </ul>
+          <p>
+            免费、无 DAU 门槛、无主体限制。官方压测（12000 条鱼）：
+            iPhone 11 Pro Max 从 <strong>10–15 帧提到 48–50 帧</strong>。要求 iOS 14+ / 微信 8.0.18+。
+          </p>
+          <div class="alert" data-tone="accent">
+            <p>
+              <strong>连带一个必须现在定死的决定：纹理格式只能用 ASTC。</strong>
+              高性能模式不支持 ETC / PVRTC。这条越早定越好 ——
+              它反过来约束整条美术管线，等 M6 才发现要全部重导会很惨。
+            </p>
+          </div>
+        </div>
+      </article>
+
+      <article class="step">
+        <div class="step-hd">
+          <span class="acode">A7</span>
+          <h3>验证分层能不能落地</h3>
+          <span class="tag">不过就要改架构</span>
+        </div>
+        <div class="step-body">
+          <p>
+            整个 <code>logic/</code> 分层架构成不成立，全看这一条。做法：
+          </p>
+          <ol>
+            <li>在 <code>assets/scripts/</code> 建一个组件，<code>import { judge } from '../logic/order'</code></li>
+            <li>编辑器不报错</li>
+            <li>构建一次，<strong>在构建产物里搜得到 <code>logic</code> 的代码</strong></li>
+          </ol>
+          <p>
+            第 3 条是关键 —— 编辑器不报错但没进产物，真机上就是空白报错。
+          </p>
+          <div class="alert" data-tone="block">
+            <p>
+              <strong>不过的退路：</strong>把 <code>logic/</code> 移出 <code>assets/</code>，
+              用 tsconfig <code>outFile</code> 编译成单个 js 吐回 assets。
+              代价是多一个构建步骤 + 调试行号对不上，但<strong>架构不用改</strong>。
+            </p>
+          </div>
+          <div class="judge">
+            <span class="judge-l">判据</span>
+            <span>构建产物里 grep 得到 <code>logic</code> 里的函数名。</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="step">
+        <div class="step-hd">
+          <span class="acode">A8</span>
+          <h3>盘一下手上有哪些测试机</h3>
+        </div>
+        <div class="step-body">
+          <p>
+            列出安卓型号、有没有旧 iPhone（2G / 3G RAM 那种）。
+          </p>
+          <p>
+            <strong>现在知道还来得及借。</strong>微信开发者工具的 iOS 模拟
+            <strong>测不出内存被系统杀</strong> —— 这是最可能真机闪退的地方，
+            等 M6 才发现没机器测就晚了。真没有就得接受「首发只保安卓」，那也要提前决定。
+          </p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ═══════════ 主流程 ═══════════ -->
+  <section class="block">
+    <div class="block-hd">
+      <span class="eyebrow">主流程 · 双泳道</span>
+      <h2>M0 → M7 谁做什么</h2>
+    </div>
+
+    <p class="lede" style="margin-bottom:1.25rem">
+      闸门横跨两道 —— 因为它是真的同时挡住两个人。
+      工期按<strong>业余每周 8–10 小时</strong>估，理想 18 周，现实 6–8 个月。
+    </p>
+
+    <div class="phase" data-state="active">
+      <div class="phase-hd">
+        <span class="mcode">M0</span>
+        <h3>三线并行开局</h3>
+        <span class="wk">第 1–2 周 · 进行中</span>
+      </div>
+      <div class="lanes">
+        <div class="lane" data-state="now">
+          <div class="lane-hd"><span class="who who-you">你</span><span class="st">现在做这个</span></div>
+          <ul>
+            <li>线 A 全部 8 步（见上一节）</li>
+            <li>目标不是「做出游戏」，是<strong>证明发布链路通</strong></li>
+          </ul>
+        </div>
+        <div class="lane" data-state="blocked">
+          <div class="lane-hd"><span class="who who-ai">AI</span><span class="st">线 B 完成 · C2 卡住</span></div>
+          <ul>
+            <li>✓ 逻辑层骨架 B1–B7 + 21 张手写顾客卡</li>
+            <li>✓ 内容管线配置 C1（8.9 万种组合，敏感值已剔除）</li>
+            <li>⛔ C2 生成 200 张卡 —— <strong>等 API key</strong></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="gate" data-kind="blocked">
+      <span class="gate-tag">GATE · GO / NO-GO</span>
+      <div class="gate-body">
+        <strong>200 张卡读完，你自己还想不想做这个游戏</strong>
+        <p>
+          这批卡纯文本读一遍就能判断。<strong>如果卡片本身不好笑，套上厨房和动画也不会变好笑，只会更贵。</strong>
+          花一天验证，省下可能三个月的方向错误 —— 整个计划里投入产出比最高的一步。
+        </p>
+        <p>
+          不过也<strong>不等于放弃项目</strong>：先分清是「维度池选得差」（换池重生成，一天）
+          还是「顾客本来就不是灵魂」（重心移到混乱系统那条线，游戏仍然成立，卖点从「AI 整活」变成「厨房失控」）。
+        </p>
+      </div>
+    </div>
+
+    <div class="phase" data-state="done">
+      <div class="phase-hd">
+        <span class="mcode">M1</span>
+        <h3>无头压力原型</h3>
+        <span class="wk">1 周 · 已完成</span>
+      </div>
+      <div class="lanes">
+        <div class="lane" data-state="todo">
+          <div class="lane-hd"><span class="who who-you">你</span><span class="st">不用参与</span></div>
+          <ul>
+            <li>纯 Node，不开 Cocos，不碰美术</li>
+            <li>要看结论跑 <code>pnpm sim curve</code></li>
+          </ul>
+        </div>
+        <div class="lane" data-state="done">
+          <div class="lane-hd"><span class="who who-ai">AI</span><span class="st">已完成</span></div>
+          <ul>
+            <li>✓ 崩点 = <strong>同时 3 单</strong>（理想玩家完成率 52%）</li>
+            <li>✓ 旋钮效力排序 · 三条反直觉结论</li>
+            <li>✓ 第 1→20 天难度曲线 <code>difficultyForDay(day)</code></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert" data-tone="accent" style="margin-bottom:0.75rem">
+      <span class="eyebrow">M1 最该记住的一条</span>
+      <p>
+        <strong>M4 的「升级项 · 设备」别做成「多一个烤炉」。</strong>
+        实测烤炉不是瓶颈，跑腿才是 —— 1 个槽位和 4 个槽位完成率几乎一样。
+        做成「烤得更快」或「工位更近」才有效。
+      </p>
+    </div>
+
+    <div class="phase">
+      <div class="phase-hd">
+        <span class="mcode">M2</span>
+        <h3>垂直切片：30 秒能玩完的最丑版本</h3>
+        <span class="wk">2–3 周</span>
+      </div>
+      <div class="lanes">
+        <div class="lane" data-state="todo">
+          <div class="lane-hd"><span class="who who-you">你</span><span class="st">待开始</span></div>
+          <ul>
+            <li>斜 45° 相机装配（正交起步，角度高度做成 Inspector 可调）</li>
+            <li>几何体厨房：地板 + 两面墙 + 四个工位（方块即可）</li>
+            <li>几何体角色：球 + 胶囊 + 方块，零美术</li>
+            <li>贴地椭圆 Blob Shadow（不是实时阴影）</li>
+          </ul>
+        </div>
+        <div class="lane" data-state="todo">
+          <div class="lane-hd"><span class="who who-ai">AI</span><span class="st">待开始</span></div>
+          <ul>
+            <li>角色控制器：<strong>左摇杆 + 右交互键，可同时按</strong></li>
+            <li>移动走<strong>相机相对映射</strong>（见下方警告）</li>
+            <li>手持系统 · 工位交互 · 烤炉火候计时</li>
+            <li>顾客状态机：进店 → 点单 → 等待 → 判定 → 评价 → 离开</li>
+            <li>台词 UI（≤30 字）· 金币结算 + 局末面板</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert" data-tone="block" style="margin-bottom:0.75rem">
+      <span class="eyebrow">斜 45° 的头号手感坑</span>
+      <p>
+        把摇杆的 <code>(x, y)</code> 直接当世界的 <code>(x, z)</code>，
+        玩家往上推、角色却斜着走 —— 因为相机绕 Y 轴转了 45°。
+        正解是<strong>先把输入向量按相机 yaw 旋转再喂给移动</strong>，
+        <code>vec2.rotateY()</code> 已经写好并测过了。
+        <strong>这行代码写不写对，决定这个游戏手感对不对，比后面所有美术都重要。</strong>
+      </p>
+    </div>
+
+    <div class="gate">
+      <span class="gate-tag">GATE · 最容易卡死的地方</span>
+      <div class="gate-body">
+        <strong>游戏名定死 → 提交软著</strong>
+        <p>
+          软著审查约 <strong>30 工作日</strong>，含来回补正现实要 <strong>6–12 周</strong>。
+          而<strong>软著证书上的名称必须与最终上架名称完全一致</strong> ——
+          定错就要重新申请，直接推迟上线两三个月。
+        </p>
+        <p>
+          链条是：<strong>定名 → 提软著 → 等 6–12 周 → 期间继续做 M3/M4/M5/M6 → 下证即可提审。</strong>
+          排在 M2 而不是更晚，是因为软著材料要源代码 + 说明书截图，
+          M2 的垂直切片刚好够，而 M3 时 UI 还在动、截图要重做。
+        </p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-hd">
+        <span class="mcode">M3</span>
+        <h3>压力落地 —— 核心卖点在这里成立</h3>
+        <span class="wk">2–3 周</span>
+      </div>
+      <div class="lanes">
+        <div class="lane" data-state="todo">
+          <div class="lane-hd"><span class="who who-you">你</span><span class="st">待开始</span></div>
+          <ul>
+            <li>真机连玩 5 局，记录差评率</li>
+            <li>工位排布调优（横屏的红利：工位数量 + 间距双旋钮）</li>
+            <li>报「同时几单开始崩」的真人数字</li>
+          </ul>
+        </div>
+        <div class="lane" data-state="todo">
+          <div class="lane-hd"><span class="who who-ai">AI</span><span class="st">待开始</span></div>
+          <ul>
+            <li>多顾客并发 + 各自耐心倒计时</li>
+            <li>订单队列 UI（横屏上方角落，一眼看清谁快超时）</li>
+            <li>客流曲线按 M1 难度表推进</li>
+            <li>音效兜底：烤糊 / 超时 / 完成各一个</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert" data-tone="accent" style="margin-bottom:0.75rem">
+      <span class="eyebrow">M3 验收 · 分层架构的红利</span>
+      <p>
+        除了主观的「连玩 5 局差评率 &gt; 0」，还有一条客观判据：
+        <strong>模拟器预测 vs 真人实测的偏差</strong>。
+        模拟器说「同时 3 单开始崩」，你如果 <strong>2 单就崩，说明操作摩擦比预期大一倍</strong> ——
+        这时该改的是<strong>操作和 UI，不是难度数值</strong>。
+      </p>
+      <p>
+        这把「手感不好」这种主观抱怨变成了一个可量化的差值。没有 <code>sim.ts</code>
+        就只能靠「我觉得有点难」来调参。
+      </p>
+    </div>
+
+    <div class="phase">
+      <div class="phase-hd">
+        <span class="mcode">M4</span>
+        <h3>混乱系统全套 + 打烊后循环</h3>
+        <span class="wk">3–4 周</span>
+      </div>
+      <div class="lanes">
+        <div class="lane" data-state="todo">
+          <div class="lane-hd"><span class="who who-you">你</span><span class="st">待开始</span></div>
+          <ul>
+            <li>洗碗池 / 灭火器 / 外卖窗口的场景与 prefab</li>
+            <li>结算面板的视觉</li>
+            <li>判断「打烊后我还想再来一天吗」</li>
+          </ul>
+        </div>
+        <div class="lane" data-state="todo">
+          <div class="lane-hd"><span class="who who-ai">AI</span><span class="st">待开始</span></div>
+          <ul>
+            <li><strong>盘子有限 → 洗碗池</strong>（优先做，不加新按钮只让资源变紧，性价比最高）</li>
+            <li>过火 → 烤糊 → 起火 → 灭火器</li>
+            <li>催单 / 差评 / 卫生检查 / 外卖第二条队列</li>
+            <li>结算 → 小费 → 升级点数 → 本地存档</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert" style="margin-bottom:0.75rem">
+      <span class="eyebrow">每加一个混乱源过两道闸</span>
+      <p>
+        ① 营业中玩家一秒注意力不剩，<strong>需要阅读或思考的东西塞进去等于没写</strong>。<br>
+        ② 玩家有没有「先 A 还是先 B」的<strong>选择</strong>？没有就是纯恶意。
+      </p>
+      <p>
+        升级项<strong>全都要同步提高客流</strong>，否则玩家越玩越闲。
+      </p>
+    </div>
+
+    <div class="phase">
+      <div class="phase-hd">
+        <span class="mcode">M5</span>
+        <h3>内容扩产</h3>
+        <span class="wk">1–2 周 · 大半在等 batch</span>
+      </div>
+      <div class="lanes">
+        <div class="lane" data-state="todo">
+          <div class="lane-hd"><span class="who who-you">你</span><span class="st">抽样审核</span></div>
+          <ul>
+            <li>随机抽 200 张人工过目（10000 张不可能全读，但审核会看）</li>
+          </ul>
+        </div>
+        <div class="lane" data-state="todo">
+          <div class="lane-hd"><span class="who who-ai">AI</span><span class="st">待开始</span></div>
+          <ul>
+            <li>扩产到 2000–10000 张 + 自动敏感词过滤</li>
+            <li>按天分包：首包 300–500 张，其余按解锁天数下载</li>
+            <li>长线剧情 arc 挂上（预写，不调实时 API）</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-hd">
+        <span class="mcode">M6</span>
+        <h3>适配 · 性能 · 真机</h3>
+        <span class="wk">2–3 周</span>
+      </div>
+      <div class="lanes">
+        <div class="lane" data-state="todo">
+          <div class="lane-hd"><span class="who who-you">你</span><span class="st">主力在这</span></div>
+          <ul>
+            <li>触摸手感调优（<strong>必须真机</strong>，本机 headless 测不出）</li>
+            <li>横屏适配 16:9 / 18:9 / 19.5:9 三档</li>
+            <li>性能三件事分开测（见下表）</li>
+            <li>上传体验版拉朋友测（上限 15 人）</li>
+          </ul>
+        </div>
+        <div class="lane" data-state="todo">
+          <div class="lane-hd"><span class="who who-ai">AI</span><span class="st">待开始</span></div>
+          <ul>
+            <li>主包收进 3.8MB：字体 fontmin 提子集、音频转单声道 OGG</li>
+            <li>纹理全部转 ASTC</li>
+            <li>首屏加载压进 3000ms</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="tw" style="margin-bottom:0.75rem">
+      <table>
+        <thead>
+          <tr><th>测什么</th><th>用什么机器</th><th>看什么</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>帧率</td><td>中低端<strong>安卓</strong></td><td>draw call、GPU 占用，低端 ≥28</td></tr>
+          <tr><td>内存</td><td>一台<strong>旧 iPhone</strong>（2G/3G RAM）</td><td>会不会被系统杀</td></tr>
+          <tr><td>帧时间尖刺</td><td>任意真机，长时间连玩</td><td>GC 造成的间歇卡顿</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="note" style="margin-bottom:0.75rem">
+      ⚠ 刘海机横屏时缺口在<strong>左右侧</strong>，而摇杆与交互键正好也在左右侧 ——
+      距边缘留 ≥50px 安全区。这是全游戏最高频的两个触摸目标，必踩。
+    </p>
+
+    <div class="phase">
+      <div class="phase-hd">
+        <span class="mcode">M7</span>
+        <h3>上架</h3>
+        <span class="wk">等软著 + 审核</span>
+      </div>
+      <div class="lanes">
+        <div class="lane" data-state="todo">
+          <div class="lane-hd"><span class="who who-you">你</span><span class="st">待开始</span></div>
+          <ul>
+            <li>软著下证（M2 就提交了，这里只是等）</li>
+            <li>类目申报、内容自查、《游戏自审自查报告》</li>
+            <li>提审、上线</li>
+          </ul>
+        </div>
+        <div class="lane" data-state="todo">
+          <div class="lane-hd"><span class="who who-ai">AI</span><span class="st">配合</span></div>
+          <ul>
+            <li>软著源代码材料整理（前 30 + 后 30 页，页眉印软件名与版本号）</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══════════ 日常循环 ═══════════ -->
+  <section class="block">
+    <div class="block-hd">
+      <span class="eyebrow">日常怎么跑</span>
+      <h2>每次开工 · 收工的固定动作</h2>
+    </div>
+
+    <div class="stack">
+<pre><code># 开工（30 秒，别跳过）
+git pull
+npx vitest run          # 逻辑层没坏，才值得开编辑器
+# → 然后再启动 Cocos Creator
+
+# 收工
+git add -A &amp;&amp; git commit -m "..." &amp;&amp; git push</code></pre>
+
+      <p class="lede">
+        <code>vitest</code> 那一步是为了避免最糟的情况：<strong>开了编辑器调半天，
+        最后发现是 AI 推的逻辑改动坏了。</strong>30 秒换掉半小时。
+      </p>
+
+      <div class="split">
+        <div class="card">
+          <h4>冲突处理</h4>
+          <ul>
+            <li><strong>场景 / prefab 冲突不 merge。</strong>谁的版本新用谁的，另一方重做那次改动 —— uuid 太多，手动 merge 几乎不可能对</li>
+            <li><code>.ts</code> 冲突正常 merge，有测试兜底</li>
+            <li><strong><code>.meta</code> 必须进仓库</strong></li>
+            <li><code>library/ temp/ build/</code> 已在 <code>.gitignore</code> 里</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h4>接口契约</h4>
+          <ul>
+            <li>AI 改 <code>logic/</code> 公开导出，同步改 <code>API.md</code>，commit 打 <code>[API]</code> 前缀</li>
+            <li>你 pull 后 Cocos 编译报错，第一件事看 <code>git log --oneline | grep API</code></li>
+            <li><strong>组件里只允许调 <code>API.md</code> 上列出的东西</strong> —— 想要新方法就说，别自己在组件里写一份</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="alert" data-tone="accent">
+        <h3>每周至少产出一个能截图或录屏的变化</h3>
+        <p>
+          哪怕只是「角色手上多了个方块代表汉堡」。
+          <strong>业余项目最大的杀手不是技术难题，是失去节奏后再也回不来。</strong>
+          看得见的进展是燃料 —— 连续两周没有可视变化，说明当前任务拆得太粗，要拆小。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 闸门与取舍 ═══════════ -->
+  <section class="block">
+    <div class="block-hd">
+      <span class="eyebrow">规则</span>
+      <h2>闸门与取舍</h2>
+    </div>
+
+    <div class="stack">
+      <div class="alert" data-tone="block">
+        <h3>带着下面任何一条，不许进入下一个里程碑</h3>
+        <ul style="margin:0;padding-left:1.15rem;display:flex;flex-direction:column;gap:0.3rem;font-size:0.9375rem;color:var(--ink-2)">
+          <li><code>npx vitest run</code> 有红灯</li>
+          <li>核心路径上留着 <code>TODO</code> 或写死的假数据</li>
+          <li>真机上跑不起来（<strong>开发者工具跑得起来不算数</strong>）</li>
+          <li>本里程碑的验收判据有一条没过</li>
+          <li>包体数字没记（M2 起每个里程碑收尾都要记一次）</li>
+        </ul>
+        <p>
+          业余项目最常见的死法是「M2 还剩三个 bug，但我想做 M3 了」，然后债务滚到收不了场。
+        </p>
+      </div>
+
+      <div class="split">
+        <div class="card">
+          <h4 style="color:var(--ok)">卡住了可以砍</h4>
+          <ul>
+            <li>美术（几何体能一路撑到 M6）</li>
+            <li>音效（M4 再补）</li>
+            <li>动画打磨、粒子特效</li>
+            <li>外卖、卫生检查等混乱源（挑两个做也成立）</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4 style="color:var(--block)">不能砍</h4>
+          <ul>
+            <li>发布链路（M0 卡住就全盘卡住）</li>
+            <li>核心循环（接单 → 做 → 交付 → 反馈）</li>
+            <li>存档（有天数推进就必须有）</li>
+            <li><strong>软著</strong>（时间线最长，砍了就上不了线）</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="lede">
+        卡在某个技术点<strong>超过两个晚上就停下来问 AI</strong>，别自己硬啃 ——
+        这是它在这个项目里最能帮上忙的地方。
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      正本是仓库里的 <code>ROADMAP.md</code>（§5 里程碑 · §6 开发流程 · §8 风险预案）。
+      本页是它的执行视图，两者冲突以 ROADMAP 为准。
+    </p>
+    <p>
+      换会话后 AI 靠 <code>ROADMAP.md</code> 顶部的「当前断点」段恢复上下文 ——
+      那一段是项目唯一的连续性载体，不能只存在对话里。
+    </p>
+  </footer>
+
+</div>
