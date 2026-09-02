@@ -17,6 +17,8 @@
     "a7": "vite-node tools/a7-expect.ts",
     "pregen": "node tools/ensure-cocos-tsconfig.mjs",
     "gen": "vite-node pipeline/gen.ts --",
+    "predup": "node tools/ensure-cocos-tsconfig.mjs",
+    "dup": "vite-node tools/dupcheck.ts --",
     "prevalidate": "node tools/ensure-cocos-tsconfig.mjs",
     "validate": "vite-node pipeline/validate.ts --"
   },
