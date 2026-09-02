@@ -10,4 +10,8 @@ export default defineConfig({
     pool: 'forks',
     poolOptions: { forks: { execArgv: ['--expose-gc'] } },
   },
+  // game/tsconfig.json extends ./temp/tsconfig.cocos.json, which the editor generates and
+  // .gitignore excludes, so a fresh clone has no temp/ and vite's lookup throws.
+  // Must be a string: vite only skips the on-disk lookup when tsconfigRaw is one.
+  esbuild: { tsconfigRaw: '{"compilerOptions":{"target":"es2020"}}' },
 })
