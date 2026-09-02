@@ -58,7 +58,7 @@
 
 | | 状态 |
 |---|---|
-| **线 A（你）** | 🟡 A1–A5 完成。A6 你说完成了，但产物里查不到 `iOSHighPerformance`（见下）；**A7 探针已就位，等你构建** |
+| **线 A（你）** | ✅ **A1–A7 全部完成**（A7 于 09-02 16:27 签收）。只剩 A8「盘一下手上有哪些测试机」 |
 | **线 B（我）** | ✅ B1–B7 全部完成 |
 | **线 C（我）** | ✅ C1 完成。⛔ **C2 仍卡在 `ANTHROPIC_API_KEY`** —— go/no-go 闸门，200 张卡约 $2.5 |
 | **M1（我）** | ✅ 全部完成，数字见 M1 那一节 |
@@ -72,8 +72,8 @@
 | A3 Cocos 3.8.x | ✅ | 3.8.8 |
 | A4 构建 → 真机 | ✅ | `deviceOrientation: landscapeRight` ✓ · 设计分辨率 1280×720 ✓ |
 | **A5 包体真数** | ✅ **已刷新，不再过期** | **主包 2428.0 KB**（红线 4096）· `cocos-js` **1844.3 KB 单体、0 插件** · `assets` **397.2 KB**（850 KB 天空盒没了）· 孤儿 0。详见 §2.4a |
-| A6 AppID + 高性能 | 🟡 **三处都齐了，等构建验证** | AppID ✓ · 公众平台后台已开通 ✓ · **构建面板「高性能模式」已勾** ✓（build-templates 那条路已撤销，见 §2.7）。**判据：构建后产物 `game.json` 里要有 `"iOSHighPerformance": true`** |
-| A7 分层落地验证 | 🟡 **第一次构建炸了，原因已修，等第二次** | 15:53 `buildScriptCommand failed with code -1` —— Cocos 把 `assets/` 下的 10 个测试文件也编译了，它们 import `vitest` / `ajv` / assets 外的 json。**已把 `__tests__/` 移到仓库根 `tests/`**，见 §3.1 那条。三件套 + 期望输出 + 三层判据在 **§A7** |
+| **A6 AppID + 高性能** | ✅ **2026-09-02 通过** | 产物 `game.json` 实测含 `"iOSHighPerformance": true`，同时含 wasm 分包的 `subpackages`（正是它证明 build-templates 那条路必须撤销，见 §2.7） |
+| **A7 分层落地验证** | ✅ **2026-09-02 16:27 通过** | 微信运行时那 9 行与 `pnpm a7` **MD5 逐字节相同**（`654c5450…`）。含完整一天无头模拟的累积结果，语义零漂移。第一次构建失败的原因见 §3.1「测试必须在 assets 之外」 |
 
 `pnpm check` 全绿：铁律① 0 命中 · typecheck 无错 · **131 个测试通过**。
 `pnpm sim` 与 `pnpm a7` 在服务器上也都能跑了（修的是 `vite-node` 那个 tsconfig 坑，见 §A2-fix 补记）。
@@ -114,8 +114,8 @@ docs/workflow-plan.html                               ← 线 A 的执行视图
 | 1 | **push 到 GitHub** | 🟡 本地领先 `origin/main` **3 个提交**（`6efadb0` `24a6c36` `e0b89b8`）+ 本轮这批。远端无独有提交，工作区干净，是直进（fast-forward）。**等你说推我再推**。`origin/master` 合完已无用，可删 |
 | 2 | Unison 两端 ignore | ✅ 生效 |
 | 3 | **`ANTHROPIC_API_KEY`** | ⛔ **仍未设置 —— 全项目当前最贵的一项** |
-| 4 | A6 `iOSHighPerformance` | 🟡 三处都齐了，**构建一次就能验**（和 A7 同一次构建） |
-| 5 | **A7：pull → 挂组件 → 再构建一次** | 🟡 第一次构建的失败原因已修并推送，**先 `git pull` 再构建** |
+| 4 | A6 `iOSHighPerformance` | ✅ **已通过** |
+| 5 | A7 | ✅ **已通过**。可以把 `A7Probe` 从场景上摘掉了（组件那栏右上角三点 → 移除组件），两个文件留着，M2 换版本时重跑 |
 | 6 | **决策：微信引擎插件开不开** | ⏸ 这次构建没走插件，主包多了约 1388 KB。见 §2.4a |
 
 **为什么 3 排在工程任务前面**：线 A 卡住只是慢，C2 是方向闸门 —— 200 张卡约 $2.5，
@@ -277,6 +277,27 @@ A7_LOGIC_LINKED_KITCHEN_CHAOS DONE
 
 第 3 层是真正的价值所在：`sim` 那行跑的是完整一天的无头模拟（几千帧），
 它对得上，等于把 `logic/` 全部 8 个模块在真机运行时环境里过了一遍。
+
+#### ✅ 签收记录（2026-09-02 16:27）
+
+微信开发者工具 Console 的 9 行与 `pnpm a7` **MD5 逐字节相同**：`654c5450b1abfa099218d6f56ec1c498`。
+第 3 层过了就蕴含第 1、2 层 —— 代码没进包就不可能在运行时打印出来，
+所以产物没同步上来也不影响判定。
+
+顺带得到两个结论：**Cocos 3.8.8 的 SWC 吃得下 `as const satisfies`**（TS 4.9 语法，
+`types.ts` 里那处），以及 **`sim.ts` 跑完整一天几千帧的累积结果一位不差** ——
+浮点与迭代顺序在两个运行时里一致。§8 风险表里「logic 改成 outFile 预编译」那条退路作废。
+
+**复跑方法**（M2 换 Cocos 版本或改构建配置后）：
+
+```bash
+pnpm a7 | sed -n '/^A7_LOGIC_LINKED_KITCHEN_CHAOS$/,$p' > /tmp/node.txt
+# 把 Console 那 9 行存成 wechat.txt，然后
+diff /tmp/node.txt /tmp/wechat.txt
+```
+
+⚠ `pnpm a7` 的输出前面有两行 pnpm banner（`Already up to date` / `Done in …`），
+不剥掉的话 diff 恒报差异 —— 用上面那条 `sed` 从标记行开始截。
 
 **签收之后**：`A7Probe.ts` 从场景上摘掉即可，两个文件先留着 ——
 M2 换 Cocos 版本或改构建配置时重跑一遍最省事。
