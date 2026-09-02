@@ -100,8 +100,10 @@ export const LINE_LIMITS = {
   greet: 12,
   order: 30,
   wait_nudge: 15,
-  praise: 20,
-  complain: 20,
+  // praise/complain are read after the customer leaves and again on the closing
+  // screen, where the player is idle — the in-play limits do not apply to them.
+  praise: 40,
+  complain: 40,
 } as const
 
 export const MOODS = [

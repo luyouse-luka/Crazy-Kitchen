@@ -72,7 +72,7 @@
     },
 
     "lines": {
-      "description": "表演层。字数上限不是排版洁癖：玩家一边跑冰箱一边烤肉，没有一秒能读长台词。笑点必须压进 order 那一句 —— 那句玩家必须读，不读做不出来。",
+      "description": "表演层。greet/order/wait_nudge 的字数上限不是排版洁癖：玩家一边跑冰箱一边烤肉，没有一秒能读长台词，笑点必须压进 order 那一句。praise/complain 是离店点评，在顾客走后与打烊结算面板上读，那时玩家是闲的，所以放宽到 40（GDD §6 举的例子本身就超 20 字）。",
       "type": "object",
       "additionalProperties": false,
       "required": ["greet", "order", "wait_nudge", "praise", "complain"],
@@ -85,8 +85,8 @@
           "maxLength": 30
         },
         "wait_nudge": { "type": "string", "minLength": 1, "maxLength": 15 },
-        "praise": { "type": "string", "minLength": 1, "maxLength": 20 },
-        "complain": { "type": "string", "minLength": 1, "maxLength": 20 }
+        "praise": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "complain": { "type": "string", "minLength": 1, "maxLength": 40 }
       }
     },
 

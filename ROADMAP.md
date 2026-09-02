@@ -47,11 +47,16 @@
 
 </details>
 
-## 📍 当前断点（2026-09-02 第二轮 · 每轮收工更新这一段）
+## 📍 当前断点（2026-09-02 第三轮 · 每轮收工更新这一段）
 
-**发布链路整条通了，包体数字已刷新且不再过期。A7 的探针我写好了，
-就差你在编辑器里挂一个组件 + 构建一次。剩下三件卡在你那边：A7 构建、
-引擎插件开不开的决策、`ANTHROPIC_API_KEY`。**
+**线 A 全部完成（A1–A8），发布链路整条通了。现在唯一的主线是 C2 ——
+方向闸门，200 张顾客卡读完才知道这个游戏的灵魂在不在。
+`ANTHROPIC_API_KEY` 一直没有，所以改走「对话里的 Opus 5 直接写」这条路，
+已写 25/200，**下次开工第一件事：ly 读这 25 张打分**（`pipeline/handwritten/cards.json`）。**
+
+**⏸ 2026-09-02 第三轮在这里暂停。** 恢复时按这个顺序：
+① ly 读 25 张给结论 → ② 方向对就续写 c_0026–c_0200，不对就改 `pipeline/prompt.ts` 重来
+（手写路线返工不花钱，这是它相对 Batch 的唯一优势，用足它）
 
 **产物目录换了名**：`../wechatgame-001/` → **`../wechatgame/`**（Unison 传上来的），
 `pnpm size` 的默认路径已跟着改，直接跑不带参数就行。
@@ -60,7 +65,7 @@
 |---|---|
 | **线 A（你）** | ✅ **A1–A8 全部完成**（A7 于 09-02 16:27 签收，A8 见下面测试机那节） |
 | **线 B（我）** | ✅ B1–B7 全部完成 |
-| **线 C（我）** | ✅ C1 完成 · **C2 脚本 09-02 已写完**（`pipeline/gen.ts` + `validate.ts`）。⛔ **只差 `ANTHROPIC_API_KEY`**，key 一给当天能跑 |
+| **线 C（我）** | ✅ C1 完成 · C2 脚本已写完（`pipeline/gen.ts` + `validate.ts`，等 key）· **C2 手写路线进行中 25/200**，见 `pipeline/handwritten/README.md` |
 | **M1（我）** | ✅ 全部完成，数字见 M1 那一节 |
 
 ### 线 A 逐步核对（2026-09-02 从新构建产物反查，不是听说）
@@ -87,6 +92,13 @@ tools/a7-expect.ts                   ← 新增 · 同一份探针在 Node 跑�
 tools/ensure-cocos-tsconfig.mjs      ← 新增 · 补 game/temp/tsconfig.cocos.json 占位
 tests/                               ← 移动 · 从 game/assets/logic/__tests__ 搬出来，10 个测试 + fixtures
 vitest.config.ts                     ← 改 · include 指向 tests/
+pipeline/prompt.ts                   ← 新增 · C2 的 system + user prompt，词表从 logic/types.ts 取
+pipeline/gen.ts                      ← 新增 · dims/sample/submit/poll 四档
+pipeline/validate.ts                 ← 新增 · schema + validateOrderSpec 两道校验
+pipeline/handwritten/                ← 新增 · 无 key 路线的产出，25/200。**不在 out/ 下，因为要进仓库**
+game/assets/logic/types.ts           ← 改 · LINE_LIMITS 的 praise/complain 20 → 40（见下）
+pipeline/customer.schema.json        ← 改 · 同上，两处 maxLength
+game/assets/logic/API.md             ← 改 · 同上
 tools/pkgsize.ts                     ← 改 · 默认路径 ../wechatgame；单体 cc.js 提示；私有配置不再误报孤儿
 package.json                         ← 改 · 加 a7 / prea7 / presim
 tsconfig.json                        ← 改 · include 收 a7-check.ts
@@ -113,7 +125,8 @@ docs/workflow-plan.html                               ← 线 A 的执行视图
 | 0 | **换工作副本**（合并的后半截，只有你能做） | ⬜ 见 §A2-fix 末尾。**A7 的前提** |
 | 1 | **push 到 GitHub** | 🟡 本地领先 `origin/main` **3 个提交**（`6efadb0` `24a6c36` `e0b89b8`）+ 本轮这批。远端无独有提交，工作区干净，是直进（fast-forward）。**等你说推我再推**。`origin/master` 合完已无用，可删 |
 | 2 | Unison 两端 ignore | ✅ 生效 |
-| 3 | **`ANTHROPIC_API_KEY`** | ⛔ **全项目唯一还卡着的事**。脚本已就位，先 `pnpm gen sample 3` 花几分钱看质量，满意再 `submit` |
+| 3 | **读 25 张卡打分** | 🔴 **下次开工第一件事**。`pipeline/handwritten/cards.json`，判据三条见 `pipeline/README.md`。这是 go/no-go 闸门 |
+| 3b | `ANTHROPIC_API_KEY` | ⏸ **不再是阻塞**。手写路线能走完 200 张做决策；key 真正必需的时机是 M5 扩产到 2000–10000 张。要用就 `pnpm gen sample 3` 先花几分钱看质量 |
 | 4 | A6 `iOSHighPerformance` | ✅ **已通过** |
 | 5 | A7 | ✅ **已通过**。可以把 `A7Probe` 从场景上摘掉了（组件那栏右上角三点 → 移除组件），两个文件留着，M2 换版本时重跑 |
 | 6 | **决策：微信引擎插件开不开** | ⏸ 这次构建没走插件，主包多了约 1388 KB。见 §2.4a |
@@ -128,6 +141,30 @@ docs/workflow-plan.html                               ← 线 A 的执行视图
 | **vivo iQOO Neo 3** | 安卓中高端基准（骁龙 865 + 144Hz 屏，2020 年机型） | ⚠ **144Hz 屏**：帧率数字会比 60Hz 机器好看，判「够不够流畅」要按帧时间不按 FPS 数字。M6 的安卓低端档这台代表不了，届时另借 |
 
 三台覆盖了 iOS 最坏情况、iOS 最好情况、安卓中高端。**缺的是安卓低端档**，M6 之前得借一台。
+
+### 决策 · 离店点评（2026-09-02，GDD §6 的落法定了）
+
+ly 提出「参考汉堡模拟器和胡闹厨房，顾客付完钱走了之后加一条对产品的评价」。
+查了 GDD —— **§6「AI 评价系统」本来就是这个**，`praise` / `complain` 两条就是它的载体，
+且已定「预生成在卡里，不运行时调 AI」。所以不是加新系统，是调时机和分量。
+
+**定下来的方案**：不加字段，把 `praise` / `complain` 的上限 **20 → 40**，
+定位从「上菜瞬间的情绪」改成「**离店点评**，在顾客走后与打烊结算面板上读」。
+
+理由是玩家什么时候真的有空读字：
+
+- 局内玩家一手拿肉一手开冰箱 —— 这正是 `greet` / `order` / `wait_nudge` 卡死在
+  12/30/15 字的原因，那三条**维持原样不动**
+- 唯一玩家闲着的时机是**打烊结算面板**（M4 已排：营收 / 差评数 / 三星评分）
+- 那也是判据「截图率 ≥15%」真正能兑现的地方 —— 一整屏点评能截图发朋友，单条飘字不行
+- 20 字写不出有记忆点的话：GDD §6 自己举的例子「这是我吃过最离谱的汉堡」就超了 20 字
+
+**没做另一个方案**（另加一对 `review_good` / `review_bad` 区分「当场情绪」与「离店点评」）：
+每张卡多约 20% 生成 token，21 张手写夹具要补字段，schema + 类型 + 测试都要动。
+两种语气真需要分开时再说，那时手写路线返工不花钱。
+
+⚠ 放宽是向后兼容的，21 张手写夹具无需改动（131 测试复跑全绿）。
+反过来收紧就会打回一批卡 —— 以后要动这两个数，先 `pnpm validate` 全量过一遍。
 
 **为什么 3 排在工程任务前面**：线 A 卡住只是慢，C2 是方向闸门 —— 200 张卡约 $2.5，
 如果 AI 生成的顾客卡撑不起「场景即敌人」那套玩法，整个 GDD 要回炉。**三个月的账，别拿两块五赌。**

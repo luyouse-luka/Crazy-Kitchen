@@ -1,0 +1,1405 @@
+{
+  "seed": 20260902,
+  "picks": [
+    {
+      "archetype": "选秀练习生",
+      "obsession": "健忘",
+      "mood": "manic",
+      "voice": "说明书腔",
+      "id": "c_0001"
+    },
+    {
+      "archetype": "相声演员",
+      "obsession": "社恐",
+      "mood": "anxious",
+      "voice": "体育解说",
+      "id": "c_0002"
+    },
+    {
+      "archetype": "相声演员",
+      "obsession": "减肥",
+      "mood": "dreamy",
+      "voice": "文言文",
+      "id": "c_0003"
+    },
+    {
+      "archetype": "高中班主任",
+      "obsession": "省钱",
+      "mood": "anxious",
+      "voice": "说唱",
+      "id": "c_0004"
+    },
+    {
+      "archetype": "小学生",
+      "obsession": "完美主义",
+      "mood": "menacing",
+      "voice": "直播带货腔",
+      "id": "c_0005"
+    },
+    {
+      "archetype": "选秀练习生",
+      "obsession": "养生",
+      "mood": "cheerful",
+      "voice": "气声",
+      "id": "c_0006"
+    },
+    {
+      "archetype": "退役运动员",
+      "obsession": "洁癖",
+      "mood": "manic",
+      "voice": "全用问句",
+      "id": "c_0007"
+    },
+    {
+      "archetype": "动物园饲养员",
+      "obsession": "健忘",
+      "mood": "deadpan",
+      "voice": "菜谱腔",
+      "id": "c_0008"
+    },
+    {
+      "archetype": "健身教练",
+      "obsession": "洁癖",
+      "mood": "heartbroken",
+      "voice": "法律条文腔",
+      "id": "c_0009"
+    },
+    {
+      "archetype": "唐朝穿越者",
+      "obsession": "怕麻烦别人",
+      "mood": "manic",
+      "voice": "旁白体",
+      "id": "c_0010"
+    },
+    {
+      "archetype": "选秀练习生",
+      "obsession": "拖延",
+      "mood": "deadpan",
+      "voice": "法律条文腔",
+      "id": "c_0011"
+    },
+    {
+      "archetype": "剧组场务",
+      "obsession": "爱教育人",
+      "mood": "anxious",
+      "voice": "气声",
+      "id": "c_0012"
+    },
+    {
+      "archetype": "深夜代驾",
+      "obsession": "完美主义",
+      "mood": "cheerful",
+      "voice": "旁白体",
+      "id": "c_0013"
+    },
+    {
+      "archetype": "家用机器人",
+      "obsession": "强迫对称",
+      "mood": "manic",
+      "voice": "儿歌调",
+      "id": "c_0014"
+    },
+    {
+      "archetype": "家用机器人",
+      "obsession": "强迫对称",
+      "mood": "anxious",
+      "voice": "导航语音",
+      "id": "c_0015"
+    },
+    {
+      "archetype": "探店博主",
+      "obsession": "怀旧",
+      "mood": "grumpy",
+      "voice": "菜谱腔",
+      "id": "c_0016"
+    },
+    {
+      "archetype": "幼儿园老师",
+      "obsession": "赶时间",
+      "mood": "manic",
+      "voice": "直播带货腔",
+      "id": "c_0017"
+    },
+    {
+      "archetype": "外星交换生",
+      "obsession": "迷信",
+      "mood": "manic",
+      "voice": "播音腔",
+      "id": "c_0018"
+    },
+    {
+      "archetype": "快递分拣员",
+      "obsession": "强迫对称",
+      "mood": "dreamy",
+      "voice": "电报体",
+      "id": "c_0019"
+    },
+    {
+      "archetype": "快递分拣员",
+      "obsession": "迷信",
+      "mood": "anxious",
+      "voice": "客服话术",
+      "id": "c_0020"
+    },
+    {
+      "archetype": "小学生",
+      "obsession": "洁癖",
+      "mood": "heartbroken",
+      "voice": "日记体",
+      "id": "c_0021"
+    },
+    {
+      "archetype": "深夜代驾",
+      "obsession": "怕麻烦别人",
+      "mood": "dreamy",
+      "voice": "体育解说",
+      "id": "c_0022"
+    },
+    {
+      "archetype": "幼儿园老师",
+      "obsession": "爱教育人",
+      "mood": "deadpan",
+      "voice": "说唱",
+      "id": "c_0023"
+    },
+    {
+      "archetype": "图书管理员",
+      "obsession": "记仇",
+      "mood": "dreamy",
+      "voice": "文言文",
+      "id": "c_0024"
+    },
+    {
+      "archetype": "快递分拣员",
+      "obsession": "健忘",
+      "mood": "menacing",
+      "voice": "全用问句",
+      "id": "c_0025"
+    },
+    {
+      "archetype": "剧组场务",
+      "obsession": "跟风",
+      "mood": "heartbroken",
+      "voice": "文言文",
+      "id": "c_0026"
+    },
+    {
+      "archetype": "选秀练习生",
+      "obsession": "健忘",
+      "mood": "anxious",
+      "voice": "法律条文腔",
+      "id": "c_0027"
+    },
+    {
+      "archetype": "的哥师傅",
+      "obsession": "完美主义",
+      "mood": "grumpy",
+      "voice": "全用问句",
+      "id": "c_0028"
+    },
+    {
+      "archetype": "民宿老板",
+      "obsession": "减肥",
+      "mood": "heartbroken",
+      "voice": "方言",
+      "id": "c_0029"
+    },
+    {
+      "archetype": "深夜代驾",
+      "obsession": "认死理",
+      "mood": "heartbroken",
+      "voice": "直播带货腔",
+      "id": "c_0030"
+    },
+    {
+      "archetype": "实习程序员",
+      "obsession": "攀比",
+      "mood": "manic",
+      "voice": "文言文",
+      "id": "c_0031"
+    },
+    {
+      "archetype": "深夜代驾",
+      "obsession": "怕麻烦别人",
+      "mood": "grumpy",
+      "voice": "绕口令",
+      "id": "c_0032"
+    },
+    {
+      "archetype": "退役运动员",
+      "obsession": "完美主义",
+      "mood": "deadpan",
+      "voice": "导航语音",
+      "id": "c_0033"
+    },
+    {
+      "archetype": "外星交换生",
+      "obsession": "攀比",
+      "mood": "dreamy",
+      "voice": "方言",
+      "id": "c_0034"
+    },
+    {
+      "archetype": "末日幸存者",
+      "obsession": "收集癖",
+      "mood": "menacing",
+      "voice": "体育解说",
+      "id": "c_0035"
+    },
+    {
+      "archetype": "快递分拣员",
+      "obsession": "减肥",
+      "mood": "dreamy",
+      "voice": "日记体",
+      "id": "c_0036"
+    },
+    {
+      "archetype": "选秀练习生",
+      "obsession": "强迫对称",
+      "mood": "menacing",
+      "voice": "法律条文腔",
+      "id": "c_0037"
+    },
+    {
+      "archetype": "外卖骑手",
+      "obsession": "护食",
+      "mood": "grumpy",
+      "voice": "说唱",
+      "id": "c_0038"
+    },
+    {
+      "archetype": "退役运动员",
+      "obsession": "完美主义",
+      "mood": "heartbroken",
+      "voice": "绕口令",
+      "id": "c_0039"
+    },
+    {
+      "archetype": "动物园饲养员",
+      "obsession": "省钱",
+      "mood": "cheerful",
+      "voice": "天气预报腔",
+      "id": "c_0040"
+    },
+    {
+      "archetype": "动物园饲养员",
+      "obsession": "收集癖",
+      "mood": "anxious",
+      "voice": "儿歌调",
+      "id": "c_0041"
+    },
+    {
+      "archetype": "相声演员",
+      "obsession": "爱教育人",
+      "mood": "deadpan",
+      "voice": "天气预报腔",
+      "id": "c_0042"
+    },
+    {
+      "archetype": "高中班主任",
+      "obsession": "养生",
+      "mood": "deadpan",
+      "voice": "儿歌调",
+      "id": "c_0043"
+    },
+    {
+      "archetype": "图书管理员",
+      "obsession": "爱教育人",
+      "mood": "grumpy",
+      "voice": "自言自语",
+      "id": "c_0044"
+    },
+    {
+      "archetype": "图书管理员",
+      "obsession": "跟风",
+      "mood": "dreamy",
+      "voice": "说唱",
+      "id": "c_0045"
+    },
+    {
+      "archetype": "家用机器人",
+      "obsession": "认死理",
+      "mood": "menacing",
+      "voice": "气声",
+      "id": "c_0046"
+    },
+    {
+      "archetype": "退役运动员",
+      "obsession": "洁癖",
+      "mood": "menacing",
+      "voice": "体育解说",
+      "id": "c_0047"
+    },
+    {
+      "archetype": "小学生",
+      "obsession": "收集癖",
+      "mood": "dreamy",
+      "voice": "法律条文腔",
+      "id": "c_0048"
+    },
+    {
+      "archetype": "唐朝穿越者",
+      "obsession": "省钱",
+      "mood": "deadpan",
+      "voice": "说唱",
+      "id": "c_0049"
+    },
+    {
+      "archetype": "外星交换生",
+      "obsession": "护食",
+      "mood": "cheerful",
+      "voice": "说唱",
+      "id": "c_0050"
+    },
+    {
+      "archetype": "退休特工",
+      "obsession": "攀比",
+      "mood": "cheerful",
+      "voice": "法律条文腔",
+      "id": "c_0051"
+    },
+    {
+      "archetype": "天文爱好者",
+      "obsession": "记仇",
+      "mood": "deadpan",
+      "voice": "法律条文腔",
+      "id": "c_0052"
+    },
+    {
+      "archetype": "高中班主任",
+      "obsession": "赶时间",
+      "mood": "menacing",
+      "voice": "法律条文腔",
+      "id": "c_0053"
+    },
+    {
+      "archetype": "外卖骑手",
+      "obsession": "怀旧",
+      "mood": "dreamy",
+      "voice": "法律条文腔",
+      "id": "c_0054"
+    },
+    {
+      "archetype": "高中班主任",
+      "obsession": "拖延",
+      "mood": "anxious",
+      "voice": "绕口令",
+      "id": "c_0055"
+    },
+    {
+      "archetype": "实习程序员",
+      "obsession": "报复性消费",
+      "mood": "dreamy",
+      "voice": "日记体",
+      "id": "c_0056"
+    },
+    {
+      "archetype": "外卖骑手",
+      "obsession": "洁癖",
+      "mood": "manic",
+      "voice": "日记体",
+      "id": "c_0057"
+    },
+    {
+      "archetype": "唐朝穿越者",
+      "obsession": "强迫对称",
+      "mood": "cheerful",
+      "voice": "儿歌调",
+      "id": "c_0058"
+    },
+    {
+      "archetype": "图书管理员",
+      "obsession": "怕麻烦别人",
+      "mood": "menacing",
+      "voice": "菜谱腔",
+      "id": "c_0059"
+    },
+    {
+      "archetype": "图书管理员",
+      "obsession": "减肥",
+      "mood": "menacing",
+      "voice": "儿歌调",
+      "id": "c_0060"
+    },
+    {
+      "archetype": "唐朝穿越者",
+      "obsession": "怕浪费",
+      "mood": "anxious",
+      "voice": "播音腔",
+      "id": "c_0061"
+    },
+    {
+      "archetype": "动物园饲养员",
+      "obsession": "拖延",
+      "mood": "manic",
+      "voice": "说唱",
+      "id": "c_0062"
+    },
+    {
+      "archetype": "快递分拣员",
+      "obsession": "怕麻烦别人",
+      "mood": "menacing",
+      "voice": "气声",
+      "id": "c_0063"
+    },
+    {
+      "archetype": "民宿老板",
+      "obsession": "护食",
+      "mood": "heartbroken",
+      "voice": "菜谱腔",
+      "id": "c_0064"
+    },
+    {
+      "archetype": "探店博主",
+      "obsession": "收集癖",
+      "mood": "heartbroken",
+      "voice": "自言自语",
+      "id": "c_0065"
+    },
+    {
+      "archetype": "健身教练",
+      "obsession": "强迫对称",
+      "mood": "cheerful",
+      "voice": "播音腔",
+      "id": "c_0066"
+    },
+    {
+      "archetype": "家用机器人",
+      "obsession": "怕麻烦别人",
+      "mood": "grumpy",
+      "voice": "自言自语",
+      "id": "c_0067"
+    },
+    {
+      "archetype": "动物园饲养员",
+      "obsession": "爱教育人",
+      "mood": "deadpan",
+      "voice": "客服话术",
+      "id": "c_0068"
+    },
+    {
+      "archetype": "小学生",
+      "obsession": "省钱",
+      "mood": "heartbroken",
+      "voice": "气声",
+      "id": "c_0069"
+    },
+    {
+      "archetype": "高中班主任",
+      "obsession": "记仇",
+      "mood": "dreamy",
+      "voice": "旁白体",
+      "id": "c_0070"
+    },
+    {
+      "archetype": "家用机器人",
+      "obsession": "护食",
+      "mood": "grumpy",
+      "voice": "直播带货腔",
+      "id": "c_0071"
+    },
+    {
+      "archetype": "相声演员",
+      "obsession": "强迫对称",
+      "mood": "heartbroken",
+      "voice": "法律条文腔",
+      "id": "c_0072"
+    },
+    {
+      "archetype": "幼儿园老师",
+      "obsession": "洁癖",
+      "mood": "menacing",
+      "voice": "绕口令",
+      "id": "c_0073"
+    },
+    {
+      "archetype": "图书管理员",
+      "obsession": "健忘",
+      "mood": "anxious",
+      "voice": "直播带货腔",
+      "id": "c_0074"
+    },
+    {
+      "archetype": "考古学家",
+      "obsession": "爱教育人",
+      "mood": "dreamy",
+      "voice": "天气预报腔",
+      "id": "c_0075"
+    },
+    {
+      "archetype": "考古学家",
+      "obsession": "完美主义",
+      "mood": "menacing",
+      "voice": "命令句",
+      "id": "c_0076"
+    },
+    {
+      "archetype": "剧组场务",
+      "obsession": "怕浪费",
+      "mood": "dreamy",
+      "voice": "自言自语",
+      "id": "c_0077"
+    },
+    {
+      "archetype": "家用机器人",
+      "obsession": "怀旧",
+      "mood": "heartbroken",
+      "voice": "电报体",
+      "id": "c_0078"
+    },
+    {
+      "archetype": "相声演员",
+      "obsession": "赶时间",
+      "mood": "anxious",
+      "voice": "导航语音",
+      "id": "c_0079"
+    },
+    {
+      "archetype": "外卖骑手",
+      "obsession": "健忘",
+      "mood": "anxious",
+      "voice": "说唱",
+      "id": "c_0080"
+    },
+    {
+      "archetype": "小学生",
+      "obsession": "认死理",
+      "mood": "deadpan",
+      "voice": "播音腔",
+      "id": "c_0081"
+    },
+    {
+      "archetype": "唐朝穿越者",
+      "obsession": "迷信",
+      "mood": "manic",
+      "voice": "方言",
+      "id": "c_0082"
+    },
+    {
+      "archetype": "动物园饲养员",
+      "obsession": "迷信",
+      "mood": "cheerful",
+      "voice": "菜谱腔",
+      "id": "c_0083"
+    },
+    {
+      "archetype": "剧组场务",
+      "obsession": "护食",
+      "mood": "cheerful",
+      "voice": "绕口令",
+      "id": "c_0084"
+    },
+    {
+      "archetype": "动物园饲养员",
+      "obsession": "护食",
+      "mood": "anxious",
+      "voice": "体育解说",
+      "id": "c_0085"
+    },
+    {
+      "archetype": "唐朝穿越者",
+      "obsession": "跟风",
+      "mood": "menacing",
+      "voice": "法律条文腔",
+      "id": "c_0086"
+    },
+    {
+      "archetype": "高中班主任",
+      "obsession": "报复性消费",
+      "mood": "deadpan",
+      "voice": "说明书腔",
+      "id": "c_0087"
+    },
+    {
+      "archetype": "高中班主任",
+      "obsession": "收集癖",
+      "mood": "grumpy",
+      "voice": "气声",
+      "id": "c_0088"
+    },
+    {
+      "archetype": "健身教练",
+      "obsession": "迷信",
+      "mood": "cheerful",
+      "voice": "菜谱腔",
+      "id": "c_0089"
+    },
+    {
+      "archetype": "健身教练",
+      "obsession": "养生",
+      "mood": "heartbroken",
+      "voice": "日记体",
+      "id": "c_0090"
+    },
+    {
+      "archetype": "选秀练习生",
+      "obsession": "怀旧",
+      "mood": "manic",
+      "voice": "日记体",
+      "id": "c_0091"
+    },
+    {
+      "archetype": "外卖骑手",
+      "obsession": "怕麻烦别人",
+      "mood": "heartbroken",
+      "voice": "客服话术",
+      "id": "c_0092"
+    },
+    {
+      "archetype": "小学生",
+      "obsession": "养生",
+      "mood": "anxious",
+      "voice": "说明书腔",
+      "id": "c_0093"
+    },
+    {
+      "archetype": "选秀练习生",
+      "obsession": "认死理",
+      "mood": "manic",
+      "voice": "天气预报腔",
+      "id": "c_0094"
+    },
+    {
+      "archetype": "末日幸存者",
+      "obsession": "省钱",
+      "mood": "anxious",
+      "voice": "直播带货腔",
+      "id": "c_0095"
+    },
+    {
+      "archetype": "唐朝穿越者",
+      "obsession": "赶时间",
+      "mood": "heartbroken",
+      "voice": "自言自语",
+      "id": "c_0096"
+    },
+    {
+      "archetype": "末日幸存者",
+      "obsession": "怕麻烦别人",
+      "mood": "grumpy",
+      "voice": "法律条文腔",
+      "id": "c_0097"
+    },
+    {
+      "archetype": "小学生",
+      "obsession": "强迫对称",
+      "mood": "anxious",
+      "voice": "天气预报腔",
+      "id": "c_0098"
+    },
+    {
+      "archetype": "外星交换生",
+      "obsession": "减肥",
+      "mood": "cheerful",
+      "voice": "说唱",
+      "id": "c_0099"
+    },
+    {
+      "archetype": "剧组场务",
+      "obsession": "拖延",
+      "mood": "heartbroken",
+      "voice": "法律条文腔",
+      "id": "c_0100"
+    },
+    {
+      "archetype": "健身教练",
+      "obsession": "养生",
+      "mood": "dreamy",
+      "voice": "日记体",
+      "id": "c_0101"
+    },
+    {
+      "archetype": "剧组场务",
+      "obsession": "洁癖",
+      "mood": "manic",
+      "voice": "绕口令",
+      "id": "c_0102"
+    },
+    {
+      "archetype": "深夜代驾",
+      "obsession": "怕麻烦别人",
+      "mood": "heartbroken",
+      "voice": "天气预报腔",
+      "id": "c_0103"
+    },
+    {
+      "archetype": "考古学家",
+      "obsession": "健忘",
+      "mood": "deadpan",
+      "voice": "直播带货腔",
+      "id": "c_0104"
+    },
+    {
+      "archetype": "选秀练习生",
+      "obsession": "报复性消费",
+      "mood": "heartbroken",
+      "voice": "绕口令",
+      "id": "c_0105"
+    },
+    {
+      "archetype": "的哥师傅",
+      "obsession": "健忘",
+      "mood": "menacing",
+      "voice": "导航语音",
+      "id": "c_0106"
+    },
+    {
+      "archetype": "选秀练习生",
+      "obsession": "洁癖",
+      "mood": "menacing",
+      "voice": "说唱",
+      "id": "c_0107"
+    },
+    {
+      "archetype": "相声演员",
+      "obsession": "社恐",
+      "mood": "manic",
+      "voice": "气声",
+      "id": "c_0108"
+    },
+    {
+      "archetype": "的哥师傅",
+      "obsession": "赶时间",
+      "mood": "manic",
+      "voice": "直播带货腔",
+      "id": "c_0109"
+    },
+    {
+      "archetype": "小学生",
+      "obsession": "强迫对称",
+      "mood": "heartbroken",
+      "voice": "方言",
+      "id": "c_0110"
+    },
+    {
+      "archetype": "快递分拣员",
+      "obsession": "迷信",
+      "mood": "heartbroken",
+      "voice": "说明书腔",
+      "id": "c_0111"
+    },
+    {
+      "archetype": "动物园饲养员",
+      "obsession": "赶时间",
+      "mood": "cheerful",
+      "voice": "客服话术",
+      "id": "c_0112"
+    },
+    {
+      "archetype": "高中班主任",
+      "obsession": "迷信",
+      "mood": "manic",
+      "voice": "说明书腔",
+      "id": "c_0113"
+    },
+    {
+      "archetype": "图书管理员",
+      "obsession": "完美主义",
+      "mood": "dreamy",
+      "voice": "法律条文腔",
+      "id": "c_0114"
+    },
+    {
+      "archetype": "唐朝穿越者",
+      "obsession": "拖延",
+      "mood": "heartbroken",
+      "voice": "日记体",
+      "id": "c_0115"
+    },
+    {
+      "archetype": "幼儿园老师",
+      "obsession": "健忘",
+      "mood": "heartbroken",
+      "voice": "命令句",
+      "id": "c_0116"
+    },
+    {
+      "archetype": "小学生",
+      "obsession": "赶时间",
+      "mood": "cheerful",
+      "voice": "全用问句",
+      "id": "c_0117"
+    },
+    {
+      "archetype": "相声演员",
+      "obsession": "报复性消费",
+      "mood": "cheerful",
+      "voice": "播音腔",
+      "id": "c_0118"
+    },
+    {
+      "archetype": "退役运动员",
+      "obsession": "爱教育人",
+      "mood": "menacing",
+      "voice": "气声",
+      "id": "c_0119"
+    },
+    {
+      "archetype": "快递分拣员",
+      "obsession": "攀比",
+      "mood": "grumpy",
+      "voice": "气声",
+      "id": "c_0120"
+    },
+    {
+      "archetype": "外卖骑手",
+      "obsession": "省钱",
+      "mood": "deadpan",
+      "voice": "法律条文腔",
+      "id": "c_0121"
+    },
+    {
+      "archetype": "唐朝穿越者",
+      "obsession": "拖延",
+      "mood": "menacing",
+      "voice": "文言文",
+      "id": "c_0122"
+    },
+    {
+      "archetype": "退休特工",
+      "obsession": "攀比",
+      "mood": "dreamy",
+      "voice": "气声",
+      "id": "c_0123"
+    },
+    {
+      "archetype": "小学生",
+      "obsession": "爱教育人",
+      "mood": "dreamy",
+      "voice": "气声",
+      "id": "c_0124"
+    },
+    {
+      "archetype": "图书管理员",
+      "obsession": "赶时间",
+      "mood": "cheerful",
+      "voice": "说明书腔",
+      "id": "c_0125"
+    },
+    {
+      "archetype": "实习程序员",
+      "obsession": "怕麻烦别人",
+      "mood": "menacing",
+      "voice": "气声",
+      "id": "c_0126"
+    },
+    {
+      "archetype": "高中班主任",
+      "obsession": "赶时间",
+      "mood": "deadpan",
+      "voice": "绕口令",
+      "id": "c_0127"
+    },
+    {
+      "archetype": "退役运动员",
+      "obsession": "攀比",
+      "mood": "menacing",
+      "voice": "旁白体",
+      "id": "c_0128"
+    },
+    {
+      "archetype": "幼儿园老师",
+      "obsession": "强迫对称",
+      "mood": "heartbroken",
+      "voice": "自言自语",
+      "id": "c_0129"
+    },
+    {
+      "archetype": "选秀练习生",
+      "obsession": "爱教育人",
+      "mood": "dreamy",
+      "voice": "旁白体",
+      "id": "c_0130"
+    },
+    {
+      "archetype": "唐朝穿越者",
+      "obsession": "健忘",
+      "mood": "anxious",
+      "voice": "说唱",
+      "id": "c_0131"
+    },
+    {
+      "archetype": "家用机器人",
+      "obsession": "怀旧",
+      "mood": "cheerful",
+      "voice": "命令句",
+      "id": "c_0132"
+    },
+    {
+      "archetype": "外星交换生",
+      "obsession": "省钱",
+      "mood": "cheerful",
+      "voice": "文言文",
+      "id": "c_0133"
+    },
+    {
+      "archetype": "考古学家",
+      "obsession": "攀比",
+      "mood": "cheerful",
+      "voice": "导航语音",
+      "id": "c_0134"
+    },
+    {
+      "archetype": "选秀练习生",
+      "obsession": "健忘",
+      "mood": "anxious",
+      "voice": "说明书腔",
+      "id": "c_0135"
+    },
+    {
+      "archetype": "探店博主",
+      "obsession": "养生",
+      "mood": "menacing",
+      "voice": "命令句",
+      "id": "c_0136"
+    },
+    {
+      "archetype": "外卖骑手",
+      "obsession": "记仇",
+      "mood": "dreamy",
+      "voice": "气声",
+      "id": "c_0137"
+    },
+    {
+      "archetype": "的哥师傅",
+      "obsession": "赶时间",
+      "mood": "dreamy",
+      "voice": "客服话术",
+      "id": "c_0138"
+    },
+    {
+      "archetype": "快递分拣员",
+      "obsession": "社恐",
+      "mood": "grumpy",
+      "voice": "旁白体",
+      "id": "c_0139"
+    },
+    {
+      "archetype": "民宿老板",
+      "obsession": "减肥",
+      "mood": "heartbroken",
+      "voice": "旁白体",
+      "id": "c_0140"
+    },
+    {
+      "archetype": "末日幸存者",
+      "obsession": "护食",
+      "mood": "dreamy",
+      "voice": "绕口令",
+      "id": "c_0141"
+    },
+    {
+      "archetype": "健身教练",
+      "obsession": "省钱",
+      "mood": "manic",
+      "voice": "播音腔",
+      "id": "c_0142"
+    },
+    {
+      "archetype": "天文爱好者",
+      "obsession": "赶时间",
+      "mood": "cheerful",
+      "voice": "方言",
+      "id": "c_0143"
+    },
+    {
+      "archetype": "动物园饲养员",
+      "obsession": "爱教育人",
+      "mood": "manic",
+      "voice": "命令句",
+      "id": "c_0144"
+    },
+    {
+      "archetype": "民宿老板",
+      "obsession": "护食",
+      "mood": "menacing",
+      "voice": "导航语音",
+      "id": "c_0145"
+    },
+    {
+      "archetype": "退休特工",
+      "obsession": "跟风",
+      "mood": "grumpy",
+      "voice": "文言文",
+      "id": "c_0146"
+    },
+    {
+      "archetype": "选秀练习生",
+      "obsession": "收集癖",
+      "mood": "manic",
+      "voice": "法律条文腔",
+      "id": "c_0147"
+    },
+    {
+      "archetype": "家用机器人",
+      "obsession": "跟风",
+      "mood": "menacing",
+      "voice": "直播带货腔",
+      "id": "c_0148"
+    },
+    {
+      "archetype": "深夜代驾",
+      "obsession": "怕浪费",
+      "mood": "dreamy",
+      "voice": "体育解说",
+      "id": "c_0149"
+    },
+    {
+      "archetype": "唐朝穿越者",
+      "obsession": "社恐",
+      "mood": "heartbroken",
+      "voice": "说明书腔",
+      "id": "c_0150"
+    },
+    {
+      "archetype": "动物园饲养员",
+      "obsession": "省钱",
+      "mood": "heartbroken",
+      "voice": "菜谱腔",
+      "id": "c_0151"
+    },
+    {
+      "archetype": "末日幸存者",
+      "obsession": "省钱",
+      "mood": "dreamy",
+      "voice": "电报体",
+      "id": "c_0152"
+    },
+    {
+      "archetype": "天文爱好者",
+      "obsession": "洁癖",
+      "mood": "deadpan",
+      "voice": "客服话术",
+      "id": "c_0153"
+    },
+    {
+      "archetype": "的哥师傅",
+      "obsession": "社恐",
+      "mood": "deadpan",
+      "voice": "客服话术",
+      "id": "c_0154"
+    },
+    {
+      "archetype": "实习程序员",
+      "obsession": "收集癖",
+      "mood": "menacing",
+      "voice": "绕口令",
+      "id": "c_0155"
+    },
+    {
+      "archetype": "的哥师傅",
+      "obsession": "迷信",
+      "mood": "manic",
+      "voice": "旁白体",
+      "id": "c_0156"
+    },
+    {
+      "archetype": "退役运动员",
+      "obsession": "认死理",
+      "mood": "grumpy",
+      "voice": "日记体",
+      "id": "c_0157"
+    },
+    {
+      "archetype": "相声演员",
+      "obsession": "社恐",
+      "mood": "manic",
+      "voice": "导航语音",
+      "id": "c_0158"
+    },
+    {
+      "archetype": "外卖骑手",
+      "obsession": "攀比",
+      "mood": "anxious",
+      "voice": "说明书腔",
+      "id": "c_0159"
+    },
+    {
+      "archetype": "快递分拣员",
+      "obsession": "赶时间",
+      "mood": "menacing",
+      "voice": "播音腔",
+      "id": "c_0160"
+    },
+    {
+      "archetype": "退役运动员",
+      "obsession": "怕浪费",
+      "mood": "anxious",
+      "voice": "说唱",
+      "id": "c_0161"
+    },
+    {
+      "archetype": "幼儿园老师",
+      "obsession": "收集癖",
+      "mood": "deadpan",
+      "voice": "播音腔",
+      "id": "c_0162"
+    },
+    {
+      "archetype": "幼儿园老师",
+      "obsession": "怕麻烦别人",
+      "mood": "menacing",
+      "voice": "命令句",
+      "id": "c_0163"
+    },
+    {
+      "archetype": "民宿老板",
+      "obsession": "减肥",
+      "mood": "dreamy",
+      "voice": "客服话术",
+      "id": "c_0164"
+    },
+    {
+      "archetype": "家用机器人",
+      "obsession": "护食",
+      "mood": "deadpan",
+      "voice": "儿歌调",
+      "id": "c_0165"
+    },
+    {
+      "archetype": "退役运动员",
+      "obsession": "洁癖",
+      "mood": "grumpy",
+      "voice": "绕口令",
+      "id": "c_0166"
+    },
+    {
+      "archetype": "健身教练",
+      "obsession": "报复性消费",
+      "mood": "manic",
+      "voice": "直播带货腔",
+      "id": "c_0167"
+    },
+    {
+      "archetype": "动物园饲养员",
+      "obsession": "记仇",
+      "mood": "grumpy",
+      "voice": "体育解说",
+      "id": "c_0168"
+    },
+    {
+      "archetype": "退休特工",
+      "obsession": "健忘",
+      "mood": "dreamy",
+      "voice": "方言",
+      "id": "c_0169"
+    },
+    {
+      "archetype": "选秀练习生",
+      "obsession": "强迫对称",
+      "mood": "menacing",
+      "voice": "旁白体",
+      "id": "c_0170"
+    },
+    {
+      "archetype": "的哥师傅",
+      "obsession": "完美主义",
+      "mood": "grumpy",
+      "voice": "说唱",
+      "id": "c_0171"
+    },
+    {
+      "archetype": "图书管理员",
+      "obsession": "跟风",
+      "mood": "manic",
+      "voice": "旁白体",
+      "id": "c_0172"
+    },
+    {
+      "archetype": "小学生",
+      "obsession": "强迫对称",
+      "mood": "anxious",
+      "voice": "儿歌调",
+      "id": "c_0173"
+    },
+    {
+      "archetype": "深夜代驾",
+      "obsession": "洁癖",
+      "mood": "manic",
+      "voice": "菜谱腔",
+      "id": "c_0174"
+    },
+    {
+      "archetype": "外星交换生",
+      "obsession": "迷信",
+      "mood": "deadpan",
+      "voice": "菜谱腔",
+      "id": "c_0175"
+    },
+    {
+      "archetype": "健身教练",
+      "obsession": "养生",
+      "mood": "deadpan",
+      "voice": "导航语音",
+      "id": "c_0176"
+    },
+    {
+      "archetype": "图书管理员",
+      "obsession": "认死理",
+      "mood": "anxious",
+      "voice": "文言文",
+      "id": "c_0177"
+    },
+    {
+      "archetype": "末日幸存者",
+      "obsession": "迷信",
+      "mood": "anxious",
+      "voice": "文言文",
+      "id": "c_0178"
+    },
+    {
+      "archetype": "的哥师傅",
+      "obsession": "迷信",
+      "mood": "deadpan",
+      "voice": "菜谱腔",
+      "id": "c_0179"
+    },
+    {
+      "archetype": "相声演员",
+      "obsession": "强迫对称",
+      "mood": "dreamy",
+      "voice": "旁白体",
+      "id": "c_0180"
+    },
+    {
+      "archetype": "相声演员",
+      "obsession": "怕麻烦别人",
+      "mood": "grumpy",
+      "voice": "直播带货腔",
+      "id": "c_0181"
+    },
+    {
+      "archetype": "外星交换生",
+      "obsession": "认死理",
+      "mood": "deadpan",
+      "voice": "说唱",
+      "id": "c_0182"
+    },
+    {
+      "archetype": "退休特工",
+      "obsession": "省钱",
+      "mood": "cheerful",
+      "voice": "说唱",
+      "id": "c_0183"
+    },
+    {
+      "archetype": "深夜代驾",
+      "obsession": "怕麻烦别人",
+      "mood": "dreamy",
+      "voice": "文言文",
+      "id": "c_0184"
+    },
+    {
+      "archetype": "考古学家",
+      "obsession": "养生",
+      "mood": "anxious",
+      "voice": "方言",
+      "id": "c_0185"
+    },
+    {
+      "archetype": "实习程序员",
+      "obsession": "怕麻烦别人",
+      "mood": "manic",
+      "voice": "气声",
+      "id": "c_0186"
+    },
+    {
+      "archetype": "图书管理员",
+      "obsession": "健忘",
+      "mood": "deadpan",
+      "voice": "命令句",
+      "id": "c_0187"
+    },
+    {
+      "archetype": "相声演员",
+      "obsession": "记仇",
+      "mood": "menacing",
+      "voice": "旁白体",
+      "id": "c_0188"
+    },
+    {
+      "archetype": "退役运动员",
+      "obsession": "赶时间",
+      "mood": "menacing",
+      "voice": "法律条文腔",
+      "id": "c_0189"
+    },
+    {
+      "archetype": "高中班主任",
+      "obsession": "怕浪费",
+      "mood": "anxious",
+      "voice": "法律条文腔",
+      "id": "c_0190"
+    },
+    {
+      "archetype": "剧组场务",
+      "obsession": "跟风",
+      "mood": "menacing",
+      "voice": "播音腔",
+      "id": "c_0191"
+    },
+    {
+      "archetype": "动物园饲养员",
+      "obsession": "怀旧",
+      "mood": "manic",
+      "voice": "说唱",
+      "id": "c_0192"
+    },
+    {
+      "archetype": "的哥师傅",
+      "obsession": "减肥",
+      "mood": "manic",
+      "voice": "气声",
+      "id": "c_0193"
+    },
+    {
+      "archetype": "相声演员",
+      "obsession": "爱教育人",
+      "mood": "dreamy",
+      "voice": "菜谱腔",
+      "id": "c_0194"
+    },
+    {
+      "archetype": "幼儿园老师",
+      "obsession": "怀旧",
+      "mood": "dreamy",
+      "voice": "气声",
+      "id": "c_0195"
+    },
+    {
+      "archetype": "末日幸存者",
+      "obsession": "健忘",
+      "mood": "cheerful",
+      "voice": "旁白体",
+      "id": "c_0196"
+    },
+    {
+      "archetype": "民宿老板",
+      "obsession": "养生",
+      "mood": "heartbroken",
+      "voice": "绕口令",
+      "id": "c_0197"
+    },
+    {
+      "archetype": "退役运动员",
+      "obsession": "护食",
+      "mood": "deadpan",
+      "voice": "命令句",
+      "id": "c_0198"
+    },
+    {
+      "archetype": "剧组场务",
+      "obsession": "怕麻烦别人",
+      "mood": "anxious",
+      "voice": "文言文",
+      "id": "c_0199"
+    },
+    {
+      "archetype": "天文爱好者",
+      "obsession": "养生",
+      "mood": "anxious",
+      "voice": "电报体",
+      "id": "c_0200"
+    }
+  ]
+}

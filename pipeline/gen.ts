@@ -193,11 +193,17 @@ async function poll(): Promise<void> {
   console.log(`\n下一步：pnpm validate`)
 }
 
-/** 只打印抽到的组合，不调 API。花钱之前先看一眼维度合不合理。 */
+/**
+ * 只打印抽到的组合并落盘，不调 API。花钱之前先看一眼维度合不合理。
+ * 落盘是为了手写那条路（无 key 时）用的是同一批组合 —— 两条路可比。
+ */
 function dims(n: number): void {
-  for (const p of pickDims(n)) {
+  const picks = pickDims(n)
+  for (const p of picks) {
     console.log(`${p.id}  ${p.archetype} / ${p.obsession} / ${p.mood} / ${p.voice}`)
   }
+  save(DIMS_FILE, { seed: SEED, picks })
+  console.log(`\n${picks.length} 组 → ${DIMS_FILE}`)
 }
 
 async function main(): Promise<void> {

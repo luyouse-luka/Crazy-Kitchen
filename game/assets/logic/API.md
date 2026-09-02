@@ -42,7 +42,7 @@
 | `DONENESS` | `rare` `medium` `well` —— 顾客只会点这三档 |
 | `MOODS` | `cheerful` `grumpy` `anxious` `dreamy` `menacing` `heartbroken` `manic` `deadpan` |
 | `STATION_KINDS` | `fridge` `grill` `assembly` `serve` `sink` |
-| `LINE_LIMITS` | 台词字数上限：identity 10 / greet 12 / order 30 / wait_nudge 15 / praise 20 / complain 20 |
+| `LINE_LIMITS` | 台词字数上限：identity 10 / greet 12 / order 30 / wait_nudge 15 / **praise 40 / complain 40**（后两条是离店点评，玩家在打烊面板上读，不受局内限制） |
 
 ### 类型
 
