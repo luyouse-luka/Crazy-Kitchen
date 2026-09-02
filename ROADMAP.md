@@ -73,7 +73,7 @@
 | 步 | 状态 | 判据实测 |
 |---|---|---|
 | A1 repo + remote | ✅ | `origin` = `git@github-luyouse-user:luyouse-luka/Crazy-Kitchen.git` |
-| A2 工程与 logic 合到一处 | ✅ 服务器端已合（`24a6c36`） | ⚠ **你那边换工作副本还没做**，见 §A2-fix 末尾。判据：新产物里 `grep A7_LOGIC` / logic 字面量全部零命中，说明你构建的那份工程里还没有 `logic/` |
+| A2 工程与 logic 合到一处 | ✅ **两端都完成** | 服务器端 `24a6c36`；你那端由 A7 反证 —— 微信运行时打得出那 9 行，说明 `logic/` 确实在你构建的工程里。（09-02 早些时候产物里零命中，是因为那份产物是换副本之前构建的） |
 | A3 Cocos 3.8.x | ✅ | 3.8.8 |
 | A4 构建 → 真机 | ✅ | `deviceOrientation: landscapeRight` ✓ · 设计分辨率 1280×720 ✓ |
 | **A5 包体真数** | ✅ **已刷新，不再过期** | **主包 2428.0 KB**（红线 4096）· `cocos-js` **1844.3 KB 单体、0 插件** · `assets` **397.2 KB**（850 KB 天空盒没了）· 孤儿 0。详见 §2.4a |
@@ -122,7 +122,7 @@ docs/workflow-plan.html                               ← 线 A 的执行视图
 
 | # | 事 | 状态 |
 |---|---|---|
-| 0 | **换工作副本**（合并的后半截，只有你能做） | ⬜ 见 §A2-fix 末尾。**A7 的前提** |
+| 0 | **换工作副本**（合并的后半截） | ✅ **已完成** —— A7 能跑出那 9 行就是它完成的铁证（你工程里确实有 `logic/` 了）。`.unison-bak` 备份可删 |
 | 1 | **push 到 GitHub** | 🟡 本地领先 `origin/main` **3 个提交**（`6efadb0` `24a6c36` `e0b89b8`）+ 本轮这批。远端无独有提交，工作区干净，是直进（fast-forward）。**等你说推我再推**。`origin/master` 合完已无用，可删 |
 | 2 | Unison 两端 ignore | ✅ 生效 |
 | 3 | **读 25 张卡打分** | 🔴 **下次开工第一件事**。`pipeline/handwritten/cards.json`，判据三条见 `pipeline/README.md`。这是 go/no-go 闸门 |
@@ -251,7 +251,7 @@ esbuild: { tsconfigRaw: '{"compilerOptions":{"target":"es2020"}}' },
 **`.meta` 必须 commit** —— 用编辑器打开 `game/` 后它会给 `assets/logic/` 下每个 `.ts`
 生成 `.meta`，那里面存 uuid 映射。漏 commit 的话，场景里拖好的引用下次全变空。
 
-#### ⬜ 合并的后半截：你那边换工作副本
+#### ✅ 合并的后半截：你那边换工作副本（2026-09-02 完成）
 
 服务器端合完了，但你 Windows 上那个 Cocos 工程目录还是旧的（独立仓库，指向 `master`）。
 等 `main` push 上去之后：
