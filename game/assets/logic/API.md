@@ -24,8 +24,9 @@
 | `rng.ts` | 可复现随机源 |
 | `sim.ts` | **M1 无头模拟器**（不进包体的部分只有 `tools/sim-cli.ts`，这个文件本身零依赖可打包） |
 | `difficulty.ts` | **难度曲线表**：第 1→20 天的参数与三星线 |
+| `input.ts` | **M2 输入层**：多点触摸路由、浮动摇杆、点按/长按、相机相对映射 |
 
-**尚未建**（按里程碑排）：`customer.ts`（M2 顾客状态机）·
+**尚未建**（按里程碑排）：`customer.ts`（M2 顾客状态机）· `movement.ts`（M2 角色移动，把 input + collision 串起来）·
 `chaos.ts`（M4 混乱事件调度）· `economy.ts`（M4 金币/升级/解锁）。
 
 ---
@@ -211,12 +212,59 @@ LAST_DAY  // 20
 
 ---
 
+## `input.ts`
+
+```ts
+// 摇杆
+interface StickConfig { radius: number; deadzone: number }   // 像素 / 归一化后
+interface StickState  { dirX, dirY: number; magnitude: number; active: boolean }
+DEFAULT_STICK   // { radius: 90, deadzone: 0.15 }
+
+// 动作键（一个键，点按与长按都从它出）
+interface ActionConfig { holdSeconds: number }
+interface ActionState  { down, holding, tapped, holdStarted: boolean; heldSeconds: number }
+DEFAULT_ACTION  // { holdSeconds: 0.3 }
+
+class TouchRouter {
+  constructor(splitX: number, stickCfg?: StickConfig, actionCfg?: ActionConfig)
+  readonly stick: StickState
+  readonly action: ActionState
+  onDown(id, x, y) / onMove(id, x, y) / onUp(id)
+  cancelAll()            // TOUCH_CANCEL 与 onHide 必须调
+  tick(dt)               // 每帧一次，在读 action 之前
+  setSplitX(x)
+}
+
+// 相机相对映射
+ISO_CAMERA_YAW                                   // Math.PI / 4
+stickToWorld(out, stick, cameraYaw): Vec2        // 单位方向
+stickToVelocity(out, stick, cameraYaw, speed): boolean   // 带 magnitude，回中返回 false
+```
+
+**组件那边只做三件事**：把 touch 事件拆成 `(id, x, y)` 喂进来 · 每帧先 `tick(dt)` 再读状态 ·
+`stickToVelocity` 的结果交给 `collision.resolveCircleAABB`。摇杆的死区、饱和、
+手指归属这些一行都别在组件里重写。
+
+⚠ **三条真机上必须验的**：
+
+1. **坐标系**：`(x, y)` 按 Cocos `Touch.getLocation()` 的约定 —— 左下为原点、**y 向上**。
+   组件那边如果拿的是 y 向下的坐标，在组件里翻符号，不要改 `input.ts`。
+2. **yaw 的符号**：四个方向各推一次看角色往哪走。前后反了把 yaw 取负，
+   左右反了说明相机往另一边转。这里锁死的是「先旋转再移动」的结构，不是某个具体符号。
+3. **`holdSeconds` = 0.3 秒是待调值**：太短会把正常点按误判成长按。
+
+**已经处理掉的坑**（别在组件里重复解决）：拇指划过屏幕中线不会让摇杆失灵（归属按下时定死，
+之后只认 id）· 第三根手指不会抢走已在推的摇杆 · 斜推到角落 `magnitude` 不会超过 1 ·
+按下不动不产生 NaN · 来电/切后台后摇杆不会卡在最后方向（前提是组件挂了 `cancelAll`）。
+
+---
+
 ## 测试夹具
 
-`__tests__/fixtures/customers.json` —— **21 张手写顾客卡**，覆盖 8 种 mood、3 档 doneness，
+`tests/fixtures/customers.json` —— **21 张手写顾客卡**，覆盖 8 种 mood、3 档 doneness，
 含一条 3 章的长线 arc（`lao_zhang`）。M1–M4 直接用，不必等内容管线。
 
-守门测试在 `__tests__/fixtures.test.ts` 与 `__tests__/schema.test.ts`：
+守门测试在 `tests/fixtures.test.ts` 与 `tests/schema.test.ts`：
 机制层可解 · 字数在限内 · arc 章节递增 · 与 `pipeline/customer.schema.json` 双向一致。
 
 ---
