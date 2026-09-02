@@ -72,7 +72,7 @@
 | A3 Cocos 3.8.x | ✅ | 3.8.8 |
 | A4 构建 → 真机 | ✅ | `deviceOrientation: landscapeRight` ✓ · 设计分辨率 1280×720 ✓ |
 | **A5 包体真数** | ✅ **已刷新，不再过期** | **主包 2428.0 KB**（红线 4096）· `cocos-js` **1844.3 KB 单体、0 插件** · `assets` **397.2 KB**（850 KB 天空盒没了）· 孤儿 0。详见 §2.4a |
-| A6 AppID + 高性能 | 🟡 **对不上，需你核一句** | AppID `wx40db4a5ae317a9a5` 已进 `project.config.json` ✓；但产物 `game.json` 只有 192 字节、**没有 `iOSHighPerformance`** ❌。你说的「完成」若指公众平台后台开通，那是对的 —— 字段这一半还差，做法见 §2.7 下面那段 |
+| A6 AppID + 高性能 | 🟡 **两半都做了，等下次构建验证** | AppID `wx40db4a5ae317a9a5` 已进 `project.config.json` ✓ · 公众平台后台已开通生产提效包（你 09-02 确认）✓ · `game/build-templates/wechatgame/game.json` 模板已放 ✓。**判据：下次构建后产物 `game.json` 里要出现 `"iOSHighPerformance": true`** —— 没出现说明 build-templates 没被套用 |
 | A7 分层落地验证 | 🟡 **探针已就位，等你构建** | 三件套 + 期望输出 + 三层判据全在 **§A7** |
 
 `pnpm check` 全绿：铁律① 0 命中 · typecheck 无错 · **131 个测试通过**。
@@ -85,6 +85,7 @@ game/assets/scripts/a7-check.ts      ← 新增 · A7 探针内核，纯 TS 零 
 game/assets/scripts/A7Probe.ts       ← 新增 · A7 Cocos 组件（挂场景用）
 tools/a7-expect.ts                   ← 新增 · 同一份探针在 Node 跑，pnpm a7
 tools/ensure-cocos-tsconfig.mjs      ← 新增 · 补 game/temp/tsconfig.cocos.json 占位
+game/build-templates/wechatgame/game.json  ← 新增 · A6 的 iOSHighPerformance（全量覆盖，见 §2.7）
 tools/pkgsize.ts                     ← 改 · 默认路径 ../wechatgame；单体 cc.js 提示；私有配置不再误报孤儿
 package.json                         ← 改 · 加 a7 / prea7 / presim
 tsconfig.json                        ← 改 · include 收 a7-check.ts
@@ -112,7 +113,7 @@ docs/workflow-plan.html                               ← 线 A 的执行视图
 | 1 | **push 到 GitHub** | 🟡 本地领先 `origin/main` **3 个提交**（`6efadb0` `24a6c36` `e0b89b8`）+ 本轮这批。远端无独有提交，工作区干净，是直进（fast-forward）。**等你说推我再推**。`origin/master` 合完已无用，可删 |
 | 2 | Unison 两端 ignore | ✅ 生效 |
 | 3 | **`ANTHROPIC_API_KEY`** | ⛔ **仍未设置 —— 全项目当前最贵的一项** |
-| 4 | **A6 核一句**：`iOSHighPerformance` | 🟡 后台开通 or 字段？见上表 A6 行 |
+| 4 | A6 `iOSHighPerformance` | 🟡 三处都齐了，**构建一次就能验**（和 A7 同一次构建） |
 | 5 | **A7：挂组件 + 构建一次** | ⬜ 四步，见 **§A7** |
 | 6 | **决策：微信引擎插件开不开** | ⏸ 这次构建没走插件，主包多了约 1388 KB。见 §2.4a |
 
@@ -122,8 +123,15 @@ docs/workflow-plan.html                               ← 线 A 的执行视图
 **M1 最该记住的一条**：⚠ **M4 的「升级项·设备」别做成「多一个烤炉」** ——
 实测烤炉不是瓶颈，跑腿才是，玩家感觉不到。做成「烤得更快」或「工位更近」才有效。
 
-**`iOSHighPerformance` 怎么加**：构建产物的 `game.json` 是每次构建重新生成的，直接改会被覆盖。
-要在 Cocos 项目的 `build-templates/wechatgame/game.json` 里放模板，构建时会合并进去。
+**`iOSHighPerformance` 已落地（2026-09-02）**：产物的 `game.json` 每次构建重新生成，
+直接改会被覆盖，所以模板放在 `game/build-templates/wechatgame/game.json`。
+
+⚠ **模板里必须写全量，不能只写 `iOSHighPerformance` 一行** —— build-templates 是在构建插件
+生成完 `game.json` 之后**整个文件覆盖**上去的，只写一行会把 `deviceOrientation` 冲掉，
+横屏直接没了。现在模板 = 产物原有的两个字段 + `iOSHighPerformance`，
+`diff` 过一遍确认只多这一行。
+**代价**：以后在构建面板改屏幕方向 / 超时，得同步改这个模板，否则模板会把面板设置钉死。
+
 连带一个已经定死的约束：**纹理格式只能 ASTC**（高性能模式不支持 ETC/PVRTC），
 这条反过来约束整条美术管线，M2 开始做资源前就得配好。
 
