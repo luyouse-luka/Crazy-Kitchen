@@ -49,8 +49,9 @@
 
 ## 📍 当前断点（2026-09-02 · 每轮收工更新这一段）
 
-**A4 真机跑通了 —— 发布链路整条打通，M0 最容易卡三天的那一步过了。A5 包体数字已实测落盘（见 §2.4a）。
-剩下 A6 半步 + A7，以及 C2 那个 go/no-go 闸门仍卡在 API key。**
+**A4 真机跑通、A5 包体数字落盘、A2 两条分支已合（`24a6c36`）—— 发布链路整条通了。
+剩下：你换工作副本（§A2-fix 末尾）、重新构建重量一次包体、A6 半步、A7；
+C2 那个 go/no-go 闸门仍卡在 API key。**
 
 **2026-09-02**：`../wechatgame-001/` 构建产物已随 Unison 传到服务器（`project/kitchen-chaos` 被 ignore
 了，但 `project/wechatgame-001` 不在 ignore 列表里，所以传得上来）。**这是好事**：以后每次构建完
@@ -68,12 +69,12 @@
 | 步 | 状态 | 判据实测 |
 |---|---|---|
 | A1 repo + remote | ✅ | 远端 `main` = 本地 `7f41f1c`，已同步 |
-| A2 clone + logic 挪回 | ❌ **没做** | 工程是**另起炉灶新建**的（`package.json` 名字还是 `NewProject`），push 成了**孤立分支 `master`**，与 `main` 无共同祖先。19 个文件里**没有 `assets/logic/`** |
+| A2 工程与 logic 合到一处 | ✅ **09-02 已合**（`24a6c36`） | 原本工程是另起炉灶新建的孤立分支 `master`（与 `main` 无共同祖先、不含 `logic/`）。19 个文件已解到 `game/` 下，零路径冲突。⚠ **你那边工作副本要跟着换**，见 §A2-fix |
 | A3 Cocos 3.8.x | ✅ | `game.json` 引擎插件版本 **3.8.8** |
 | A4 构建 → 真机 | ✅ | 你手机上看到场景。配置一并核过：`deviceOrientation: landscapeRight` ✓、设计分辨率 `1280×720` ✓ |
 | **A5 包体真数** | ✅ 数字有效但**已过期** | **主包 2299.8 KB**（红线 4096）· `cocos-js` **862.5 KB** · 详见 §2.4a。⚠ 产物是 09-01 **07:35** 构建的，工程配置 **09:22** 又改过（关了物理），**得重新构建再量一次** |
 | A6 AppID + 高性能 | 🟡 一半 | AppID `wx40db4a5ae317a9a5` 已填进构建 ✓；`game.json` **无 `iOSHighPerformance`** ❌ |
-| A7 分层落地验证 | ⬜ **被 A2 卡住** | 不是「还没写那个 import」—— 是 `logic/` 根本不在工程里。A2 不解决，A7 无从谈起 |
+| A7 分层落地验证 | ⬜ **解锁了** | A2 合完之后 `logic/` 已经在工程里，现在就是「写一个 import + 构建一次搜产物」的事 |
 
 `pnpm check` 全绿：铁律① 0 命中 · typecheck 无错 · **131 个测试通过** ·
 铁律② 10 万帧堆增长 −181KB（完全平坦）。
@@ -100,7 +101,8 @@ tools/sim-cli.ts                                      ← pnpm sim crash|sweep|c
 
 | # | 事 | 状态 |
 |---|---|---|
-| 1 | GitHub repo + remote | 🟡 `main` 与本地 `7f41f1c` 一致，但**远端 `master` 是你 09-01 的 Cocos 工程**（`c340de8`，19 文件），与 `main` 无共同祖先 —— **两条历史要合，见下方 §A2-fix。别删 `master`，那是唯一一份工程** |
+| 0 | **换工作副本**（合并的后半截，只有你能做） | ⬜ 见 §A2-fix 末尾 |
+| 1 | GitHub repo + remote | 🟡 服务器端已合（`main` = `24a6c36`），**但还没 push**。远端 `master` 合完就没用了，push 之后可删 |
 | 2 | Unison 两端 ignore | ✅ 生效。服务器 `.unison/sync.prf` 与 `unison-setup/sync-server.prf` 各 1 处 `ignore = Path project/kitchen-chaos` |
 | 3 | **`ANTHROPIC_API_KEY`** | ⛔ **仍未设置 —— 全项目当前最贵的一项** |
 | 4 | A6 后半：iOS 高性能模式 | ⬜ `game.json` 里还没有 `iOSHighPerformance` |
@@ -114,9 +116,9 @@ tools/sim-cli.ts                                      ← pnpm sim crash|sweep|c
 连带一个已经定死的约束：**纹理格式只能 ASTC**（高性能模式不支持 ETC/PVRTC），
 这条反过来约束整条美术管线，M2 开始做资源前就得配好。
 
-#### §A2-fix · 两条历史怎么合（2026-09-02 发现，**当前最该先解决的事**）
+#### §A2-fix · 两条历史合并记录（2026-09-02 · 服务器端已执行 `24a6c36`）
 
-现状：远端有两个互不相干的分支。
+合并前：远端有两个互不相干的分支。
 
 | 分支 | 内容 | 结构 |
 |---|---|---|
@@ -142,25 +144,54 @@ Crazy-Kitchen/
 ├── pipeline/ · tools/ · ROADMAP.md · GDD.md · docs/
 ```
 
-`master` 只有一个提交、没有值得保的历史，所以直接取内容、不做 merge 最干净：
+`master` 只有一个提交、没有值得保的历史，所以直接取内容、不做 merge：
 
 ```bash
 git checkout main
-git archive origin/master | tar -x -C game/     # 19 个文件解到 game/
-git add game && git commit -m "feat(game): 并入 Cocos 3.8.8 工程到 game/"
+git archive origin/master | tar -x -C game/     # 19 个文件解到 game/，零路径冲突
+git add game && git commit
 ```
 
-⚠ **两个坑**：
+**⚠ 合并当场炸出来的一个坑（记下来，换机器还会遇到）**
 
-1. **`.gitignore`** —— `master` 根目录那份忽略的是 `library/ temp/ build/ profiles/ native`，
-   解到 `game/` 之后这些规则会**相对 `game/` 生效**，正好是我们要的。但根目录 `main` 那份
-   也有自己的规则，两份并存不冲突，**不要合并成一份**（Cocos 那份是编辑器维护的）。
-2. **`.meta` 必须 commit** —— 用编辑器打开 `game/` 后它会给 `assets/logic/` 下每个 `.ts`
-   生成 `.meta`，那里面存 uuid 映射。漏 commit 的话，场景里拖好的引用下次全变空。
+合完 10 个测试文件**全部失败**，`TSConfckParseError: failed to resolve
+"extends":"./temp/tsconfig.cocos.json"`。原因：`game/tsconfig.json` extends
+`./temp/tsconfig.cocos.json`，而 `temp/` 是**编辑器生成、被 `.gitignore` 排除**的目录 ——
+你机器上有所以看不到，**任何新 clone 或 CI 都会中**。vite 为每个 `.ts` 向上找最近的
+tsconfig，找到 `game/tsconfig.json` 就死在 extends 上。
 
-**你那边要做的**：确认 Windows 上的 Cocos 工程目录在哪、是不是就打算继续用它。
-合完之后工作副本要变成「clone `Crazy-Kitchen` → 用 Cocos 编辑器打开其中的 `game/` 子目录」。
-服务器这边我随时能执行上面三行，**等你一句话**。
+修法在 `vitest.config.ts` 把 `tsconfigRaw` 钉死。**必须传字符串** ——
+vite 7.3 `config.js:6070` 是 `if (typeof tsconfigRaw !== "string")` 才去读磁盘，
+传对象照样会去找文件、照样炸（这一步我先写成对象，白试了一轮）。
+
+```ts
+esbuild: { tsconfigRaw: '{"compilerOptions":{"target":"es2020"}}' },
+```
+
+**两份 `.gitignore` 并存是对的，别合并**：根目录那份管 `game/library/`、`game/temp/` 等
+（本来就是按「工程在 game/ 下」写的）；`game/.gitignore` 是 Cocos 编辑器维护的，动它下次会被改回来。
+
+**`.meta` 必须 commit** —— 用编辑器打开 `game/` 后它会给 `assets/logic/` 下每个 `.ts`
+生成 `.meta`，那里面存 uuid 映射。漏 commit 的话，场景里拖好的引用下次全变空。
+
+#### ⬜ 合并的后半截：你那边换工作副本
+
+服务器端合完了，但你 Windows 上那个 Cocos 工程目录还是旧的（独立仓库，指向 `master`）。
+等 `main` push 上去之后：
+
+```
+① 现在那个工程目录改名备份，别删
+② git clone git@github-luyouse-user:luyouse-luka/Crazy-Kitchen.git
+③ 用 Cocos 编辑器打开 clone 出来的 game/ 子目录（不是仓库根）
+④ 编辑器会给 assets/logic/ 下 20 个 .ts 生成 .meta → commit 掉
+⑤ 确认能构建、能真机跑，再删 ① 的备份
+```
+
+⚠ **③ 打开的是 `game/`，不是仓库根** —— 打开仓库根会让编辑器在根目录再生成一套
+`assets/` / `settings/`，等于又开一个新工程。
+
+顺带一提，`game/package.json` 里工程名还是 `NewProject`，要不要改成 `kitchen-chaos` 你定
+（`uuid` 才是编辑器认的标识，改 `name` 应该无害，但我没验证过，所以没动）。
 
 #### 已废弃：切换到 git 工作流的顺序
 
