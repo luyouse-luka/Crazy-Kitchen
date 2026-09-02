@@ -72,7 +72,7 @@
 | A3 Cocos 3.8.x | ✅ | 3.8.8 |
 | A4 构建 → 真机 | ✅ | `deviceOrientation: landscapeRight` ✓ · 设计分辨率 1280×720 ✓ |
 | **A5 包体真数** | ✅ **已刷新，不再过期** | **主包 2428.0 KB**（红线 4096）· `cocos-js` **1844.3 KB 单体、0 插件** · `assets` **397.2 KB**（850 KB 天空盒没了）· 孤儿 0。详见 §2.4a |
-| A6 AppID + 高性能 | 🟡 **两半都做了，等下次构建验证** | AppID `wx40db4a5ae317a9a5` 已进 `project.config.json` ✓ · 公众平台后台已开通生产提效包（你 09-02 确认）✓ · `game/build-templates/wechatgame/game.json` 模板已放 ✓。**判据：下次构建后产物 `game.json` 里要出现 `"iOSHighPerformance": true`** —— 没出现说明 build-templates 没被套用 |
+| A6 AppID + 高性能 | 🟡 **三处都齐了，等构建验证** | AppID ✓ · 公众平台后台已开通 ✓ · **构建面板「高性能模式」已勾** ✓（build-templates 那条路已撤销，见 §2.7）。**判据：构建后产物 `game.json` 里要有 `"iOSHighPerformance": true`** |
 | A7 分层落地验证 | 🟡 **第一次构建炸了，原因已修，等第二次** | 15:53 `buildScriptCommand failed with code -1` —— Cocos 把 `assets/` 下的 10 个测试文件也编译了，它们 import `vitest` / `ajv` / assets 外的 json。**已把 `__tests__/` 移到仓库根 `tests/`**，见 §3.1 那条。三件套 + 期望输出 + 三层判据在 **§A7** |
 
 `pnpm check` 全绿：铁律① 0 命中 · typecheck 无错 · **131 个测试通过**。
@@ -85,7 +85,6 @@ game/assets/scripts/a7-check.ts      ← 新增 · A7 探针内核，纯 TS 零 
 game/assets/scripts/A7Probe.ts       ← 新增 · A7 Cocos 组件（挂场景用）
 tools/a7-expect.ts                   ← 新增 · 同一份探针在 Node 跑，pnpm a7
 tools/ensure-cocos-tsconfig.mjs      ← 新增 · 补 game/temp/tsconfig.cocos.json 占位
-game/build-templates/wechatgame/game.json  ← 新增 · A6 的 iOSHighPerformance（全量覆盖，见 §2.7）
 tests/                               ← 移动 · 从 game/assets/logic/__tests__ 搬出来，10 个测试 + fixtures
 vitest.config.ts                     ← 改 · include 指向 tests/
 tools/pkgsize.ts                     ← 改 · 默认路径 ../wechatgame；单体 cc.js 提示；私有配置不再误报孤儿
@@ -125,14 +124,15 @@ docs/workflow-plan.html                               ← 线 A 的执行视图
 **M1 最该记住的一条**：⚠ **M4 的「升级项·设备」别做成「多一个烤炉」** ——
 实测烤炉不是瓶颈，跑腿才是，玩家感觉不到。做成「烤得更快」或「工位更近」才有效。
 
-**`iOSHighPerformance` 已落地（2026-09-02）**：产物的 `game.json` 每次构建重新生成，
-直接改会被覆盖，所以模板放在 `game/build-templates/wechatgame/game.json`。
+**`iOSHighPerformance` 走构建面板，不要用 build-templates（2026-09-02 结论）**：
+构建面板里的「高性能模式」勾上，Cocos 自己会往 `game.json` 写这个字段。
 
-⚠ **模板里必须写全量，不能只写 `iOSHighPerformance` 一行** —— build-templates 是在构建插件
-生成完 `game.json` 之后**整个文件覆盖**上去的，只写一行会把 `deviceOrientation` 冲掉，
-横屏直接没了。现在模板 = 产物原有的两个字段 + `iOSHighPerformance`，
-`diff` 过一遍确认只多这一行。
-**代价**：以后在构建面板改屏幕方向 / 超时，得同步改这个模板，否则模板会把面板设置钉死。
+⚠ **一度往 `game/build-templates/wechatgame/game.json` 放过模板，当天就删了。**
+build-templates 是在构建插件生成完 `game.json` 之后**整个文件覆盖**上去的 ——
+模板里没写的字段会被冲掉。写模板时产物 `game.json` 只有 `deviceOrientation` +
+`networkTimeout` 两项，但面板一旦勾上「原生代码(wasm/asmjs)分包」，
+构建会往 `game.json` 加 `subpackages`，**模板会把它冲掉，wasm 分包直接失效**。
+凡是面板能生成的字段，一律让面板生成；build-templates 只留给面板**根本没有**的东西。
 
 连带一个已经定死的约束：**纹理格式只能 ASTC**（高性能模式不支持 ETC/PVRTC），
 这条反过来约束整条美术管线，M2 开始做资源前就得配好。
