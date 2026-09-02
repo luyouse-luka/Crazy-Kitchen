@@ -154,7 +154,11 @@ function reachFrom(g: Graph, roots: string[]): Set<string> {
 }
 
 const ENTRY = [
-  'game.js', 'game.json', 'project.config.json', 'application.js', 'first-screen.js',
+  // project.private.config.json is written by the WeChat devtools, not by a build, and
+  // is not uploaded. Counted as live anyway: 0.6 KB the wrong way is a rounding error,
+  // while calling it an orphan tells you to delete a file you need locally.
+  'game.js', 'game.json', 'project.config.json', 'project.private.config.json',
+  'application.js', 'first-screen.js',
   'web-adapter.js', 'engine-adapter.js', 'logo.png', 'slogan.png',
   'src/settings.json', 'src/import-map.js', 'src/polyfills.bundle.js',
   'src/system.bundle.js', 'src/effect.bin', 'src/chunks/bundle.js',
@@ -194,7 +198,7 @@ function exclusiveTo(g: Graph, entry: string, siblings: string[]): string[] {
 // ─────────────────────────── main ───────────────────────────
 
 function main(): void {
-  const root = process.argv[2] ?? '../wechatgame-001'
+  const root = process.argv[2] ?? '../wechatgame'
   if (!existsSync(root)) {
     console.log(`找不到构建产物目录：${root}`)
     process.exit(1)
@@ -232,7 +236,13 @@ function main(): void {
   console.log(`    外壳/适配      ${kb(shell)} KB`)
 
   const cc = parseCc(root)
-  if (cc !== undefined) {
+  if (cc !== undefined && cc.plugin.length === 0 && cc.local.length === 0) {
+    // Monolithic cc.js: the build did not split the engine into modules, so there is
+    // no module list to read. Silence here would look like "nothing detected".
+    console.log(
+      `\n  引擎模块   cc.js 是单体（${kb(engine)} KB），没有模块清单 —— 微信引擎插件没开，引擎整个进主包`,
+    )
+  } else if (cc !== undefined) {
     console.log(`\n  引擎模块   ${cc.plugin.length} 个走插件（不计包体） · ${cc.local.length} 个本地（计包体）`)
     const localEntries = cc.local.map((i) => join('cocos-js', i))
     const rows = localEntries

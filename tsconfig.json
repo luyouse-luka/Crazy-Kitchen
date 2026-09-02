@@ -13,5 +13,11 @@
     "skipLibCheck": true,
     "types": ["vitest/globals"]
   },
-  "include": ["game/assets/logic/**/*.ts", "tools/**/*.ts", "vitest.config.ts"]
+  "//include": "scripts/ 里只收 a7-check.ts —— 同目录的 Cocos 组件 import 'cc'，这里没有引擎类型声明",
+  "include": [
+    "game/assets/logic/**/*.ts",
+    "game/assets/scripts/a7-check.ts",
+    "tools/**/*.ts",
+    "vitest.config.ts"
+  ]
 }

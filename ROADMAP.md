@@ -47,69 +47,80 @@
 
 </details>
 
-## 📍 当前断点（2026-09-02 · 每轮收工更新这一段）
+## 📍 当前断点（2026-09-02 第二轮 · 每轮收工更新这一段）
 
-**A4 真机跑通、A5 包体数字落盘、A2 两条分支已合（`24a6c36`）—— 发布链路整条通了。
-剩下：你换工作副本（§A2-fix 末尾）、重新构建重量一次包体、A6 半步、A7；
-C2 那个 go/no-go 闸门仍卡在 API key。**
+**发布链路整条通了，包体数字已刷新且不再过期。A7 的探针我写好了，
+就差你在编辑器里挂一个组件 + 构建一次。剩下三件卡在你那边：A7 构建、
+引擎插件开不开的决策、`ANTHROPIC_API_KEY`。**
 
-**2026-09-02**：`../wechatgame-001/` 构建产物已随 Unison 传到服务器（`project/kitchen-chaos` 被 ignore
-了，但 `project/wechatgame-001` 不在 ignore 列表里，所以传得上来）。**这是好事**：以后每次构建完
-我都能直接 `pnpm size` 读真数，不用你抄。
+**产物目录换了名**：`../wechatgame-001/` → **`../wechatgame/`**（Unison 传上来的），
+`pnpm size` 的默认路径已跟着改，直接跑不带参数就行。
 
 | | 状态 |
 |---|---|
-| **线 A（你）** | 🟡 A1–A5 完成。A6 只做了一半（AppID 已填，iOS 高性能模式未开）；A7 未开始 |
+| **线 A（你）** | 🟡 A1–A5 完成。A6 你说完成了，但产物里查不到 `iOSHighPerformance`（见下）；**A7 探针已就位，等你构建** |
 | **线 B（我）** | ✅ B1–B7 全部完成 |
-| **线 C（我）** | ✅ C1 完成（`pipeline/` 配置已重建）。⛔ **C2 卡在 `ANTHROPIC_API_KEY` 未设置** —— 这是 go/no-go 闸门，200 张卡约 $2.5 |
-| **M1（我）** | ✅ 全部完成。崩点、旋钮效力、20 天难度曲线都有实测数字，见 M1 那一节 |
+| **线 C（我）** | ✅ C1 完成。⛔ **C2 仍卡在 `ANTHROPIC_API_KEY`** —— go/no-go 闸门，200 张卡约 $2.5 |
+| **M1（我）** | ✅ 全部完成，数字见 M1 那一节 |
 
-### 线 A 逐步核对（2026-09-02 从构建产物反查，不是听说）
+### 线 A 逐步核对（2026-09-02 从新构建产物反查，不是听说）
 
 | 步 | 状态 | 判据实测 |
 |---|---|---|
-| A1 repo + remote | ✅ | 远端 `main` = 本地 `7f41f1c`，已同步 |
-| A2 工程与 logic 合到一处 | ✅ **09-02 已合**（`24a6c36`） | 原本工程是另起炉灶新建的孤立分支 `master`（与 `main` 无共同祖先、不含 `logic/`）。19 个文件已解到 `game/` 下，零路径冲突。⚠ **你那边工作副本要跟着换**，见 §A2-fix |
-| A3 Cocos 3.8.x | ✅ | `game.json` 引擎插件版本 **3.8.8** |
-| A4 构建 → 真机 | ✅ | 你手机上看到场景。配置一并核过：`deviceOrientation: landscapeRight` ✓、设计分辨率 `1280×720` ✓ |
-| **A5 包体真数** | ✅ 数字有效但**已过期** | **主包 2299.8 KB**（红线 4096）· `cocos-js` **862.5 KB** · 详见 §2.4a。⚠ 产物是 09-01 **07:35** 构建的，工程配置 **09:22** 又改过（关了物理），**得重新构建再量一次** |
-| A6 AppID + 高性能 | 🟡 一半 | AppID `wx40db4a5ae317a9a5` 已填进构建 ✓；`game.json` **无 `iOSHighPerformance`** ❌ |
-| A7 分层落地验证 | ⬜ **解锁了** | A2 合完之后 `logic/` 已经在工程里，现在就是「写一个 import + 构建一次搜产物」的事 |
+| A1 repo + remote | ✅ | `origin` = `git@github-luyouse-user:luyouse-luka/Crazy-Kitchen.git` |
+| A2 工程与 logic 合到一处 | ✅ 服务器端已合（`24a6c36`） | ⚠ **你那边换工作副本还没做**，见 §A2-fix 末尾。判据：新产物里 `grep A7_LOGIC` / logic 字面量全部零命中，说明你构建的那份工程里还没有 `logic/` |
+| A3 Cocos 3.8.x | ✅ | 3.8.8 |
+| A4 构建 → 真机 | ✅ | `deviceOrientation: landscapeRight` ✓ · 设计分辨率 1280×720 ✓ |
+| **A5 包体真数** | ✅ **已刷新，不再过期** | **主包 2428.0 KB**（红线 4096）· `cocos-js` **1844.3 KB 单体、0 插件** · `assets` **397.2 KB**（850 KB 天空盒没了）· 孤儿 0。详见 §2.4a |
+| A6 AppID + 高性能 | 🟡 **对不上，需你核一句** | AppID `wx40db4a5ae317a9a5` 已进 `project.config.json` ✓；但产物 `game.json` 只有 192 字节、**没有 `iOSHighPerformance`** ❌。你说的「完成」若指公众平台后台开通，那是对的 —— 字段这一半还差，做法见 §2.7 下面那段 |
+| A7 分层落地验证 | 🟡 **探针已就位，等你构建** | 三件套 + 期望输出 + 三层判据全在 **§A7** |
 
-`pnpm check` 全绿：铁律① 0 命中 · typecheck 无错 · **131 个测试通过** ·
-铁律② 10 万帧堆增长 −181KB（完全平坦）。
+`pnpm check` 全绿：铁律① 0 命中 · typecheck 无错 · **131 个测试通过**。
+`pnpm sim` 与 `pnpm a7` 在服务器上也都能跑了（修的是 `vite-node` 那个 tsconfig 坑，见 §A2-fix 补记）。
 
-**已落盘的文件**（`project/kitchen-chaos/` 下）：
+**本轮新增/改动的文件**（`project/kitchen-chaos/` 下）：
+
+```
+game/assets/scripts/a7-check.ts      ← 新增 · A7 探针内核，纯 TS 零 cc 依赖
+game/assets/scripts/A7Probe.ts       ← 新增 · A7 Cocos 组件（挂场景用）
+tools/a7-expect.ts                   ← 新增 · 同一份探针在 Node 跑，pnpm a7
+tools/ensure-cocos-tsconfig.mjs      ← 新增 · 补 game/temp/tsconfig.cocos.json 占位
+tools/pkgsize.ts                     ← 改 · 默认路径 ../wechatgame；单体 cc.js 提示；私有配置不再误报孤儿
+package.json                         ← 改 · 加 a7 / prea7 / presim
+tsconfig.json                        ← 改 · include 收 a7-check.ts
+ROADMAP.md                           ← 改 · 本段 + §2.4a 重写 + 新增 §A7 + §A2-fix 补记
+```
+
+**在此之前已落盘的**（累计）：
 
 ```
 .gitignore · package.json · pnpm-workspace.yaml · tsconfig.json · vitest.config.ts
+game/                                                 ← Cocos 3.8.8 工程（编辑器开这一层）
 game/assets/logic/  types · vec2 · collision · recipe · order · rng · sim · difficulty · API.md
-game/assets/logic/__tests__/  上述各一份 .test.ts + fixtures + schema + memory（10 个）
+game/assets/logic/__tests__/  上述各一份 .test.ts + fixtures + schema + memory（10 个 · 131 测试）
 game/assets/logic/__tests__/fixtures/customers.json   ← 21 张手写顾客卡
 pipeline/  dimensions.json · customer.schema.json · README.md
-tools/sim-cli.ts                                      ← pnpm sim crash|sweep|curve|day
+tools/sim-cli.ts · tools/pkgsize.ts                   ← pnpm sim / pnpm size
+docs/workflow-plan.html                               ← 线 A 的执行视图
 ```
-
-仓库外还改了两份 Unison 配置（服务器上的源，**需要你手动应用到两端**，见下）。
-
-**M1 最该记住的一条**：⚠ **M4 的「升级项·设备」别做成「多一个烤炉」** ——
-实测烤炉不是瓶颈，跑腿才是，玩家感觉不到。做成「烤得更快」或「工位更近」才有效。
 
 ### ⚠ 需要你操作的事
 
-按「拦住的事最多」排。前两条已经在 2026-09-02 确认做完，留在这儿只为存判据。
-
 | # | 事 | 状态 |
 |---|---|---|
-| 0 | **换工作副本**（合并的后半截，只有你能做） | ⬜ 见 §A2-fix 末尾 |
-| 1 | GitHub repo + remote | 🟡 服务器端已合（`main` = `24a6c36`），**但还没 push**。远端 `master` 合完就没用了，push 之后可删 |
-| 2 | Unison 两端 ignore | ✅ 生效。服务器 `.unison/sync.prf` 与 `unison-setup/sync-server.prf` 各 1 处 `ignore = Path project/kitchen-chaos` |
+| 0 | **换工作副本**（合并的后半截，只有你能做） | ⬜ 见 §A2-fix 末尾。**A7 的前提** |
+| 1 | **push 到 GitHub** | 🟡 本地领先 `origin/main` **3 个提交**（`6efadb0` `24a6c36` `e0b89b8`）+ 本轮这批。远端无独有提交，工作区干净，是直进（fast-forward）。**等你说推我再推**。`origin/master` 合完已无用，可删 |
+| 2 | Unison 两端 ignore | ✅ 生效 |
 | 3 | **`ANTHROPIC_API_KEY`** | ⛔ **仍未设置 —— 全项目当前最贵的一项** |
-| 4 | A6 后半：iOS 高性能模式 | ⬜ `game.json` 里还没有 `iOSHighPerformance` |
-| 5 | A7：分层落地验证 | ⬜ 一个 import 的事，见 §A7 |
+| 4 | **A6 核一句**：`iOSHighPerformance` | 🟡 后台开通 or 字段？见上表 A6 行 |
+| 5 | **A7：挂组件 + 构建一次** | ⬜ 四步，见 **§A7** |
+| 6 | **决策：微信引擎插件开不开** | ⏸ 这次构建没走插件，主包多了约 1388 KB。见 §2.4a |
 
 **为什么 3 排在工程任务前面**：线 A 卡住只是慢，C2 是方向闸门 —— 200 张卡约 $2.5，
 如果 AI 生成的顾客卡撑不起「场景即敌人」那套玩法，整个 GDD 要回炉。**三个月的账，别拿两块五赌。**
+
+**M1 最该记住的一条**：⚠ **M4 的「升级项·设备」别做成「多一个烤炉」** ——
+实测烤炉不是瓶颈，跑腿才是，玩家感觉不到。做成「烤得更快」或「工位更近」才有效。
 
 **`iOSHighPerformance` 怎么加**：构建产物的 `game.json` 是每次构建重新生成的，直接改会被覆盖。
 要在 Cocos 项目的 `build-templates/wechatgame/game.json` 里放模板，构建时会合并进去。
@@ -168,6 +179,14 @@ vite 7.3 `config.js:6070` 是 `if (typeof tsconfigRaw !== "string")` 才去读�
 esbuild: { tsconfigRaw: '{"compilerOptions":{"target":"es2020"}}' },
 ```
 
+⚠ **2026-09-02 补记：这条只救得了 vitest，救不了 `vite-node`。**
+`vite-node@6` 拉的是 `vite@8`（转译走 `vite:oxc`，不是 esbuild），
+`esbuild.tsconfigRaw` 和 `oxc.tsconfigRaw` 都不起作用，
+建 `vite.config.ts` 或 `-c` 显式指定也一样 —— 它照样去磁盘找 `temp/tsconfig.cocos.json`。
+所以 `pnpm sim` 在服务器上一直是坏的（M1 那些数字是依赖升级之前跑的）。
+现行修法是 `tools/ensure-cocos-tsconfig.mjs` 补一份最小占位，
+由 `presim` / `prea7` 自动调起，**文件已存在就不写**，编辑器那份永远优先。
+
 **两份 `.gitignore` 并存是对的，别合并**：根目录那份管 `game/library/`、`game/temp/` 等
 （本来就是按「工程在 game/ 下」写的）；`game/.gitignore` 是 Cocos 编辑器维护的，动它下次会被改回来。
 
@@ -198,6 +217,64 @@ esbuild: { tsconfigRaw: '{"compilerOptions":{"target":"es2020"}}' },
 原来这里有一份「先 push → 备份孤儿拷贝 → clone → 启用 ignore → 删备份」的五步顺序。
 **2026-09-02 已全部执行完毕**，留个记号免得下轮以为还没做。
 本地那两份 `.unison-bak` 如果还在，确认 clone 内容齐了就可以删。
+
+#### §A7 · 分层落地验证（2026-09-02 备好探针，等你构建一次）
+
+**验的是什么**：`game/assets/logic/` 那 20 个纯 TS 文件，Cocos 的编译链吃不吃得下、
+打不打得进微信小游戏产物、跑出来的结果和我在服务器上跑的**是不是同一个数**。
+前两条过不了就走 §8 风险表的退路（logic 改成 outFile 预编译成 js）。
+
+**探针三件套**（我已写好并提交）：
+
+| 文件 | 作用 |
+|---|---|
+| `game/assets/scripts/a7-check.ts` | 纯 TS，零 `cc` 依赖。把 8 个 logic 模块各调一遍，输出 9 行 |
+| `game/assets/scripts/A7Probe.ts` | Cocos 组件，`start()` 里把那 9 行 `console.log` 出来 |
+| `tools/a7-expect.ts` | 同一份 `a7-check.ts` 在 Node 里跑。`pnpm a7` |
+
+关键在于**两边跑的是同一个文件**，所以判据不是「看着差不多」，是**逐字符相同**。
+
+**你要做的**（前提：§A2-fix 末尾那五步换副本已完成）：
+
+```
+① 编辑器打开 game/ → 它会给 assets/logic/ 和 assets/scripts/ 下的 .ts 生成 .meta → commit
+② 打开 test.scene，把 A7Probe 组件拖到任意一个节点上（挂哪个节点都行），保存场景
+③ 构建 → 微信开发者工具 → 看 console
+④ 把 console 里那 9 行原样贴给我
+```
+
+**期望输出**（`pnpm a7` 于 2026-09-02 实测，服务器 Node v24.19.0）：
+
+```
+A7_LOGIC_LINKED_KITCHEN_CHAOS
+types ing=8 cook=raw/rare/medium/well/burnt mood=8 station=fridge/grill/assembly/serve/sink
+recipe core=true cook=medium n=3
+order ok=true cookOk=true missing=[] forbidden=[]
+rng 7,70,90,97
+vec2/collision dist=5.000 rot=4.000,-3.000 hit=true reach=true
+difficulty lastDay=20 stars=3/6/8 got=3
+sim arrived=18 served=9 wrong=0 timedOut=9 burnt=0 peak=4 rate=0.5000
+A7_LOGIC_LINKED_KITCHEN_CHAOS DONE
+```
+
+**三层判据，从弱到强**：
+
+| 层 | 判据 | 过不了说明什么 |
+|---|---|---|
+| 1 | 产物里 `grep -r A7_LOGIC_LINKED_KITCHEN_CHAOS` 有命中 | 组件根本没编译进包 —— 多半是 `.meta` 没生成或组件没挂上 |
+| 2 | 产物里搜得到 `burnt` / `menacing` / `assembly` 这些 logic 独有的字面量 | 组件进了但 logic 被 tree-shake 掉了 |
+| 3 | console 那 9 行与 `pnpm a7` **逐字符相同** | 数字对不上 = Cocos 的编译链把 logic 编译成了另一个语义（浮点、装饰器、target 差异），这是最该怕的一种失败 |
+
+第 3 层是真正的价值所在：`sim` 那行跑的是完整一天的无头模拟（几千帧），
+它对得上，等于把 `logic/` 全部 8 个模块在真机运行时环境里过了一遍。
+
+**签收之后**：`A7Probe.ts` 从场景上摘掉即可，两个文件先留着 ——
+M2 换 Cocos 版本或改构建配置时重跑一遍最省事。
+
+⚠ **`pnpm a7` / `pnpm sim` 在服务器上曾经跑不起来**（`vite-node@6` 拉的是 `vite@8`，
+`vitest.config.ts` 里那条 `esbuild.tsconfigRaw` 对它无效）。已改成自愈：
+`tools/ensure-cocos-tsconfig.mjs` 在 `game/temp/tsconfig.cocos.json` 缺席时补一份最小版，
+由 `presim` / `prea7` 自动调起。**编辑器那份永远优先**，脚本只在文件不存在时才写。
 
 ---
 
@@ -500,74 +577,64 @@ Unity WASM 实测   首包 3-5MB  子包 7-15MB    wasmcode 10-25MB
 **所以分包策略必须在 M0 就定，不能拖到 M6 的适配阶段。** 好消息是顾客卡是最理想的分包对象——
 纯数据、非首屏必需，且 GDD 本来就有「天数推进」机制：**首包只带 300–500 张够玩前几天，其余按天解锁下载**。
 
-### 2.4a 空项目包体实测（A5 · 2026-09-02）
+### 2.4a 空项目包体实测（A5 · 2026-09-02 第二次构建，取代第一次）
 
-来源：`project/wechatgame-001/`（Cocos 3.8.8 空模板 + 一个 `test.scene`，真机已跑通）。
-判据脚本 `tools/pkgsize.ts`，跑法 `pnpm size [产物目录]`，孤儿 0 个。
+来源：`project/wechatgame/`（Cocos 3.8.8 空模板 + 一个 `test.scene`，真机已跑通）。
+判据脚本 `tools/pkgsize.ts`，跑法 `pnpm size`（默认就指这个目录），孤儿 0 个。
+产物 09-01 **09:01** 构建，工程配置最后一次改动在此之前 —— 这组数字**不再有时效问题**。
 
-> ⚠ **这组数字有时效**：产物是 09-01 **07:35 UTC** 构建的，而工程配置（`master` 分支的
-> `settings/v2/packages/engine.json`）是 **09:22 UTC** 提交的 —— **构建早于配置修改 1 小时 47 分**。
-> 配置里 `physics: false` / `physics-2d: false`，但产物的 `cc.js` 仍引用 `./physics-2d-box2d.js`，
-> 两边对不上，正是这个时间差造成的。**下次构建完再跑一遍 `pnpm size`，以那次为准。**
-
-| 项 | 实测 | 占比 | 说明 |
+| 项 | 09-01 07:35 构建 | 09-01 09:01 构建 | 变化 |
 |---|---|---|---|
-| **主包有效总量** | **2299.8 KB** | — | ✅ 红线 4096 / 安全线 3891 |
-| `cocos-js` | 862.5 KB | 38% | 见下「引擎插件」 |
-| `assets` | 1249.1 KB | 54% | **其中 850 KB 是默认天空盒** |
-| `src` | 30.0 KB | 1% | 空的，还没有游戏脚本 |
-| 外壳 / 适配 | 158.1 KB | 7% | `web-adapter` 88K + `first-screen` 20K + `engine-adapter` 20K + logo/slogan 27K |
+| **主包有效总量** | 2299.8 KB | **2428.0 KB** | +128 KB ✅ 红线 4096 / 安全线 3891 |
+| `cocos-js` | 862.5 KB（19 模块走插件） | **1844.3 KB（单体，0 插件）** | **+982 KB** |
+| `assets` | 1249.1 KB | **397.2 KB** | **−852 KB** |
+| `src` | 30.0 KB | 27.0 KB | — |
+| 外壳 / 适配 | 158.1 KB | 159.5 KB | — |
 
-**结论一：引擎比估的便宜得多。** 3.8.8 的构建产物里 `cc.js` 引用 25 个模块，其中 **19 个走
-`plugin:` 前缀的微信引擎插件（`wx0446ba2621dda60a`），不计入 4MB 主包**，只有 6 个是本地文件。
-上一版按 2D 项目外推的 2.2–2.8MB 是**没考虑引擎插件机制**的数，作废。
-⚠ 代价是首次进入要下载引擎插件——不吃主包配额，但**吃首屏时间**，M6 真机测首屏必须冷启动测。
+两笔近千 KB 的变化方向相反，净额只有 128 KB，**别被总量的平稳骗过去**。
 
-本地那 6 个模块，按「关掉它能省多少」（独占依赖，非文件自身大小）排：
+#### ✅ 解决了：850 KB 天空盒自己没了
 
-| 模块 | 独占量 | 我们用不用 |
+上一版记为「⏸ 不知道怎么去」的那两个 cubemap（`d032ac98…` 575.5 KB +
+`6f01cf7f…` 274.5 KB），**重新构建后不在包里了** —— `find assets -name "*d032ac98*"` 零命中。
+上一版的推断「它们是被依赖收集进来的，不是场景直接引用」得到印证：
+依赖关系一变（关模块 / 重新收集），它们就不再被收进来。
+`assets` 剩下的 397 KB 里 356 KB 是 `internal/import/06/06ba65fee.json`（内置 effect 合并 json，
+着色器，**死成本**），逻辑资源仍然只有几 KB。
+
+#### ✅ 解决了：2D 物理真的裁掉了
+
+`engine.json` 里关的 `physics` / `physics-2d` 这次生效了。判据是在单体 `cc.js` 里搜特征符号：
+`b2World` `b2Body` `box2d` `PhysicsSystem2D` `RigidBody2D` `physics-2d` 全部 **0 命中**，
+3D 的 `PhysicsSystem` `RigidBody` `ammo` `cannon` 也全 0。上一版预估的 406 KB 省下来了。
+
+#### ⏸ 待你确认：微信引擎插件这次没开
+
+上一次构建 `cc.js` 是 7.4 KB 的入口文件，引用 25 个模块、其中 19 个带 `plugin:cocos/` 前缀
+（走微信引擎插件 `wx0446ba2621dda60a`，**不计 4MB 主包**）。
+这一次 `cc.js` 是 **1.8 MB 的单体文件，`grep -c "plugin:cocos" = 0`** —— 引擎整个进了主包。
+
+**代价换算**：引擎 +982 KB，而中间还裁掉了 406 KB 物理，所以「不走插件」的真实成本约
+**1388 KB**。开回插件的话主包大约能回到 **1040 KB**，等于把红线余量从 1668 KB 拉到 3056 KB。
+
+| | 走引擎插件 | 不走（当前） |
 |---|---|---|
-| `physics-2d-box2d` | 364.8 KB | ❌ 不用。**配置里已关**（`engine.json` `physics-2d: false`），产物里还在是因为构建早于改配置 |
-| `custom-pipeline` | 193.0 KB | 待定，看烘焙 lightmap 走不走自定义管线 |
-| `animation` | 170.5 KB | ✅ 要 |
-| `skeletal-animation` | 9.2 KB | ✅ 要（角色） |
-| `affine-transform` | 1.7 KB | — |
-| `physics-2d-framework` | 1.1 KB | ❌ 随 box2d 一起走（另有 40 KB 共享 chunk 不计在这两行里） |
+| 主包 | ≈1040 KB | 2428 KB |
+| 首次进入 | 要下载引擎插件，**吃首屏时间** | 无额外下载 |
+| 可控性 | 插件版本跟微信走 | 引擎版本自己钉死 |
 
-**结论二：包体大头是看不见的天空盒。** `assets/main` 的 940 KB 里，逻辑资源只有 5 KB
-（`test.scene` + 默认物理材质 + 内置渲染管线），其余 **850 KB 是 3D 空模板自带的两张
-cubemap**（`d032ac98…` 575.5 KB + `6f01cf7f…` 274.5 KB，各 6 个面/mip）。
-**斜 45° 固定相机的室内厨房永远看不到天空盒**，而且场景里它已经是关的 —— 关了还进包，见下。
-另外 `assets/internal` 的 412 KB 里 347.7 KB 是内置 effect 合并 json（着色器），那个是死成本。
+**这是个决策，不是 bug，我不替你定。** 请你在 Cocos 构建面板里核一下
+「使用微信小游戏引擎插件」这一项这次是不是没勾 —— 如果是有意关的，把理由写进这一节；
+如果是手滑，下次构建勾回来再量一次。M6 真机测首屏必须冷启动测，那时候这笔账才算得准。
 
-**⏸ 两处可裁（合计 ~1256 KB，占当前包体 55%）：**
+#### 结论（按当前这次构建）
 
-| # | 动作 | 省 | 状态 |
-|---|---|---|---|
-| 1 | 去掉默认环境 cubemap | 850 KB | ❓ **不知道怎么去** —— 见下 |
-| 2 | 关掉 2D 物理模块 | 406 KB | ✅ **你已经在配置里关了**，只等重新构建生效 |
-
-第 2 项的 406 KB = `physics-2d-box2d.js` 365 KB + 共享 chunk 40 KB + framework 1 KB。
-上一版报的 365 KB 只算了「独占」文件，漏了 `physics-2d-framework-CVNkMl3f.js` 那 40 KB
-（它被 box2d 和 framework 共享，两边都不算独占）—— 两个模块一起关才是真实省量。
-
-**第 1 项是个没解决的问题，别当成待办勾掉。** 场景里 `cc.SkyboxInfo._enabled = false`、
-`_envmap` / `_diffuseMapHDR` 全是 `None`，**天空盒本来就是关的**，那 850 KB 照样进了 `main` bundle。
-所以「去场景里关掉 skybox」这个做法是无效的（上一版写错了，已改）。两个 uuid 的形态：
-
-| uuid | 量 | 判断 |
-|---|---|---|
-| `d032ac98-…` | 575.5 KB · 6 个面 | 环境反射 cubemap（specular） |
-| `6f01cf7f-…` | 274.5 KB · 6 个面 | 漫反射辐照度图（diffuse），分辨率明显低一档 |
-
-两个都不在 `main/config.json` 的 `paths` 里（那里只有 `test.scene`、
-`default-physics-material`、`builtin-forward` 三项），说明它们是**被依赖收集进来的**，
-不是场景直接引用。**下一步先重新构建看它还在不在** —— 配置改过之后可能已经不进包了，
-真还在再查是谁拉的（怀疑 `builtin-forward` 渲染管线，但没验证，不写成结论）。
-
-裁完引擎+资源死成本约 **1044 KB**，4096 KB 红线下**留给内容约 3050 KB** ——
-比上一版表格宽松得多（那版光 `cocos-js` 就估掉 2.2–2.8MB）。
-分包策略仍然要做（顾客卡 10000 张 ≈ 2MB 装不进主包），但**没有原先估的那么紧张**。
+- **引擎不便宜了**：上一版「3.8.8 引擎只占 862 KB」的结论**成立的前提是走引擎插件**。
+  不走插件时引擎 1844 KB，占主包 76%。两个数字都对，别混着引用。
+- **包体大头从资源转回引擎**：`assets` 397 KB 里 356 KB 是着色器死成本，
+  真正属于「我们的内容」的还是零。
+- 红线 4096 KB 下**留给内容约 1668 KB**（走插件则约 3056 KB）。
+  顾客卡 10000 张 ≈ 2MB，**当前配置下装不进主包，分包策略仍然要做**。
 
 ### 2.5 真瓶颈二：iOS 内存（最可能真机闪退的地方）
 
