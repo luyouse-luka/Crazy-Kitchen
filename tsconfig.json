@@ -18,6 +18,7 @@
     "game/assets/logic/**/*.ts",
     "game/assets/scripts/a7-check.ts",
     "tests/**/*.ts",
+    "pipeline/**/*.ts",
     "tools/**/*.ts",
     "vitest.config.ts"
   ]
