@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { createBurger, addIngredient, addCookedPatty, hasCore, cookLevelAt } from '../recipe'
-import type { CookWindows } from '../types'
+import { createBurger, addIngredient, addCookedPatty, hasCore, cookLevelAt } from '../game/assets/logic/recipe'
+import type { CookWindows } from '../game/assets/logic/types'
 
 /** M1 会扫这组参数，测试里固定一组好算的 */
 const windows: CookWindows = { rareAt: 3, mediumAt: 6, wellAt: 9, burntAt: 12 }

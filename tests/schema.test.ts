@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 // schema 声明的是 draft 2020-12，ajv 的默认入口只带 draft-07，必须走这个子入口
 import Ajv from 'ajv/dist/2020'
-import schema from '../../../../pipeline/customer.schema.json'
+import schema from '../pipeline/customer.schema.json'
 import cards from './fixtures/customers.json'
 
 /**

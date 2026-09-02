@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import cards from './fixtures/customers.json'
-import { validateOrderSpec } from '../order'
-import { LINE_LIMITS, MOODS, DONENESS } from '../types'
-import type { CustomerCard } from '../types'
+import { validateOrderSpec } from '../game/assets/logic/order'
+import { LINE_LIMITS, MOODS, DONENESS } from '../game/assets/logic/types'
+import type { CustomerCard } from '../game/assets/logic/types'
 
 /**
  * 手写夹具的守门测试。

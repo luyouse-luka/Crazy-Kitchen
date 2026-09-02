@@ -73,7 +73,7 @@
 | A4 构建 → 真机 | ✅ | `deviceOrientation: landscapeRight` ✓ · 设计分辨率 1280×720 ✓ |
 | **A5 包体真数** | ✅ **已刷新，不再过期** | **主包 2428.0 KB**（红线 4096）· `cocos-js` **1844.3 KB 单体、0 插件** · `assets` **397.2 KB**（850 KB 天空盒没了）· 孤儿 0。详见 §2.4a |
 | A6 AppID + 高性能 | 🟡 **两半都做了，等下次构建验证** | AppID `wx40db4a5ae317a9a5` 已进 `project.config.json` ✓ · 公众平台后台已开通生产提效包（你 09-02 确认）✓ · `game/build-templates/wechatgame/game.json` 模板已放 ✓。**判据：下次构建后产物 `game.json` 里要出现 `"iOSHighPerformance": true`** —— 没出现说明 build-templates 没被套用 |
-| A7 分层落地验证 | 🟡 **探针已就位，等你构建** | 三件套 + 期望输出 + 三层判据全在 **§A7** |
+| A7 分层落地验证 | 🟡 **第一次构建炸了，原因已修，等第二次** | 15:53 `buildScriptCommand failed with code -1` —— Cocos 把 `assets/` 下的 10 个测试文件也编译了，它们 import `vitest` / `ajv` / assets 外的 json。**已把 `__tests__/` 移到仓库根 `tests/`**，见 §3.1 那条。三件套 + 期望输出 + 三层判据在 **§A7** |
 
 `pnpm check` 全绿：铁律① 0 命中 · typecheck 无错 · **131 个测试通过**。
 `pnpm sim` 与 `pnpm a7` 在服务器上也都能跑了（修的是 `vite-node` 那个 tsconfig 坑，见 §A2-fix 补记）。
@@ -86,6 +86,8 @@ game/assets/scripts/A7Probe.ts       ← 新增 · A7 Cocos 组件（挂场景�
 tools/a7-expect.ts                   ← 新增 · 同一份探针在 Node 跑，pnpm a7
 tools/ensure-cocos-tsconfig.mjs      ← 新增 · 补 game/temp/tsconfig.cocos.json 占位
 game/build-templates/wechatgame/game.json  ← 新增 · A6 的 iOSHighPerformance（全量覆盖，见 §2.7）
+tests/                               ← 移动 · 从 game/assets/logic/__tests__ 搬出来，10 个测试 + fixtures
+vitest.config.ts                     ← 改 · include 指向 tests/
 tools/pkgsize.ts                     ← 改 · 默认路径 ../wechatgame；单体 cc.js 提示；私有配置不再误报孤儿
 package.json                         ← 改 · 加 a7 / prea7 / presim
 tsconfig.json                        ← 改 · include 收 a7-check.ts
@@ -98,8 +100,8 @@ ROADMAP.md                           ← 改 · 本段 + §2.4a 重写 + 新增 
 .gitignore · package.json · pnpm-workspace.yaml · tsconfig.json · vitest.config.ts
 game/                                                 ← Cocos 3.8.8 工程（编辑器开这一层）
 game/assets/logic/  types · vec2 · collision · recipe · order · rng · sim · difficulty · API.md
-game/assets/logic/__tests__/  上述各一份 .test.ts + fixtures + schema + memory（10 个 · 131 测试）
-game/assets/logic/__tests__/fixtures/customers.json   ← 21 张手写顾客卡
+tests/  上述各一份 .test.ts + fixtures + schema + memory（10 个 · 131 测试）
+tests/fixtures/customers.json                         ← 21 张手写顾客卡
 pipeline/  dimensions.json · customer.schema.json · README.md
 tools/sim-cli.ts · tools/pkgsize.ts                   ← pnpm sim / pnpm size
 docs/workflow-plan.html                               ← 线 A 的执行视图
@@ -114,7 +116,7 @@ docs/workflow-plan.html                               ← 线 A 的执行视图
 | 2 | Unison 两端 ignore | ✅ 生效 |
 | 3 | **`ANTHROPIC_API_KEY`** | ⛔ **仍未设置 —— 全项目当前最贵的一项** |
 | 4 | A6 `iOSHighPerformance` | 🟡 三处都齐了，**构建一次就能验**（和 A7 同一次构建） |
-| 5 | **A7：挂组件 + 构建一次** | ⬜ 四步，见 **§A7** |
+| 5 | **A7：pull → 挂组件 → 再构建一次** | 🟡 第一次构建的失败原因已修并推送，**先 `git pull` 再构建** |
 | 6 | **决策：微信引擎插件开不开** | ⏸ 这次构建没走插件，主包多了约 1388 KB。见 §2.4a |
 
 **为什么 3 排在工程任务前面**：线 A 卡住只是慢，C2 是方向闸门 —— 200 张卡约 $2.5，
@@ -718,8 +720,7 @@ project/kitchen-chaos/
 │  │  │  ├─ chaos.ts              混乱事件调度器
 │  │  │  ├─ economy.ts            金币、升级、解锁
 │  │  │  ├─ sim.ts                ★ 无头模拟器：不开引擎跑完整一局（见 M1）
-│  │  │  ├─ API.md                ★ 公开接口清单，我改接口必同步改它（见第六节）
-│  │  │  └─ __tests__/            vitest 单元测试
+│  │  │  └─ API.md                ★ 公开接口清单，我改接口必同步改它（见第六节）
 │  │  ├─ scripts/                 Cocos 组件：只做渲染 + 输入 + 调 logic
 │  │  ├─ scenes/                  场景（你在编辑器摆）
 │  │  ├─ prefabs/                 几何体角色、工位
@@ -733,13 +734,39 @@ project/kitchen-chaos/
 │  ├─ gen.ts · validate.ts        批量生成 / 校验
 │  └─ out/                        生成结果，验收通过才拷进 resources/
 │
-├─ vitest.config.ts               ← 指向 game/assets/logic/**/__tests__
+├─ tests/                         ★ vitest 单元测试 —— 必须在 assets/ 之外，见下
+│  ├─ *.test.ts                   import '../game/assets/logic/<模块>'
+│  └─ fixtures/customers.json     21 张手写顾客卡
+├─ vitest.config.ts               ← 指向 tests/**/*.test.ts
 ├─ package.json                   ← 仅供测试与管线用，不进 Cocos 构建
 ├─ GDD.md · ROADMAP.md · docs/
 ```
 
 > `package.json` / `vitest.config.ts` 放在**仓库根**而不是 `game/` 里，
 > 避免和 Cocos 自己的 `game/package.json` 打架。
+
+#### ⚠ 测试必须在 `assets/` 之外（2026-09-02 用一次构建失败换来的）
+
+上一版把 `__tests__/` 放在 `game/assets/logic/` 里面，**这会让构建直接失败**：
+
+```
+build task failed! Error: execute-task buildScriptCommand failed with code -1
+```
+
+**Cocos 编译 `assets/` 下的每一个 `.ts`，不区分它是不是测试。** 测试文件 import 的三样
+东西它全解析不了 —— `vitest`（devDependency，构建时不存在）· `ajv/dist/2020`（同上）·
+`'../../../../pipeline/customer.schema.json'`（**指向 `assets/` 之外，Cocos 不允许**）。
+
+所以规则是：**`assets/` 下只放「要跟着进包」的东西**。判据一条命令：
+
+```bash
+find game/assets -name '*.ts' -exec grep -h "from '" {} + | sed "s/.*from //" | sort -u
+# 只准出现相对路径和 'cc'。冒出任何裸包名或 ../../ 出 assets 的路径 = 下次构建会炸
+# （别写成 game/assets/**/*.ts —— bash 默认不开 globstar，那样只扫得到一层）
+```
+
+`logic/API.md` 留在 `assets/logic/` 里是**有意的**（接缝文档贴着代码才记得改）。
+Cocos 会给它生成 `.meta` 当未知资源导入，不引用就不进包 —— **这不是 bug，别去修**。
 
 ### 3.2 三条铁律，都能不开编辑器验证
 
@@ -855,7 +882,7 @@ project/kitchen-chaos/
 - [ ] `types.ts`（食材/订单/顾客卡/事件的全部数据结构）
 - [ ] `vec2.ts` + `collision.ts` + 单测
 - [ ] `recipe.ts` + `order.ts` + 单测：**把「一个汉堡怎么算做对了」写死并测通**
-- [ ] 手写 20 张顾客卡进 `__tests__/fixtures/`，让后面几个里程碑不必等内容管线
+- [ ] 手写 20 张顾客卡进 `tests/fixtures/`，让后面几个里程碑不必等内容管线
 - [ ] `API.md` 首版（见第六节的接口契约）
 
 #### 线 C · AI 顾客验证（我）—— ⛔ 这是 go/no-go 闸门
@@ -1291,7 +1318,7 @@ iOS 高性能模式免费、无 DAU 门槛、无主体限制；iOS 内存上限 
 | B2 | ✅ **已完成** 仓库根 `package.json` + `vitest.config.ts` + `tsconfig.json` + `pnpm-workspace.yaml`；`pnpm check` = 铁律① + typecheck + 测试 |
 | B3 | ✅ **已完成** `types.ts` · `vec2.ts` · `collision.ts` + 52 个单测（含 `rotateY` 相机相对映射、圆-AABB 角落不误判、推出后不再重叠） |
 | B4 | ✅ **已完成** `recipe.ts` · `order.ts` + 28 个单测（火候三档边界、required/banned 相交、错误项列全不短路） |
-| B5 | ✅ **已完成** `__tests__/fixtures/customers.json` —— **21 张**手写卡，8 种 mood 全覆盖，含一条 3 章 arc |
+| B5 | ✅ **已完成** `tests/fixtures/customers.json` —— **21 张**手写卡，8 种 mood 全覆盖，含一条 3 章 arc |
 | B6 | ✅ **已完成** `logic/API.md` 首版 |
 | B7 | ✅ **已完成（2026-08-07）** 本方案落盘 `project/kitchen-chaos/ROADMAP.md`；同步改 `GDD.md`（引擎/美术结案、竖屏→横屏）、修 `docs/ai-customer-v1.md` 失效清单 |
 

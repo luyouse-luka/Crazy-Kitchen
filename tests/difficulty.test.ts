@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { difficultyForDay, starsFor, LAST_DAY } from '../difficulty'
-import { runDay, defaultSimConfig } from '../sim'
+import { difficultyForDay, starsFor, LAST_DAY } from '../game/assets/logic/difficulty'
+import { runDay, defaultSimConfig } from '../game/assets/logic/sim'
 
 /**
  * 难度曲线是**标定出来的产物**（跑 `pnpm sim curve` 反复调参得到），

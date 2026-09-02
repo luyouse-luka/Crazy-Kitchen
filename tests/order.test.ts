@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { judge, validateOrderSpec } from '../order'
-import { createBurger, addIngredient, addCookedPatty } from '../recipe'
-import type { OrderSpec } from '../types'
+import { judge, validateOrderSpec } from '../game/assets/logic/order'
+import { createBurger, addIngredient, addCookedPatty } from '../game/assets/logic/recipe'
+import type { OrderSpec } from '../game/assets/logic/types'
 
 const spec = (over: Partial<OrderSpec> = {}): OrderSpec => ({
   required: ['bun', 'patty'],

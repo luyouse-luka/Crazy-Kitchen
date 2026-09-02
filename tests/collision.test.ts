@@ -5,9 +5,9 @@ import {
   circleOverlapsCircle,
   resolveCircleAABB,
   inTriggerRange,
-} from '../collision'
-import type { AABB } from '../collision'
-import type { Vec2 } from '../vec2'
+} from '../game/assets/logic/collision'
+import type { AABB } from '../game/assets/logic/collision'
+import type { Vec2 } from '../game/assets/logic/vec2'
 
 const v = (x: number, z: number): Vec2 => ({ x, z })
 const box = (cx: number, cz: number, hx: number, hz: number): AABB => ({

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createRng, reseed, nextFloat, nextInt, nextRange, pick, chance } from '../rng'
+import { createRng, reseed, nextFloat, nextInt, nextRange, pick, chance } from '../game/assets/logic/rng'
 
 describe('createRng / reseed', () => {
   it('同一 seed 给出同一序列 —— 参数扫描的两次跑必须可比', () => {

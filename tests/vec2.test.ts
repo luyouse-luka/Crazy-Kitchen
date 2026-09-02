@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { dist, dist2, set, copy, add, scale, lenSq, normalize, rotateY } from '../vec2'
-import type { Vec2 } from '../vec2'
+import { dist, dist2, set, copy, add, scale, lenSq, normalize, rotateY } from '../game/assets/logic/vec2'
+import type { Vec2 } from '../game/assets/logic/vec2'
 
 const v = (x: number, z: number): Vec2 => ({ x, z })
 

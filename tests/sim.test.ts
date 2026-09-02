@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { runDay, defaultSimConfig, createSimState, stepSim } from '../sim'
-import type { SimConfig } from '../sim'
+import { runDay, defaultSimConfig, createSimState, stepSim } from '../game/assets/logic/sim'
+import type { SimConfig } from '../game/assets/logic/sim'
 
 /** 在默认配置上改几个字段。默认值本身是 M1 要标定的东西，测试只依赖相对关系。 */
 const cfg = (over: Partial<SimConfig> = {}): SimConfig => ({ ...defaultSimConfig(), ...over })

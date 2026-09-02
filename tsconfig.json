@@ -17,6 +17,7 @@
   "include": [
     "game/assets/logic/**/*.ts",
     "game/assets/scripts/a7-check.ts",
+    "tests/**/*.ts",
     "tools/**/*.ts",
     "vitest.config.ts"
   ]

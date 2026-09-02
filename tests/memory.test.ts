@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createSimState, stepSim, defaultSimConfig, SIM_DT } from '../sim'
+import { createSimState, stepSim, defaultSimConfig, SIM_DT } from '../game/assets/logic/sim'
 
 /**
  * 铁律②：热路径零分配（ROADMAP §2.6 / §3.2）。
