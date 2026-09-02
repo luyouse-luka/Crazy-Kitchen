@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "check:no-engine": "! grep -rn \"from 'cc'\\|from \\\"cc\\\"\" game/assets/logic/ && echo 'OK: logic/ 零引擎依赖'",
     "check": "pnpm run check:no-engine && pnpm run typecheck && pnpm run test",
-    "sim": "vite-node tools/sim-cli.ts --"
+    "sim": "vite-node tools/sim-cli.ts --",
+    "size": "vite-node tools/pkgsize.ts --"
   },
   "devDependencies": {
     "ajv": "^8.20.0",

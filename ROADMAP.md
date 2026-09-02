@@ -47,20 +47,33 @@
 
 </details>
 
-## 📍 当前断点（2026-08-08 · 每轮收工更新这一段）
+## 📍 当前断点（2026-09-02 · 每轮收工更新这一段）
 
-**M0 线 B、线 C 的 C1、以及整个 M1 已完成。线 A 一步没动（那是你的活），C2 卡在 API key。**
+**A4 真机跑通了 —— 发布链路整条打通，M0 最容易卡三天的那一步过了。A5 包体数字已实测落盘（见 §2.4a）。
+剩下 A6 半步 + A7，以及 C2 那个 go/no-go 闸门仍卡在 API key。**
 
-**2026-08-08**：GitHub repo `luyouse-luka/Crazy-Kitchen` 已建，服务器端 remote 已配并验证连通，
-**但还没 push**（等你发话）。Unison 两端的 ignore 行仍需你手动拷 —— 服务器上的
-`.unison/` / `unison-setup/` 本身就在 ignore 列表里，我改了也传不过去。切换顺序有讲究，见下。
+**2026-09-02**：`../wechatgame-001/` 构建产物已随 Unison 传到服务器（`project/kitchen-chaos` 被 ignore
+了，但 `project/wechatgame-001` 不在 ignore 列表里，所以传得上来）。**这是好事**：以后每次构建完
+我都能直接 `pnpm size` 读真数，不用你抄。
 
 | | 状态 |
 |---|---|
-| **线 A（你）** | ⬜ 全部未开始。A1 的前置已备好（repo 已建 + remote 已配），见下方「需要你操作」 |
+| **线 A（你）** | 🟡 A1–A5 完成。A6 只做了一半（AppID 已填，iOS 高性能模式未开）；A7 未开始 |
 | **线 B（我）** | ✅ B1–B7 全部完成 |
 | **线 C（我）** | ✅ C1 完成（`pipeline/` 配置已重建）。⛔ **C2 卡在 `ANTHROPIC_API_KEY` 未设置** —— 这是 go/no-go 闸门，200 张卡约 $2.5 |
 | **M1（我）** | ✅ 全部完成。崩点、旋钮效力、20 天难度曲线都有实测数字，见 M1 那一节 |
+
+### 线 A 逐步核对（2026-09-02 从构建产物反查，不是听说）
+
+| 步 | 状态 | 判据实测 |
+|---|---|---|
+| A1 repo + remote | ✅ | 远端 `main` = 本地 `7f41f1c`，已同步 |
+| A2 clone + logic 挪回 | ❌ **没做** | 工程是**另起炉灶新建**的（`package.json` 名字还是 `NewProject`），push 成了**孤立分支 `master`**，与 `main` 无共同祖先。19 个文件里**没有 `assets/logic/`** |
+| A3 Cocos 3.8.x | ✅ | `game.json` 引擎插件版本 **3.8.8** |
+| A4 构建 → 真机 | ✅ | 你手机上看到场景。配置一并核过：`deviceOrientation: landscapeRight` ✓、设计分辨率 `1280×720` ✓ |
+| **A5 包体真数** | ✅ 数字有效但**已过期** | **主包 2299.8 KB**（红线 4096）· `cocos-js` **862.5 KB** · 详见 §2.4a。⚠ 产物是 09-01 **07:35** 构建的，工程配置 **09:22** 又改过（关了物理），**得重新构建再量一次** |
+| A6 AppID + 高性能 | 🟡 一半 | AppID `wx40db4a5ae317a9a5` 已填进构建 ✓；`game.json` **无 `iOSHighPerformance`** ❌ |
+| A7 分层落地验证 | ⬜ **被 A2 卡住** | 不是「还没写那个 import」—— 是 `logic/` 根本不在工程里。A2 不解决，A7 无从谈起 |
 
 `pnpm check` 全绿：铁律① 0 命中 · typecheck 无错 · **131 个测试通过** ·
 铁律② 10 万帧堆增长 −181KB（完全平坦）。
@@ -83,66 +96,77 @@ tools/sim-cli.ts                                      ← pnpm sim crash|sweep|c
 
 ### ⚠ 需要你操作的事
 
-1. **GitHub repo** —— ✅ **2026-08-08 已建**：`luyouse-luka/Crazy-Kitchen`。
-   服务器端 remote 已配好并验证连通（`git ls-remote` 通过），**尚未 push**。
+按「拦住的事最多」排。前两条已经在 2026-09-02 确认做完，留在这儿只为存判据。
 
-   ⚠ **remote URL 用的是 `github-luyouse-user`，不是你给的 `github.com`**，也不是本文档
-   之前写错的 `github-luyouse`。这台服务器上三个 host 各自绑不同身份，实测：
+| # | 事 | 状态 |
+|---|---|---|
+| 1 | GitHub repo + remote | 🟡 `main` 与本地 `7f41f1c` 一致，但**远端 `master` 是你 09-01 的 Cocos 工程**（`c340de8`，19 文件），与 `main` 无共同祖先 —— **两条历史要合，见下方 §A2-fix。别删 `master`，那是唯一一份工程** |
+| 2 | Unison 两端 ignore | ✅ 生效。服务器 `.unison/sync.prf` 与 `unison-setup/sync-server.prf` 各 1 处 `ignore = Path project/kitchen-chaos` |
+| 3 | **`ANTHROPIC_API_KEY`** | ⛔ **仍未设置 —— 全项目当前最贵的一项** |
+| 4 | A6 后半：iOS 高性能模式 | ⬜ `game.json` 里还没有 `iOSHighPerformance` |
+| 5 | A7：分层落地验证 | ⬜ 一个 import 的事，见 §A7 |
 
-   | Host | `ssh -T` 返回的身份 | 能不能用 |
-   |---|---|---|
-   | `github.com` | `Hi devmtc-1!` | ❌ 另一个账号 |
-   | `github-luyouse` | `Hi luyouse-luka/vue-taskHub!` | ❌ **仓库级 deploy key**，只对 vue-taskHub 有效 |
-   | `github-luyouse-user` | `Hi luyouse-luka!` | ✅ **账号级 key，跨仓库** |
+**为什么 3 排在工程任务前面**：线 A 卡住只是慢，C2 是方向闸门 —— 200 张卡约 $2.5，
+如果 AI 生成的顾客卡撑不起「场景即敌人」那套玩法，整个 GDD 要回炉。**三个月的账，别拿两块五赌。**
 
-   带斜杠的返回值（`账号/仓库名`）是 deploy key 的标志。所以：
+**`iOSHighPerformance` 怎么加**：构建产物的 `game.json` 是每次构建重新生成的，直接改会被覆盖。
+要在 Cocos 项目的 `build-templates/wechatgame/game.json` 里放模板，构建时会合并进去。
+连带一个已经定死的约束：**纹理格式只能 ASTC**（高性能模式不支持 ETC/PVRTC），
+这条反过来约束整条美术管线，M2 开始做资源前就得配好。
 
-   ```bash
-   git remote add origin git@github-luyouse-user:luyouse-luka/Crazy-Kitchen.git
-   ```
+#### §A2-fix · 两条历史怎么合（2026-09-02 发现，**当前最该先解决的事**）
 
-   > 同一个坑 ai-learning 项目已经踩过一次并纠正过（笔记原话：「SSH 别名是
-   > `github-luyouse-user`，不是笔记里写的 `github-luyouse`」），本文档 v1.3 又抄了错的那份。
+现状：远端有两个互不相干的分支。
 
-2. **应用 Unison ignore** —— 我只能改服务器上的**源副本**，实际生效的两份在你的机器上。
-   服务器上 `.unison/`、`unison-setup/`、`server-sync/` 三个目录**本身就在 ignore 列表里**，
-   所以我改了也不会自动同步过去，必须手动拷。
+| 分支 | 内容 | 结构 |
+|---|---|---|
+| `main` (`7f41f1c`) | 逻辑层 + 管线 + 文档，20+ 文件 | `game/assets/logic/` · `pipeline/` · `tools/` · `ROADMAP.md` |
+| `master` (`c340de8`) | Cocos 工程，19 文件 | **工程根就是仓库根**：`assets/` · `settings/` · `package.json` |
 
-   | 端 | 实际生效的文件 | 从服务器哪份拷 | 落地路径 |
-   |---|---|---|---|
-   | **WSL**（用户名 `luyouse`） | `~/.unison/sync.prf` | `/home/ly/.unison/sync.prf` | `/home/luyouse/project/kitchen-chaos` |
-   | **Windows** | `C:\Users\12255\.unison\sync-server.prf` | `/home/ly/unison-setup/sync-server.prf` | `C:\Users\12255\server-sync\project\kitchen-chaos` |
-
-   两份服务器源副本都已加 `ignore = Path project/kitchen-chaos`（已核实各 1 处命中）。
-   另外三份 prf 不受影响：`eurocave-sync.prf` 有 `path = project/EuroCave` 限定，
-   两份 `server-sync.prf` 的远端根是 `/home/ly/server-sync` 子目录，都够不着本项目。
-
-   ⚠ **拷之前先处理本地那份"孤儿拷贝"** —— ignore 生效前 Unison 一直在同步本项目，
-   所以上面两个落地路径下**已经各有一份没有 `.git` 的拷贝**（`.git` 本来就被 ignore）。
-   直接在原地 `git clone` 会因目录非空而失败。正确顺序见下。
-
-3. **`ANTHROPIC_API_KEY`** —— C2 生成 200 张卡要用。这是 M0 的 go/no-go 闸门，
-   比线 A 的任何一步都重要（工程卡住只是慢，方向错了是三个月）
-
-#### 切换到 git 工作流的正确顺序
-
-顺序错了会丢东西，按这个来：
+`git merge-base` 返回空 —— **两边没有共同祖先**，是各自 `git init` 出来的两棵树。
+方案 §3.1 要求的结构是「仓库根 = `main` 的样子，Cocos 工程放在 `game/` 子目录」，
+所以要把 `master` 那 19 个文件挪进 `game/`，与已有的 `game/assets/logic/` 并存：
 
 ```
-① 服务器 push（我来，等你说）
-       ↓
-② 本地把孤儿拷贝改名备份：project/kitchen-chaos → kitchen-chaos.unison-bak
-       ↓
-③ 本地 git clone git@github-luyouse-user:luyouse-luka/Crazy-Kitchen.git kitchen-chaos
-       ↓
-④ 确认 clone 出来的内容齐了，再启用两端的 ignore 行
-       ↓
-⑤ 确认之后才删 .unison-bak
+Crazy-Kitchen/
+├── game/                    ← Cocos 工程（用编辑器打开的是这一层）
+│   ├── assets/
+│   │   ├── logic/           ← main 带来的 20 个 .ts（编辑器会给它们生成 .meta，必须 commit）
+│   │   ├── test.scene
+│   │   ├── material.mtl
+│   │   ├── surface-effect.effect
+│   │   └── terrain.terrain
+│   ├── settings/
+│   ├── package.json         ← name 建议从 NewProject 改成 kitchen-chaos
+│   └── tsconfig.json
+├── pipeline/ · tools/ · ROADMAP.md · GDD.md · docs/
 ```
 
-**②③ 之间不要跑 Unison** —— 那会儿本地是空目录而服务器有文件，`prefer=newer` 会把整个项目
-重新灌回来，白忙。④ 放在 ③ 之后是因为：ignore 一旦生效，本地就再也拿不到服务器的更新了，
-必须先让 git 接上手。
+`master` 只有一个提交、没有值得保的历史，所以直接取内容、不做 merge 最干净：
+
+```bash
+git checkout main
+git archive origin/master | tar -x -C game/     # 19 个文件解到 game/
+git add game && git commit -m "feat(game): 并入 Cocos 3.8.8 工程到 game/"
+```
+
+⚠ **两个坑**：
+
+1. **`.gitignore`** —— `master` 根目录那份忽略的是 `library/ temp/ build/ profiles/ native`，
+   解到 `game/` 之后这些规则会**相对 `game/` 生效**，正好是我们要的。但根目录 `main` 那份
+   也有自己的规则，两份并存不冲突，**不要合并成一份**（Cocos 那份是编辑器维护的）。
+2. **`.meta` 必须 commit** —— 用编辑器打开 `game/` 后它会给 `assets/logic/` 下每个 `.ts`
+   生成 `.meta`，那里面存 uuid 映射。漏 commit 的话，场景里拖好的引用下次全变空。
+
+**你那边要做的**：确认 Windows 上的 Cocos 工程目录在哪、是不是就打算继续用它。
+合完之后工作副本要变成「clone `Crazy-Kitchen` → 用 Cocos 编辑器打开其中的 `game/` 子目录」。
+服务器这边我随时能执行上面三行，**等你一句话**。
+
+#### 已废弃：切换到 git 工作流的顺序
+
+原来这里有一份「先 push → 备份孤儿拷贝 → clone → 启用 ignore → 删备份」的五步顺序。
+**2026-09-02 已全部执行完毕**，留个记号免得下轮以为还没做。
+本地那两份 `.unison-bak` 如果还在，确认 clone 内容齐了就可以删。
 
 ---
 
@@ -428,12 +452,13 @@ Unity WASM 实测   首包 3-5MB  子包 7-15MB    wasmcode 10-25MB
 
 ### 2.4 真瓶颈一：包体
 
-3D 引擎是死成本，砍不动，其余全要挤。参考数字：Cocos 2D 项目优化后 `cocos-js` 约 1.64–1.68MB、
-主包 1.94–2.14MB；**3D 管线更重，`cocos-js` 预算按 2.2–2.8MB 估**（M0 要实测出真数）。
+3D 引擎是死成本，砍不动，其余全要挤。~~参考数字：Cocos 2D 项目优化后 `cocos-js` 约 1.64–1.68MB、
+主包 1.94–2.14MB；**3D 管线更重，`cocos-js` 预算按 2.2–2.8MB 估**~~ —— **A5 已实测，估高了 2.5 倍以上**，
+真数见下方 §2.4a，本节表格的 `cocos-js` 行已按实测改写。
 
 | 项 | 预算 | 备注 |
 |---|---|---|
-| `cocos-js`（3D 裁剪后） | 2.2–2.8MB | 死成本。裁掉物理、2D 粒子、Spine、GPU 粒子计算等未用模块 |
+| `cocos-js`（3D 裁剪后） | **0.86MB（实测）** | 死成本。3.8.8 起 19 个模块走微信**引擎插件**不计包体，只剩 6 个本地。仍可再裁 `physics-2d-box2d` 365KB |
 | 中文字体子集 | 0.3–0.8MB | ⚠ **整套中文字体 >10MB**，必须 fontmin 提字（减 80–90%） |
 | 3D 模型 | 0.5–1MB | 低模无贴图，20 物件 + 4 角色 |
 | 贴图 | <0.1MB | 卡通风格只需一张 512 调色板图集 |
@@ -443,6 +468,75 @@ Unity WASM 实测   首包 3-5MB  子包 7-15MB    wasmcode 10-25MB
 
 **所以分包策略必须在 M0 就定，不能拖到 M6 的适配阶段。** 好消息是顾客卡是最理想的分包对象——
 纯数据、非首屏必需，且 GDD 本来就有「天数推进」机制：**首包只带 300–500 张够玩前几天，其余按天解锁下载**。
+
+### 2.4a 空项目包体实测（A5 · 2026-09-02）
+
+来源：`project/wechatgame-001/`（Cocos 3.8.8 空模板 + 一个 `test.scene`，真机已跑通）。
+判据脚本 `tools/pkgsize.ts`，跑法 `pnpm size [产物目录]`，孤儿 0 个。
+
+> ⚠ **这组数字有时效**：产物是 09-01 **07:35 UTC** 构建的，而工程配置（`master` 分支的
+> `settings/v2/packages/engine.json`）是 **09:22 UTC** 提交的 —— **构建早于配置修改 1 小时 47 分**。
+> 配置里 `physics: false` / `physics-2d: false`，但产物的 `cc.js` 仍引用 `./physics-2d-box2d.js`，
+> 两边对不上，正是这个时间差造成的。**下次构建完再跑一遍 `pnpm size`，以那次为准。**
+
+| 项 | 实测 | 占比 | 说明 |
+|---|---|---|---|
+| **主包有效总量** | **2299.8 KB** | — | ✅ 红线 4096 / 安全线 3891 |
+| `cocos-js` | 862.5 KB | 38% | 见下「引擎插件」 |
+| `assets` | 1249.1 KB | 54% | **其中 850 KB 是默认天空盒** |
+| `src` | 30.0 KB | 1% | 空的，还没有游戏脚本 |
+| 外壳 / 适配 | 158.1 KB | 7% | `web-adapter` 88K + `first-screen` 20K + `engine-adapter` 20K + logo/slogan 27K |
+
+**结论一：引擎比估的便宜得多。** 3.8.8 的构建产物里 `cc.js` 引用 25 个模块，其中 **19 个走
+`plugin:` 前缀的微信引擎插件（`wx0446ba2621dda60a`），不计入 4MB 主包**，只有 6 个是本地文件。
+上一版按 2D 项目外推的 2.2–2.8MB 是**没考虑引擎插件机制**的数，作废。
+⚠ 代价是首次进入要下载引擎插件——不吃主包配额，但**吃首屏时间**，M6 真机测首屏必须冷启动测。
+
+本地那 6 个模块，按「关掉它能省多少」（独占依赖，非文件自身大小）排：
+
+| 模块 | 独占量 | 我们用不用 |
+|---|---|---|
+| `physics-2d-box2d` | 364.8 KB | ❌ 不用。**配置里已关**（`engine.json` `physics-2d: false`），产物里还在是因为构建早于改配置 |
+| `custom-pipeline` | 193.0 KB | 待定，看烘焙 lightmap 走不走自定义管线 |
+| `animation` | 170.5 KB | ✅ 要 |
+| `skeletal-animation` | 9.2 KB | ✅ 要（角色） |
+| `affine-transform` | 1.7 KB | — |
+| `physics-2d-framework` | 1.1 KB | ❌ 随 box2d 一起走（另有 40 KB 共享 chunk 不计在这两行里） |
+
+**结论二：包体大头是看不见的天空盒。** `assets/main` 的 940 KB 里，逻辑资源只有 5 KB
+（`test.scene` + 默认物理材质 + 内置渲染管线），其余 **850 KB 是 3D 空模板自带的两张
+cubemap**（`d032ac98…` 575.5 KB + `6f01cf7f…` 274.5 KB，各 6 个面/mip）。
+**斜 45° 固定相机的室内厨房永远看不到天空盒**，而且场景里它已经是关的 —— 关了还进包，见下。
+另外 `assets/internal` 的 412 KB 里 347.7 KB 是内置 effect 合并 json（着色器），那个是死成本。
+
+**⏸ 两处可裁（合计 ~1256 KB，占当前包体 55%）：**
+
+| # | 动作 | 省 | 状态 |
+|---|---|---|---|
+| 1 | 去掉默认环境 cubemap | 850 KB | ❓ **不知道怎么去** —— 见下 |
+| 2 | 关掉 2D 物理模块 | 406 KB | ✅ **你已经在配置里关了**，只等重新构建生效 |
+
+第 2 项的 406 KB = `physics-2d-box2d.js` 365 KB + 共享 chunk 40 KB + framework 1 KB。
+上一版报的 365 KB 只算了「独占」文件，漏了 `physics-2d-framework-CVNkMl3f.js` 那 40 KB
+（它被 box2d 和 framework 共享，两边都不算独占）—— 两个模块一起关才是真实省量。
+
+**第 1 项是个没解决的问题，别当成待办勾掉。** 场景里 `cc.SkyboxInfo._enabled = false`、
+`_envmap` / `_diffuseMapHDR` 全是 `None`，**天空盒本来就是关的**，那 850 KB 照样进了 `main` bundle。
+所以「去场景里关掉 skybox」这个做法是无效的（上一版写错了，已改）。两个 uuid 的形态：
+
+| uuid | 量 | 判断 |
+|---|---|---|
+| `d032ac98-…` | 575.5 KB · 6 个面 | 环境反射 cubemap（specular） |
+| `6f01cf7f-…` | 274.5 KB · 6 个面 | 漫反射辐照度图（diffuse），分辨率明显低一档 |
+
+两个都不在 `main/config.json` 的 `paths` 里（那里只有 `test.scene`、
+`default-physics-material`、`builtin-forward` 三项），说明它们是**被依赖收集进来的**，
+不是场景直接引用。**下一步先重新构建看它还在不在** —— 配置改过之后可能已经不进包了，
+真还在再查是谁拉的（怀疑 `builtin-forward` 渲染管线，但没验证，不写成结论）。
+
+裁完引擎+资源死成本约 **1044 KB**，4096 KB 红线下**留给内容约 3050 KB** ——
+比上一版表格宽松得多（那版光 `cocos-js` 就估掉 2.2–2.8MB）。
+分包策略仍然要做（顾客卡 10000 张 ≈ 2MB 装不进主包），但**没有原先估的那么紧张**。
 
 ### 2.5 真瓶颈二：iOS 内存（最可能真机闪退的地方）
 
@@ -1068,6 +1162,9 @@ iOS 高性能模式免费、无 DAU 门槛、无主体限制；iOS 内存上限 
 三条线同时起跑。**顺序在每条线内部有依赖，线与线之间没有——不要互相等。**
 
 ### 线 A · 你（Windows / 微信后台）
+
+> 状态不在这张表里维护，看「📍 当前断点」的逐步核对表 —— 两处都记就一定会有一处忘了改。
+> 截至 2026-09-02：A1–A5 ✅ · A6 一半 · A7/A8 未开始。
 
 | # | 做什么 | 卡住的话 |
 |---|---|---|
