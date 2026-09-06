@@ -11,7 +11,7 @@
 declare const process: { argv: string[]; exit(code?: number): void }
 declare const console: { log(...args: unknown[]): void }
 
-import { SPEC } from './scene-spec'
+import { SPEC, UI_SPEC } from './scene-spec'
 
 // @ts-expect-error Node builtin, typed locally — same stance as pkgsize.ts.
 import * as nodeFs from 'node:fs'
@@ -246,7 +246,32 @@ function main(): void {
     if (spec.pos && !same(n.pos, spec.pos)) diffs.push(`  ${n.name} Position ${fmt(n.pos)} ≠ 定稿 (${spec.pos.join(', ')})`)
     if (spec.scale && !same(n.scale, spec.scale)) diffs.push(`  ${n.name} Scale ${fmt(n.scale)} ≠ 定稿 (${spec.scale.join(', ')})`)
   })
-  const missing = Object.keys(SPEC).filter((k) => !seen.has(k))
+  walk(root, (n) => {
+    const ui = UI_SPEC[n.name]
+    if (!ui) return
+    seen.add(n.name)
+    let size: [number, number] | null = null
+    let mode = -1
+    for (const c of n.comps) {
+      const t = str(c['__type__'])
+      if (t === 'cc.UITransform') {
+        const cs = (c['_contentSize'] ?? {}) as Record<string, unknown>
+        size = [num(cs['width']), num(cs['height'])]
+      }
+      if (t === 'cc.Sprite') mode = num(c['_sizeMode'])
+    }
+    if (ui.size && size && (size[0] !== ui.size[0] || size[1] !== ui.size[1])) {
+      diffs.push(`  ${n.name} 尺寸 ${size[0]}×${size[1]} ≠ 定稿 ${ui.size[0]}×${ui.size[1]}`)
+    }
+    if (ui.sizeMode !== undefined && mode >= 0 && mode !== ui.sizeMode) {
+      diffs.push(`  ${n.name} Sprite SizeMode 不是 CUSTOM —— 填的尺寸会被图片顶回去`)
+    }
+    if (ui.pos && !same(n.pos, ui.pos)) {
+      diffs.push(`  ${n.name} Position ${fmt(n.pos)} ≠ 定稿 (${ui.pos.join(', ')})`)
+    }
+  })
+
+  const missing = [...Object.keys(SPEC), ...Object.keys(UI_SPEC)].filter((k) => !seen.has(k))
   const noScale = Object.entries(SPEC).filter(([, v]) => !v.scale).map(([k]) => k)
   if (missing.length > 0) console.log('  场景里还没有：', missing.join(' '))
   if (diffs.length > 0) console.log(diffs.join('\n'))

@@ -712,12 +712,17 @@ pnpm test          # 逻辑层没坏，才值得开编辑器
 
 **脚本改不了、必须你在编辑器里做的**（`pnpm scene` 会一直报到做完为止）：
 
-- `UI_HUD` 加 `UITransform`
-- `UI_Joystick` / `UI_ActionButton` 的 `Sprite` → `SizeMode` 改 `CUSTOM`，再设 180×180 / 160×160
-- `UI_ActionButton` 加 `Widget` 锚右下（`right = 120` `bottom = 120`）
-- 八个材质（色值见 §2.3）建好拖到各自的 `MeshRenderer` 上
-- `Body` / `Head` / `Shadow` 的 Scale
-- `Ortho Height`
+- **加组件** —— `UITransform` / `Widget` 这类要新增条目并重排引用 id，编辑器里点比脚本安全
+- **八个材质**（色值见 §2.3）建好拖到各自的 `MeshRenderer` 上
+- **`Body` / `Head` 的 Scale** —— 取决于内置 Capsule/Sphere 的默认尺寸，工程里没有这个数
+- **`Ortho Height`** —— 要看画面调
+
+组件加好之后，它身上的**数值**（`contentSize`、`SizeMode`、Transform）就归 `scene-spec.ts` 管了，
+跑 `pnpm scene:apply --write` 填，别手填 —— 手填的值没有判据守着，下次谁动了都不知道。
+
+> ⚠ `Sprite` 的 `SizeMode` 和 `contentSize` **必须一起改**。
+> SizeMode 不是 `CUSTOM` 时，编辑器一加载就拿图片尺寸把 `contentSize` 顶回去（内置白块是 40×36），
+> 只改尺寸等于没改。`sceneapply` 两个一起写，`scenedump` 两个一起查。
 
 直接把这几个数贴给我就行，**不用截图**——我读不了编辑器，但读得懂数字。
 拿到之后我写 `StationView` 组件把 `kitchen.ts` 的坐标接上。

@@ -32,7 +32,32 @@ export const SPEC: Record<string, NodeSpec> = {
   Body: { pos: [0, 0.6, 0] },
   Head: { pos: [0, 1.4, 0] },
   Anchor_Hand: { pos: [0, 1.75, 0] },
-  Shadow: { pos: [0, 0.01, 0] },
+  // Plane 的内置 mesh 默认边长 10m（实测确认：scale=1 时它盖住了整个 8×6 地板），
+  // 所以 0.08/0.06 出来是 0.8 × 0.6 米 —— 比玩家直径 0.7 略大一圈
+  Shadow: { pos: [0, 0.01, 0], scale: [0.08, 1, 0.06] },
+}
+
+// ─────────────────────────── UI ───────────────────────────
+
+export interface UiSpec {
+  /** UITransform 的 contentSize */
+  size?: [number, number]
+  /** cc.Sprite.SizeMode：0 CUSTOM / 1 TRIMMED / 2 RAW。不是 CUSTOM 的话 size 会被图片顶回去 */
+  sizeMode?: number
+  pos?: [number, number, number]
+}
+
+/**
+ * 设计分辨率 1280×720，Canvas 锚点在中心，所以 x∈[-640,640] y∈[-360,360]。
+ * 摇杆 180 = DEFAULT_STICK.radius(90) 的两倍（API.md 的 input.ts 一节）。
+ *
+ * 位置只写 UI_HUD 的 —— 另两个一个是浮动（运行时移到手指位置）、
+ * 一个由 Widget 锚定，编辑器里的 position 运行时都会被覆盖。
+ */
+export const UI_SPEC: Record<string, UiSpec> = {
+  UI_Joystick: { size: [180, 180], sizeMode: 0 },
+  UI_ActionButton: { size: [160, 160], sizeMode: 0 },
+  UI_HUD: { size: [1280, 720], pos: [0, 0, 0] },
 }
 
 /** cc.Camera.ClearFlag。SKYBOX(14) 是新建场景的默认值，正是它把天空盒拉进包里 */

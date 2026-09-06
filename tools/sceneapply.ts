@@ -13,7 +13,7 @@
 declare const process: { argv: string[]; exit(code?: number): void }
 declare const console: { log(...args: unknown[]): void }
 
-import { SPEC, RENAMES, CLEAR_SKYBOX, CLEAR_SOLID_COLOR } from './scene-spec'
+import { SPEC, UI_SPEC, RENAMES, CLEAR_SKYBOX, CLEAR_SOLID_COLOR } from './scene-spec'
 
 // @ts-expect-error Node builtin, typed locally — same stance as pkgsize.ts.
 import * as nodeFs from 'node:fs'
@@ -96,6 +96,44 @@ function main(): void {
       if (sc && !eq(sc, spec.scale)) {
         changes.push(`缩放  ${name.padEnd(18)} ${fmt(sc)} → (${spec.scale.join(', ')})`)
         setVec(sc, spec.scale)
+      }
+    }
+  }
+
+  // ── UI：UITransform 的尺寸 + Sprite 的 SizeMode
+  // 两者必须一起改：SizeMode 不是 CUSTOM 时，编辑器一加载就拿图片尺寸把 contentSize 顶回去，
+  // 只改尺寸等于没改。（在 JSON 里两个字段谁先谁后无所谓，都是静态数据。）
+  for (const e of all) {
+    if (e['__type__'] !== 'cc.Node') continue
+    const name = str(e['_name'])
+    const ui = UI_SPEC[name]
+    if (!ui) continue
+    const comps = Array.isArray(e['_components']) ? (e['_components'] as unknown[]) : []
+    const own = comps
+      .filter((r): r is { __id__: number } => typeof r === 'object' && r !== null && typeof (r as { __id__?: unknown }).__id__ === 'number')
+      .map((r) => all[r.__id__])
+      .filter((c): c is Entry => c !== undefined)
+
+    if (ui.pos) {
+      const p = asVec(e['_lpos'])
+      if (p && !eq(p, ui.pos)) {
+        changes.push(`位置  ${name.padEnd(18)} ${fmt(p)} → (${ui.pos.join(', ')})`)
+        setVec(p, ui.pos)
+      }
+    }
+    for (const c of own) {
+      if (c['__type__'] === 'cc.Sprite' && ui.sizeMode !== undefined && num(c['_sizeMode']) !== ui.sizeMode) {
+        const was = ['CUSTOM', 'TRIMMED', 'RAW'][num(c['_sizeMode'])] ?? '?'
+        changes.push(`UI    ${name.padEnd(18)} Sprite SizeMode ${was} → CUSTOM`)
+        c['_sizeMode'] = ui.sizeMode
+      }
+      if (c['__type__'] === 'cc.UITransform' && ui.size) {
+        const cs = c['_contentSize'] as Record<string, unknown> | undefined
+        if (cs && (num(cs['width']) !== ui.size[0] || num(cs['height']) !== ui.size[1])) {
+          changes.push(`UI    ${name.padEnd(18)} 尺寸 ${num(cs['width'])}×${num(cs['height'])} → ${ui.size[0]}×${ui.size[1]}`)
+          cs['width'] = ui.size[0]
+          cs['height'] = ui.size[1]
+        }
       }
     }
   }
