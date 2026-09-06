@@ -1,4 +1,4 @@
-# `logic/` 公开接口清单 · v0.2（2026-08-07）
+# `logic/` 公开接口清单 · v0.3（2026-09-06）
 
 `logic/` 是**服务器侧的代码**与**你的 Cocos 组件**之间唯一的接缝，接缝要有文档。
 
@@ -25,6 +25,7 @@
 | `sim.ts` | **M1 无头模拟器**（不进包体的部分只有 `tools/sim-cli.ts`，这个文件本身零依赖可打包） |
 | `difficulty.ts` | **难度曲线表**：第 1→20 天的参数与三星线 |
 | `input.ts` | **M2 输入层**：多点触摸路由、浮动摇杆、点按/长按、相机相对映射 |
+| `kitchen.ts` | **M2 厨房状态机**：手持、工位交互、烤炉计时 |
 
 **尚未建**（按里程碑排）：`customer.ts`（M2 顾客状态机）· `movement.ts`（M2 角色移动，把 input + collision 串起来）·
 `chaos.ts`（M4 混乱事件调度）· `economy.ts`（M4 金币/升级/解锁）。
@@ -256,6 +257,65 @@ stickToVelocity(out, stick, cameraYaw, speed): boolean   // 带 magnitude，回�
 **已经处理掉的坑**（别在组件里重复解决）：拇指划过屏幕中线不会让摇杆失灵（归属按下时定死，
 之后只认 id）· 第三根手指不会抢走已在推的摇杆 · 斜推到角落 `magnitude` 不会超过 1 ·
 按下不动不产生 NaN · 来电/切后台后摇杆不会卡在最后方向（前提是组件挂了 `cancelAll`）。
+
+---
+
+## `kitchen.ts`
+
+```ts
+// 手持：同时只能拿一样
+type CarryKind = 'none' | 'ingredient' | 'patty' | 'plate'
+interface Carry { kind: CarryKind; ingredient: Ingredient; cook: CookLevel }
+
+interface GrillSlot { busy: boolean; elapsed: number }
+
+interface KitchenConfig { stations: Station[]; cook: CookWindows; grillSlots: number }
+interface KitchenState {
+  t: number
+  carry: Carry
+  grill: GrillSlot[]
+  burger: Burger            // 唯一一个在制汉堡，预分配
+  assemblyOccupied: boolean // 与 carry.kind === 'plate' 互斥
+  cfg: KitchenConfig
+}
+
+createKitchen(cfg): KitchenState
+stepKitchen(st, dt)                       // 每帧一次，只推进烤炉
+grillCookLevel(st, slot): CookLevel       // UI 画火候条
+stationInReach(st, pos): Station | null   // 每帧一次，「进范围 → 提示」
+
+// 一个动作键的全部去处，按 station.kind 分派
+interact(st, playerPos, station, req?): InteractResult
+discard(st): InteractResult               // 烤糊的肉唯一的出路
+
+interface InteractRequest {
+  ingredient?: Ingredient   // fridge：取哪样
+  slot?: number             // grill：取哪位，省略 = 烤最久的那块
+  spec?: OrderSpec          // serve：判定依据
+}
+interface InteractResult {
+  kind: 'take-ingredient' | 'place-patty' | 'take-patty' | 'add-to-burger'
+      | 'pick-plate' | 'put-plate' | 'serve' | 'discard' | 'blocked'
+  reason: BlockReason       // 'none' | 'out-of-range' | 'hands-full' | 'grill-full' | …
+  verdict: OrderVerdict | null   // 只有 serve 有
+  slot: number                   // 只有烤炉有
+}
+```
+
+**组件那边只做三件事**：每帧 `stepKitchen(dt)` + `stationInReach()` 决定要不要显示提示 ·
+动作键按下时把够得着的那个 station 交给 `interact()` · 按 `result.kind` 播动画、
+按 `result.reason` 弹提示。**规则一条都别在组件里重写。**
+
+⚠ **烤糊的肉留在炉上**，与 `sim.ts` 不同 —— 那边的理想厨师不会让它糊，直接删掉了事；
+真人得走过去端下来 `discard()`，M4 的起火链就挂在这个占着不放的烤位上。
+
+⚠ **`interact` 不认输入映射**。「冰箱怎么选食材」（8 种食材只有一个 `Station_Fridge`）
+和「丢弃怎么触发」都是 UI 决策，还没定 —— 见 ROADMAP §M2 待决。
+
+**已经锁在测试里的**（29 个用例）：同时只能拿一样 · 冰箱拿的生肉也是 `kind: 'patty'` ·
+边界上算够得着 · 烤位满了不吞肉 · 烤过的不能回炉 · 不指定烤位取最久那块 ·
+重复食材挡下且东西还在手上 · 汉堡不会同时在手上和台上 · 缺骨架的半成品交不出去 ·
+送完手和台子都清空。
 
 ---
 

@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { createSimState, stepSim, defaultSimConfig, SIM_DT } from '../game/assets/logic/sim'
+import { createKitchen, stepKitchen, stationInReach } from '../game/assets/logic/kitchen'
+import type { Station } from '../game/assets/logic/types'
 
 /**
  * 铁律②：热路径零分配（ROADMAP §2.6 / §3.2）。
@@ -39,6 +41,51 @@ describe('铁律② · 热路径零分配', () => {
     const before = heapAfterGc()
     for (let i = 0; i < FRAMES; i++) stepSim(state, SIM_DT)
     const after = heapAfterGc()
+
+    const grownMB = (after - before) / MB
+    expect(grownMB, `10000 帧后堆增长 ${grownMB.toFixed(2)}MB`).toBeLessThan(2)
+  })
+
+  it('厨房状态机跑 10000 帧同样平坦（stepKitchen + 每帧的工位提示查询）', () => {
+    const station = (id: string, kind: Station['kind'], x: number, z: number): Station => ({
+      id,
+      kind,
+      pos: { x, z },
+      box: { center: { x, z }, halfX: 0.5, halfZ: 0.5 },
+      triggerRange: 1.5,
+    })
+    const st = createKitchen({
+      stations: [
+        station('Station_Fridge', 'fridge', -3, 2),
+        station('Station_Grill', 'grill', 0, 2),
+        station('Station_Assembly', 'assembly', 3, 2),
+        station('Station_Serve', 'serve', 3, -2),
+      ],
+      cook: { rareAt: 3, mediumAt: 6, wellAt: 9, burntAt: 13 },
+      grillSlots: 2,
+    })
+    st.grill[0]!.busy = true
+    st.grill[1]!.busy = true
+
+    // 玩家位置每帧都在动 —— stationInReach 是每帧调用的，别只测 stepKitchen
+    const pos = { x: 0, z: 0 }
+    // 返回值必须被用掉 —— 丢弃的话 V8 可能把整个调用优化没，这条就成了测空气
+    let hits = 0
+    const run = (n: number): void => {
+      for (let i = 0; i < n; i++) {
+        pos.x = Math.sin(i * 0.01) * 4
+        pos.z = Math.cos(i * 0.01) * 3
+        stepKitchen(st, SIM_DT)
+        if (stationInReach(st, pos) !== null) hits++
+      }
+    }
+
+    run(2000)
+    const before = heapAfterGc()
+    run(FRAMES)
+    const after = heapAfterGc()
+
+    expect(hits, 'stationInReach 一次都没命中 → 这条测的是没进过循环体的空路径').toBeGreaterThan(0)
 
     const grownMB = (after - before) / MB
     expect(grownMB, `10000 帧后堆增长 ${grownMB.toFixed(2)}MB`).toBeLessThan(2)
