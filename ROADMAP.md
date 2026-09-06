@@ -47,22 +47,42 @@
 
 </details>
 
-## 📍 当前断点（2026-09-02 第四轮 · 每轮收工更新这一段）
+## 📍 当前断点（2026-09-06 第五轮 · 每轮收工更新这一段）
 
-**线 A 全部完成（A1–A8），发布链路整条通了。现在唯一的主线是 C2 ——
-方向闸门，200 张顾客卡读完才知道这个游戏的灵魂在不在。
-`ANTHROPIC_API_KEY` 一直没有，所以改走「对话里的 Opus 5 直接写」这条路，
-已写 25/200，**下次开工第一件事：ly 读这 25 张打分**（`pipeline/handwritten/cards.json`）。**
+**⛔ M0 的 go/no-go 闸门在 2026-09-06 通过了。** ly 读完 `pipeline/handwritten/cards.json`
+那 25 张，结论是「基本没什么问题，可以继续进行」。**方向成立，可以建厨房了。**
 
-**⏸ 2026-09-02 第四轮：三线并行中。**
-① 🔴 **ly 读 25 张给结论** —— 唯一阻塞项，其余都替代不了它
-② 🟡 ly 在 Cocos：发布路径改 `..\..\wechatgame` · 引擎插件 A/B 各构建一次
-③ 🟢 我：C2 闸门期间做**不受闸门约束**的活 —— 闸门挡的是「建厨房」的美术沉没成本，
-   而角色怎么走路跟顾客卡好不好笑无关，顾客系统推翻重设计也一行不用改。
-   已完成 `logic/input.ts`（M2 输入层）。
+**手写路线就停在 25 张，不续写到 200。** 闸门要的是方向答案，已经拿到；而三条判据里的
+「重复感衰减点 ≥50 张」在同对话手写这条路上**永远测不准**（模型记得前面写过什么、会主动
+避重复，论证见 `pipeline/handwritten/README.md`），再写 175 张也换不到那个数，只换到内容。
+内容量产是 M5 的事 —— 那时用 key 花 $2.5 拿 200 次互不知情的独立调用，分布还更真实。
+现有 25 张 + `tests/fixtures/customers.json` 的 21 张 = **46 张**，撑到 M5 绰绰有余。
 
-结论回来之后：方向对就续写 c_0026–c_0200，不对就改 `pipeline/prompt.ts` 重来
-（手写路线返工不花钱，这是它相对 Batch 的唯一优势，用足它）
+**⏸ 2026-09-06 第五轮：主线转 M2 垂直切片。**
+① 🟡 **ly 在 Cocos**：对着 `docs/m2-scene-guide.md` 搭场景（相机 / 几何厨房 / 几何角色 /
+   Blob Shadow），摆完把 §12 那四组数贴给我
+② 🟢 **我**：`logic/kitchen.ts` 已落地（手持 + 工位交互 + 烤炉，29 测试）。
+   接下来是顾客状态机 `customer.ts` + 台词 UI 逻辑 + 金币结算
+③ ⏰ **游戏名有外部时钟** —— M2 出口要定死并提软著，等 6–12 周。M2 排 2–3 周，
+   所以**大约 9 月底到 10 月初必须定名**
+
+### 相机方向复议（2026-09-06，维持原判）
+
+ly 问「相机固定在第一人称是不是难度几何上升」。**是，但难度不是问题，换掉的是游戏类型** ——
+这游戏要的焦虑是「我知道烤炉要糊了，但我人在冰箱前」（信息全知、手不够用），
+第一人称给的是「烤炉糊了我不知道」（信息缺失）。后者玩家不会觉得是自己的错。
+
+反对它的硬证据是**本项目自己跑出来的**：M1 实测「烤炉不是瓶颈，跑腿才是」。
+跑腿已经是最堵的一段，第一人称在它前面又加一道「先转身找到目标」。
+
+连带会崩的：刚验收的顾客卡（`greet`/`order`/`wait_nudge` 是文字，背对顾客区就读不到）·
+已定项「左拇指摇杆 + 右拇指交互键」（右手要让给转视角）· §2.3 白拿的东西全部还回去 ·
+手机高频转身的晕动症。旁证：VR 厨房游戏（*Job Simulator* / *Cook-Out*）无一例外
+把同时管理的工位数从 4 个砍到 1–2 个 —— 第一人称下盯四个灶台不是更难，是不可行。
+
+**想要的「临场感」在斜 45° 上也拿得到**：着火时屏幕震动 + 边缘泛红 · 油烟局部糊住一小块 ·
+相机轻微跟随（已定项本来就允许）· **过场用第一人称**（顾客点单时切近景读那句 `order`，
+读完切回俯视）—— 最后这条反而让 200 张卡的台词有了表演空间，成本只是一个相机动画。
 
 **产物目录换了名**：`../wechatgame-001/` → **`../wechatgame/`**（Unison 传上来的），
 `pnpm size` 的默认路径已跟着改，直接跑不带参数就行。
@@ -70,8 +90,9 @@
 | | 状态 |
 |---|---|
 | **线 A（你）** | ✅ **A1–A8 全部完成**（A7 于 09-02 16:27 签收，A8 见下面测试机那节） |
-| **线 B（我）** | ✅ B1–B7 全部完成 · **M2 输入层已提前落地**（`logic/input.ts`，23 测试） |
-| **线 C（我）** | ✅ C1 完成 · C2 脚本已写完（`pipeline/gen.ts` + `validate.ts`，等 key）· **C2 手写路线进行中 25/200**，见 `pipeline/handwritten/README.md` |
+| **线 B（我）** | ✅ B1–B7 全部完成 · **M2 输入层 + 厨房状态机已落地**（`logic/input.ts` 23 测试 · `logic/kitchen.ts` 29 测试） |
+| **线 C（我）** | ✅ **C1 + C2 全部完成，闸门已过**。25 张手写卡是最终交付量，脚本路线（`gen.ts` + `validate.ts`）留给 M5 扩产 |
+| **M0** | ✅ **出口已过**（2026-09-06） |
 | **M1（我）** | ✅ 全部完成，数字见 M1 那一节 |
 
 ### 线 A 逐步核对（2026-09-02 从新构建产物反查，不是听说）
@@ -86,8 +107,27 @@
 | **A6 AppID + 高性能** | ✅ **2026-09-02 通过** | 产物 `game.json` 实测含 `"iOSHighPerformance": true`，同时含 wasm 分包的 `subpackages`（正是它证明 build-templates 那条路必须撤销，见 §2.7） |
 | **A7 分层落地验证** | ✅ **2026-09-02 16:27 通过** | 微信运行时那 9 行与 `pnpm a7` **MD5 逐字节相同**（`654c5450…`）。含完整一天无头模拟的累积结果，语义零漂移。第一次构建失败的原因见 §3.1「测试必须在 assets 之外」 |
 
-`pnpm check` 全绿：铁律① 0 命中 · typecheck 无错 · **131 个测试通过**。
+`pnpm check` 全绿：铁律① 0 命中 · typecheck 无错 · **184 个测试通过**（12 个文件）。
 `pnpm sim` 与 `pnpm a7` 在服务器上也都能跑了（修的是 `vite-node` 那个 tsconfig 坑，见 §A2-fix 补记）。
+
+**第五轮新增/改动**（`project/kitchen-chaos/` 下）：
+
+```
+game/assets/logic/kitchen.ts   ← 新增 · M2 厨房状态机：手持 + 工位交互 + 烤炉计时
+tests/kitchen.test.ts          ← 新增 · 29 个单测
+tests/memory.test.ts           ← 改 · 加一条 kitchen 热路径零分配（含「返回值必须被用掉」的守卫）
+game/assets/logic/API.md       ← 改 · 加 kitchen.ts 一节，v0.2 → v0.3
+ROADMAP.md                     ← 改 · 本段 + 相机复议 + M2 清单勾三条 + 修两处过期数字
+```
+
+⚠ **两处 UI 决策还没定，`kitchen.ts` 有意没替它们做主**（铁律⑳：这算决策不算还原）：
+
+1. **冰箱怎么选 8 种食材** —— 场景里只有一个 `Station_Fridge`。三个候选：走近后摇杆临时改作
+   选择器 · 弹一个食材轮盘 · 按当前订单自动给「还缺的下一样」。
+   ⚠ **第三个会剥夺「拿错」这条失败路径**，「我都说了不要洋葱」那类笑点会跟着消失
+2. **丢弃怎么触发** —— 烤糊的肉只有 `discard()` 一条出路，是空地长按还是加个垃圾桶工位，未定
+
+`interact()` 不认输入映射，上面两条定了之后只改组件，逻辑层一行不用动。
 
 **第四轮新增/改动**（`project/kitchen-chaos/` 下）：
 
@@ -127,8 +167,8 @@ ROADMAP.md                           ← 改 · 本段 + §2.4a 重写 + 新增 
 ```
 .gitignore · package.json · pnpm-workspace.yaml · tsconfig.json · vitest.config.ts
 game/                                                 ← Cocos 3.8.8 工程（编辑器开这一层）
-game/assets/logic/  types · vec2 · collision · recipe · order · rng · sim · difficulty · API.md
-tests/  上述各一份 .test.ts + fixtures + schema + memory（10 个 · 131 测试）
+game/assets/logic/  types · vec2 · collision · recipe · order · rng · sim · difficulty · input · kitchen · API.md
+tests/  上述各一份 .test.ts + fixtures + schema + memory（累计 12 个文件 · 184 测试）
 tests/fixtures/customers.json                         ← 21 张手写顾客卡
 pipeline/  dimensions.json · customer.schema.json · README.md
 tools/sim-cli.ts · tools/pkgsize.ts                   ← pnpm sim / pnpm size
@@ -140,10 +180,12 @@ docs/workflow-plan.html                               ← 线 A 的执行视图
 | # | 事 | 状态 |
 |---|---|---|
 | 0 | **换工作副本**（合并的后半截） | ✅ **已完成** —— A7 能跑出那 9 行就是它完成的铁证（你工程里确实有 `logic/` 了）。`.unison-bak` 备份可删 |
-| 1 | **push 到 GitHub** | 🟡 本地领先 `origin/main` **3 个提交**（`6efadb0` `24a6c36` `e0b89b8`）+ 本轮这批。远端无独有提交，工作区干净，是直进（fast-forward）。**等你说推我再推**。`origin/master` 合完已无用，可删 |
+| 1 | **push 到 GitHub** | ✅ **已完成**。`origin/main` = `b852eea`，`git rev-list --count origin/main..main` = 0，reflog 记着 `update by push`。`origin/master` 合完已无用，可删 |
 | 2 | Unison 两端 ignore | ✅ 生效 |
-| 3 | **读 25 张卡打分** | 🔴 **下次开工第一件事**。`pipeline/handwritten/cards.json`，判据三条见 `pipeline/README.md`。这是 go/no-go 闸门 |
-| 3b | `ANTHROPIC_API_KEY` | ⏸ **不再是阻塞**。手写路线能走完 200 张做决策；key 真正必需的时机是 M5 扩产到 2000–10000 张。要用就 `pnpm gen sample 3` 先花几分钱看质量 |
+| 3 | **读 25 张卡打分** | ✅ **2026-09-06 通过** —— 「基本没什么问题，可以继续进行」。手写路线到此为止，不写 c_0026–c_0200 |
+| 3b | `ANTHROPIC_API_KEY` | ⏸ **不是阻塞**。真正必需的时机是 M5 扩产到 2000–10000 张。要用就 `pnpm gen sample 3` 先花几分钱看质量 |
+| 8 | ⏰ **定游戏名** | 🟡 **有外部时钟**：M2 出口要定死并提软著，等 6–12 周 → 约 **9 月底至 10 月初**。候选：疯狂后厨 / AI后厨 / 神经病餐厅 / 厨神营业中 |
+| 9 | 搭 M2 场景 | 🟡 对着 `docs/m2-scene-guide.md` 做，摆完把 §12 那四组数贴给我，我写 `StationView` 组件 |
 | 4 | A6 `iOSHighPerformance` | ✅ **已通过** |
 | 5 | A7 | ✅ **已通过**。可以把 `A7Probe` 从场景上摘掉了（组件那栏右上角三点 → 移除组件），两个文件留着，M2 换版本时重跑 |
 | 6 | **决策：微信引擎插件开不开** | ⏸ 这次构建没走插件，主包多了约 1388 KB。见 §2.4a |
@@ -1091,9 +1133,13 @@ Cocos 会给它生成 `.meta` 当未知资源导入，不引用就不进包 —�
       —— 🟡 逻辑层 `logic/input.ts` 已完成（23 个单测），等组件接线
 - [x] 移动走**相机相对映射**（见下方坑）
       —— 🟡 `stickToWorld` / `stickToVelocity` 已完成。**yaw 的符号必须真机验**，见 `API.md`
-- [ ] 手持系统：同时只能拿一样，头顶显示持有物
-- [ ] 工位交互：进入触发范围 → 提示 → 按键取放
-- [ ] 烤炉火候计时（三档：生 / 刚好 / 糊）
+- [x] 手持系统：同时只能拿一样，头顶显示持有物
+      —— 🟡 `logic/kitchen.ts` 的 `Carry` 已完成，头顶显示是组件侧的事
+- [x] 工位交互：进入触发范围 → 提示 → 按键取放
+      —— 🟡 `stationInReach()` + `interact()` 已完成，等场景坐标接线
+- [x] 烤炉火候计时（三档：生 / 刚好 / 糊）
+      —— ✅ `stepKitchen()` + `grillCookLevel()`。⚠ **烤糊的肉留在炉上**（与 sim.ts 不同），
+      玩家得自己端下来 `discard()`，M4 的起火链就挂在那个占着不放的烤位上
 - [ ] 一个顾客走进来 → 点单（读 M0 那 20 张卡）→ 等待 → 判定 → 评价 → 离开
 - [ ] 台词 UI（≤30 字上限，见 `docs/ai-customer-v1.md` §3 的论证）
 - [ ] 金币结算 + 局末小结算面板
