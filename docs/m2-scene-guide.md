@@ -107,8 +107,15 @@ Scene
 └── Canvas                 UI（2D）
     ├── UI_Joystick        摇杆的视觉（左半屏）
     ├── UI_ActionButton    动作键（右半屏）
+    ├── UI_DiscardButton   丢弃键 · **手里有东西才显示**，建好后 active 关掉
+    ├── UI_FridgePanel     冰箱面板 · 建好后 active 关掉
+    │   ├── Slot_0 … Slot_3   上排：bun / patty / cheese / lettuce
+    │   └── Slot_4 … Slot_7   下排：tomato / onion / pickle / bacon
     └── UI_HUD             订单/金币/计时
 ```
+
+> 8 个 `Slot_*` 的顺序**就是 `INGREDIENTS` 的顺序**（`types.ts`）。别按自己觉得顺手的次序摆 ——
+> 组件按索引取食材，摆反了会变成「点生菜给培根」，而这在编辑器里看不出来。
 
 **为什么静态和动态要分两棵子树**：`Kitchen` 底下的东西这辈子都不动，
 将来可以整块合并成一个 mesh、烘一张 lightmap；`Actors` 底下每帧都在变。
@@ -325,11 +332,36 @@ Capsule / Cylinder 的默认高度也不见得是 1。
 | `UI_HUD` | 跟随全屏 | `Widget` 四边都设 0 | 订单/金币/计时的 `Label` 放它下面 |
 | `UI_ActionButton` | 160 × 160 | `Widget` 锚右下，`right = 120`、`bottom = 120` | 视觉指示而已，整个右半屏都能点 |
 | `UI_Joystick` | 180 × 180 | 不锚定，脚本运行时移到手指位置 | **编辑器里 `active` 关掉**，浮动摇杆按下才出现 |
+| `UI_DiscardButton` | 120 × 120 | `Widget` 锚右下，`right = 140`、`bottom = 300` | **`active` 关掉**。手里有东西才显示，**长按 0.3s** 才丢 |
+| `UI_FridgePanel` | 560 × 288 | 不锚定，`position = (0, 60, 0)` | **`active` 关掉**。走到冰箱点动作键才开 |
+| `Slot_0` … `Slot_7` | 各 120 × 120 | 位置由 `pnpm scene:apply --write` 写入 | 只管建节点，别手摆坐标 |
+
+`UI_DiscardButton` 的 `right = 140` 不是笔误 —— 它比动作键窄 40，右边多缩 20 才能让两者
+**中心 x 对齐在 440**。`bottom = 300` = 动作键的 `bottom 120` + 高 `160` + 间距 `20`。
+
+**8 个格子怎么建**：每个 `Slot_i` 是一个 `Sprite`（`SizeMode` 切 **CUSTOM**，否则 120×120
+会被图片尺寸顶回去），下面挂一个 `Label` 写食材名。M2 阶段没有图标美术，
+**纯色块 + 文字就够**——这属于「上线前必须替换的占位内容」，已登记在 ROADMAP。
+
+建完 8 个空节点跑 `pnpm scene:apply --write`，位置自动写进去。手摆的话
+`pnpm scene` 会一直报差值——那张表是算出来的（`PANEL` 常量），不是量出来的。
+
+> ⚠ **面板不做全屏遮罩**。世界在面板打开期间**继续跑**（烤炉继续烤、顾客耐心继续掉），
+> 玩家必须看得见厨房里正在糊的那块肉。要做视觉分隔就只给面板自身一个底色，
+> 别在它背后铺一层压满屏的半透明黑。
 
 `UI_Joystick` 的 180 = `DEFAULT_STICK.radius` 90 的两倍（`API.md` 的 `input.ts` 一节）。
 
 > ⚠ **`splitX` 别写死 640**。`TouchRouter` 的 `splitX` 用的是**触摸像素坐标**，不是设计分辨率。
 > 运行时取 `view.getVisibleSize().width / 2`，否则在非 16:9 的手机上左右半屏的分界会跑偏。
+>
+> ⚠ **同一条坑，捕获区也踩**：`UI_DiscardButton` 与 8 个 `Slot_*` 要喂给
+> `TouchRouter.setCaptureZones()`，而它们的 `position` 是**设计分辨率下的 Canvas 中心坐标**。
+> 两处不一致——原点差半屏、单位差一个缩放因子（Fit Height 下 2400×1080 的手机是 1.5 倍）。
+> 转换只走 `tools/scene-spec.ts` 的 `uiRectToCaptureZone(id, cx, cy, w, h, screenW, screenH)`，
+> **`screenW/screenH` 必须传运行时实测值**。
+> 按 1280×720 硬算的话，**编辑器预览里完全正常，只有真机会错位**，
+> 且错的样子像「按钮没反应」而不像坐标算错——`tests/input.test.ts` 有一组 2400×1080 的用例钉着它。
 
 #### 材质颜色
 

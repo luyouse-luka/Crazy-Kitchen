@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { createSimState, stepSim, defaultSimConfig, SIM_DT } from '../game/assets/logic/sim'
 import { createKitchen, stepKitchen, stationInReach } from '../game/assets/logic/kitchen'
 import { createMovement, stepMovement } from '../game/assets/logic/movement'
-import { ISO_CAMERA_YAW } from '../game/assets/logic/input'
+import { ISO_CAMERA_YAW, TouchRouter } from '../game/assets/logic/input'
 import type { Station } from '../game/assets/logic/types'
 
 /**
@@ -141,5 +141,34 @@ describe('铁律② · 热路径零分配', () => {
 
   it('gc 确实可用 —— 否则上面两条读的都是 GC 时机的噪声', () => {
     expect(typeof maybeGc).toBe('function')
+  })
+
+  it('TouchRouter 带 9 个捕获区跑 10000 帧仍平坦（面板开着时的最坏情况）', () => {
+    // 8 格 + 丢弃键 = 面板打开时同时挂着的最大数量
+    const zones = []
+    for (let i = 0; i < 8; i++) {
+      zones.push({ id: `slot${i}`, x: 376 + (i % 4) * 136, y: 420 - Math.floor(i / 4) * 136, w: 120, h: 120 })
+    }
+    zones.push({ id: 'discard', x: 1040, y: 300, w: 120, h: 120 })
+
+    const r = new TouchRouter(640)
+    r.setCaptureZones(zones)
+    // 双手都按着：摇杆在推、一个格子被按住 —— tick 要走完所有分支
+    r.onDown(1, 100, 300)
+    r.onMove(1, 190, 300)
+    r.onDown(2, 436, 480)
+
+    for (let i = 0; i < 2000; i++) r.tick(SIM_DT)
+
+    const before = heapAfterGc()
+    for (let i = 0; i < FRAMES; i++) r.tick(SIM_DT)
+    const after = heapAfterGc()
+
+    // 守卫：这一路真的走到了长按分支，否则上面 10000 次 tick 可能什么都没做
+    expect(r.zone('discard')).toBeDefined()
+    expect(r.zone('slot0')!.holding).toBe(true)
+
+    const grownMB = (after - before) / MB
+    expect(grownMB, `10000 帧后堆增长 ${grownMB.toFixed(2)}MB`).toBeLessThan(2)
   })
 })

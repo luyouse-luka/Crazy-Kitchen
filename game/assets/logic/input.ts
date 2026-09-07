@@ -66,6 +66,23 @@ export interface ActionState {
 
 // ─────────────────────────── 路由 ───────────────────────────
 
+/**
+ * 优先捕获矩形（UI 面板的格子、丢弃键）。屏幕像素，**左下角为原点、y 向上**，与 onDown 同系。
+ *
+ * 存在的理由：本路由按左右半屏分路，右半屏**任何一点**按下都算动作键。
+ * 冰箱面板的 8 个格子横跨屏幕中线、丢弃键落在右半屏 —— 不先把它们从分路里摘出来，
+ * 点格子会推摇杆、按丢弃键会同时取一次料。
+ */
+export interface CaptureZone {
+  id: string
+  /** 左下角 */
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
+
 /** 一路输入的内部记账。id 为 -1 表示这一路空着 */
 interface Slot {
   id: number
@@ -77,6 +94,10 @@ interface Slot {
 
 function emptySlot(): Slot {
   return { id: -1, originX: 0, originY: 0, curX: 0, curY: 0 }
+}
+
+function emptyAction(): ActionState {
+  return { down: false, holding: false, tapped: false, holdStarted: false, heldSeconds: 0 }
 }
 
 /**
@@ -93,13 +114,13 @@ export class TouchRouter {
   private right = emptySlot()
 
   readonly stick: StickState = { dirX: 0, dirY: 0, magnitude: 0, active: false }
-  readonly action: ActionState = {
-    down: false,
-    holding: false,
-    tapped: false,
-    holdStarted: false,
-    heldSeconds: 0,
-  }
+  readonly action: ActionState = emptyAction()
+
+  /** 三张平行表，同序。分开存是为了 tick 能按索引遍历、不产生临时对象（铁律②） */
+  private zones: CaptureZone[] = []
+  private zoneSlots: Slot[] = []
+  private zoneStates: ActionState[] = []
+  private zoneIndex = new Map<string, number>()
 
   /**
    * @param splitX 左右分界的屏幕 x（像素）。通常是屏宽的一半
@@ -117,7 +138,56 @@ export class TouchRouter {
     this.splitX = x
   }
 
+  /**
+   * 换一批捕获区（打开/关闭冰箱面板、丢弃键显隐）。
+   *
+   * ⚠ 正按在旧区上的手指整根作废，不迁移到新区、也不回落到左右分路 ——
+   * 面板关闭那一刻按着的格子若留着，下次开面板会凭空触发一次。
+   * 那根手指迟到的 onUp 找不到归属，会被直接丢掉。
+   */
+  setCaptureZones(zones: readonly CaptureZone[]): void {
+    this.zones = zones.slice()
+    this.zoneSlots = this.zones.map(emptySlot)
+    this.zoneStates = this.zones.map(emptyAction)
+    this.zoneIndex.clear()
+    for (let i = 0; i < this.zones.length; i++) {
+      // 重名时先登记的赢，与 hitZone 的重叠规则一致
+      if (!this.zoneIndex.has(this.zones[i]!.id)) this.zoneIndex.set(this.zones[i]!.id, i)
+    }
+  }
+
+  /** 读某个区的状态。语义与 action 完全一致（tapped / holdStarted 都是单帧脉冲） */
+  zone(id: string): ActionState | undefined {
+    const i = this.zoneIndex.get(id)
+    return i === undefined ? undefined : this.zoneStates[i]
+  }
+
+  /** 命中的区索引，没有则 -1。含左下边、不含右上边 —— 相邻格子共边时只会中一个 */
+  private hitZone(x: number, y: number): number {
+    for (let i = 0; i < this.zones.length; i++) {
+      const z = this.zones[i]!
+      if (x >= z.x && x < z.x + z.w && y >= z.y && y < z.y + z.h) return i
+    }
+    return -1
+  }
+
   onDown(id: number, x: number, y: number): void {
+    const zi = this.hitZone(x, y)
+    if (zi >= 0) {
+      const z = this.zoneSlots[zi]!
+      if (z.id !== -1) return // 那个区已经有手指了，忽略这根
+      z.id = id
+      z.originX = x
+      z.originY = y
+      z.curX = x
+      z.curY = y
+      const st = this.zoneStates[zi]!
+      st.down = true
+      st.heldSeconds = 0
+      st.holding = false
+      return // 不再进左右分路
+    }
+
     const slot = x < this.splitX ? this.left : this.right
     if (slot.id !== -1) return // 那一路已经有手指了，忽略这根
     slot.id = id
@@ -135,6 +205,25 @@ export class TouchRouter {
   }
 
   onMove(id: number, x: number, y: number): void {
+    for (let i = 0; i < this.zoneSlots.length; i++) {
+      if (this.zoneSlots[i]!.id !== id) continue
+      const z = this.zones[i]!
+      const inside = x >= z.x && x < z.x + z.w && y >= z.y && y < z.y + z.h
+      if (inside) {
+        this.zoneSlots[i]!.curX = x
+        this.zoneSlots[i]!.curY = y
+      } else {
+        // 滑出即作废，且不复活 —— 玩家点错格子后划开松手是唯一的反悔手段。
+        // 作废后这根手指不在任何一路里，后续 onMove/onUp 都会被丢掉。
+        this.zoneSlots[i]!.id = -1
+        const st = this.zoneStates[i]!
+        st.down = false
+        st.holding = false
+        st.heldSeconds = 0
+      }
+      return
+    }
+
     if (this.left.id === id) {
       this.left.curX = x
       this.left.curY = y
@@ -147,6 +236,17 @@ export class TouchRouter {
   }
 
   onUp(id: number): void {
+    for (let i = 0; i < this.zoneSlots.length; i++) {
+      if (this.zoneSlots[i]!.id !== id) continue
+      this.zoneSlots[i]!.id = -1
+      const st = this.zoneStates[i]!
+      if (!st.holding) st.tapped = true
+      st.down = false
+      st.holding = false
+      st.heldSeconds = 0
+      return
+    }
+
     if (this.left.id === id) {
       this.left.id = -1
       this.recomputeStick()
@@ -167,6 +267,15 @@ export class TouchRouter {
    * 玩家回到游戏发现角色一直往一边走。组件里挂 TOUCH_CANCEL 和 onHide。
    */
   cancelAll(): void {
+    for (let i = 0; i < this.zoneSlots.length; i++) {
+      this.zoneSlots[i]!.id = -1
+      const st = this.zoneStates[i]!
+      st.down = false
+      st.holding = false
+      st.tapped = false
+      st.holdStarted = false
+      st.heldSeconds = 0
+    }
     this.left = emptySlot()
     this.right = emptySlot()
     this.stick.dirX = 0
@@ -187,14 +296,19 @@ export class TouchRouter {
    * 都读得到。组件的 update 里先 tick 再读，顺序反了会漏掉点按。
    */
   tick(dt: number): void {
-    this.action.tapped = false
-    this.action.holdStarted = false
-    if (this.action.down) {
-      this.action.heldSeconds += dt
-      if (!this.action.holding && this.action.heldSeconds >= this.actionCfg.holdSeconds) {
-        this.action.holding = true
-        this.action.holdStarted = true
-      }
+    this.advance(this.action, dt)
+    for (let i = 0; i < this.zoneStates.length; i++) this.advance(this.zoneStates[i]!, dt)
+  }
+
+  /** 捕获区与动作键共用同一套点按/长按语义，改一处两边一起变 */
+  private advance(st: ActionState, dt: number): void {
+    st.tapped = false
+    st.holdStarted = false
+    if (!st.down) return
+    st.heldSeconds += dt
+    if (!st.holding && st.heldSeconds >= this.actionCfg.holdSeconds) {
+      st.holding = true
+      st.holdStarted = true
     }
   }
 

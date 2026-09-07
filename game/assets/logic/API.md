@@ -1,4 +1,4 @@
-# `logic/` 公开接口清单 · v0.4（2026-09-07）
+# `logic/` 公开接口清单 · v0.5（2026-09-07）
 
 `logic/` 是**服务器侧的代码**与**你的 Cocos 组件**之间唯一的接缝，接缝要有文档。
 
@@ -227,14 +227,19 @@ interface ActionConfig { holdSeconds: number }
 interface ActionState  { down, holding, tapped, holdStarted: boolean; heldSeconds: number }
 DEFAULT_ACTION  // { holdSeconds: 0.3 }
 
+// 捕获区（UI 面板的格子、丢弃键）
+interface CaptureZone { id: string; x, y, w, h: number }   // 左下角原点，与 onDown 同系
+
 class TouchRouter {
   constructor(splitX: number, stickCfg?: StickConfig, actionCfg?: ActionConfig)
   readonly stick: StickState
   readonly action: ActionState
   onDown(id, x, y) / onMove(id, x, y) / onUp(id)
   cancelAll()            // TOUCH_CANCEL 与 onHide 必须调
-  tick(dt)               // 每帧一次，在读 action 之前
+  tick(dt)               // 每帧一次，在读 action / zone 之前
   setSplitX(x)
+  setCaptureZones(zones: readonly CaptureZone[])   // 换一批；正按着的手指整根作废
+  zone(id: string): ActionState | undefined        // 语义与 action 完全一致
 }
 
 // 相机相对映射
@@ -258,6 +263,25 @@ stickToVelocity(out, stick, cameraYaw, speed): boolean   // 带 magnitude，回�
 **已经处理掉的坑**（别在组件里重复解决）：拇指划过屏幕中线不会让摇杆失灵（归属按下时定死，
 之后只认 id）· 第三根手指不会抢走已在推的摇杆 · 斜推到角落 `magnitude` 不会超过 1 ·
 按下不动不产生 NaN · 来电/切后台后摇杆不会卡在最后方向（前提是组件挂了 `cancelAll`）。
+
+### 捕获区：为什么需要它
+
+分路是**按左右半屏**的 —— 右半屏任何一点按下都算动作键。冰箱面板的 8 格横跨屏幕中线、
+丢弃键落在右半屏，不先把它们从分路里摘出来，**点格子会推摇杆、按丢弃键会同时取一次料**。
+
+`setCaptureZones()` 登记的矩形在 `onDown` 时优先认领手指，认领后不进左右分路。
+规则三条，各有测试盯着：
+
+| 规则 | 为什么 |
+|---|---|
+| 命中含左下边、不含右上边 | 相邻格子共边时只中一个，否则中间那条缝会同时属于两格 |
+| 重叠时先登记的赢 | 后登记的永远点不到 —— 所以 `Slot_*` 之间有一条「不重叠」的判据 |
+| 滑出即作废，滑回不复活 | 点错格子后划开松手是玩家唯一的反悔手段；作废的手指也不会转投摇杆/动作键 |
+
+⚠ **坐标系差一个半屏的平移**：UI 节点的 position 是 Canvas 中心原点（x∈[-640,640]），
+捕获区是触摸的左下原点（x∈[0,1280]）。直接拿节点 position 当捕获区，整块区会偏到
+屏幕左下角 —— 而且**偏得像「没生效」，不像坐标错**。转换只走
+`tools/scene-spec.ts` 的 `uiRectToCaptureZone()`，别在组件里重写。
 
 ---
 
