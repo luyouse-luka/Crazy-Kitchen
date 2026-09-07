@@ -27,6 +27,14 @@ export const SPEC: Record<string, NodeSpec> = {
   Station_Assembly: { pos: [-3.5, 0.45, 0], scale: [1, 0.9, 1] },
   Station_Serve: { pos: [-1, 0.45, 2.5], scale: [2, 0.9, 1] },
 
+  /**
+   * 柜台外的顾客区。独立一块，**不并进 Floor** —— 玩家可走边界仍是 Floor 的 ±4/±3
+   * （movement.ts 的 FLOOR_BOUNDS），把两者合成一块会让「地板」同时指两个东西。
+   * z ∈ [3, 5]，与店内地板在 z=3 精确接边，不重叠所以不会共面闪烁。
+   * 顶面同样在 y=0（pos.y = -scale.y / 2）。
+   */
+  Floor_Customer: { pos: [0, -0.05, 4], scale: [8, 0.1, 2] },
+
   // 玩家：位置是定的，scale 取决于内置 Capsule/Sphere/Plane 的默认尺寸 —— 编辑器里量（§2.2 的 _Ruler）
   Player: { pos: [0, 0, 0] },
   Body: { pos: [0, 0.6, 0] },
@@ -57,6 +65,8 @@ export interface MatSpec {
  */
 export const MAT_SPEC: Record<string, MatSpec> = {
   Floor: { mat: 'M_Floor', rgba: [200, 200, 200, 255], tech: 0 },
+  // 比店内深一档，只为把柜台内外分开；⏳ 色相待定，别当定稿
+  Floor_Customer: { mat: 'M_FloorOut', rgba: [150, 150, 150, 255], tech: 0 },
   Wall_N: { mat: 'M_Wall', rgba: [230, 230, 230, 255], tech: 0 },
   Wall_E: { mat: 'M_Wall', rgba: [230, 230, 230, 255], tech: 0 },
   Station_Fridge: { mat: 'M_Fridge', rgba: [58, 123, 213, 255], tech: 0 },

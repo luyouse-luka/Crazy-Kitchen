@@ -67,7 +67,12 @@ ly 在编辑器里调 `M_Shadow` 的 Alpha 时报「76 一点黑色都不见，1
 三个 define 与 `colorScale` 已复位，`Shadow` 的 `y` 也从误调的 0.092 写回 0.006
 （`pnpm scene:apply --write`，改前先证 JSON 往返逐字节无损）。
 
-### ⏳ 唯一待你拍板：影子的 Alpha
+### ⏳ 线 A 待做
+
+1. **影子的 Alpha**（见下）
+2. **建 `Floor_Customer`** —— Cube，`(0, -0.05, 4)` scale `(8, 0.1, 2)`，挂新材质 `M_FloorOut`
+
+### ⏳ 待你拍板：影子的 Alpha
 
 `pnpm scene` 现在只剩一行红：材质是 **128**、定稿是 **76**。
 
@@ -95,12 +100,23 @@ ly 在编辑器里调 `M_Shadow` 的 Alpha 时报「76 一点黑色都不见，1
 而且 `stick(1, 1)` 是非法输入（`dirX/dirY` 约定是单位方向，长度 √2 等于把速度放大 1.41 倍）。
 现在每条碰撞用例都先断言 `blocked === true` 当锚点。
 
-### ⏳ 还堵着的三件（都不是我能定的）
+### ✅ 顾客站位已定：独立一块 `Floor_Customer`
+
+`(0, -0.05, 4)` scale `(8, 0.1, 2)`，z ∈ [3, 5]，与店内地板在 z=3 精确接边。
+ly 2026-09-07 实测「z=4 或 z=5 都能完全装下」，画面有余量。
+
+**没有并进 `Floor` 是刻意的** —— 玩家可走边界就是 `Floor` 的 ±4/±3（`movement.ts` 的
+`FLOOR_BOUNDS`，有测试断言两者一致）。延伸 `Floor` 的话「地板」会同时指「画出来的地」
+和「走得到的地」，那条一致性判据就得删 —— **删判据正是判据体系开始烂掉的地方**。
+不铺地则顾客踩在 `SOLID_COLOR` 背景上，深色背景勉强能看，浅色下就是明摆着浮空。
+
+`Floor_Customer` 已写进 `scene-spec.ts`，`pnpm scene` 正报「场景里还没有」，
+线 A 建完自动转绿。⏳ **`M_FloorOut` 的色相待定**，暂填比店内深一档的 `#969696`。
+
+### ⏳ 还堵着的两件（都不是我能定的）
 
 1. **冰箱怎么选 8 种食材** —— ⚠「按订单自动给下一样」会剥夺「拿错」的失败路径
 2. **丢弃怎么触发** —— 空地长按，还是加个垃圾桶工位
-3. **`Station_Serve` 贴着南边界，顾客站 `z > 3` 会浮空** —— 这条直接卡 `customer.ts`，
-   顾客站哪是它的第一个字段。加 `Floor_Customer` / 地板往南延 / 顾客本来就站店外
 
 ### ⏰ 外部时钟：游戏名
 
@@ -116,6 +132,9 @@ tests/memory.test.ts            ← 改 · 加 movement 热路径零分配（含
 game/assets/logic/API.md        ← 改 · 加 movement.ts 一节，v0.3 → v0.4
 game/assets/materials/M_Shadow.mtl ← 改 · 关掉三个误开的 define，colorScale 复位
 game/assets/main.scene          ← 改 · Shadow y 0.092 → 0.006
+tools/scene-spec.ts             ← 改 · 加 Floor_Customer 的 Transform 与材质定稿
+docs/m2-scene-guide.md          ← 改 · 顾客区从「待决」转定稿（§2.1 树 / §2.3 表 + 俯视图 / §5 材质）；
+                                      顺带修掉三处过期的 `Wall_W`（相机对照表的箭头指错了行）
 ROADMAP.md                      ← 改 · 本段
 ```
 
