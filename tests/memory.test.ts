@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { createSimState, stepSim, defaultSimConfig, SIM_DT } from '../game/assets/logic/sim'
 import { createKitchen, stepKitchen, stationInReach } from '../game/assets/logic/kitchen'
+import { createMovement, stepMovement } from '../game/assets/logic/movement'
+import { ISO_CAMERA_YAW } from '../game/assets/logic/input'
 import type { Station } from '../game/assets/logic/types'
 
 /**
@@ -86,6 +88,41 @@ describe('铁律② · 热路径零分配', () => {
     const after = heapAfterGc()
 
     expect(hits, 'stationInReach 一次都没命中 → 这条测的是没进过循环体的空路径').toBeGreaterThan(0)
+
+    const grownMB = (after - before) / MB
+    expect(grownMB, `10000 帧后堆增长 ${grownMB.toFixed(2)}MB`).toBeLessThan(2)
+  })
+
+  it('角色移动跑 10000 帧同样平坦（stepMovement + 每帧的碰撞解算）', () => {
+    const m = createMovement({
+      boxes: [
+        { center: { x: 2, z: -2.5 }, halfX: 0.5, halfZ: 0.5 },
+        { center: { x: -2, z: -2.5 }, halfX: 0.5, halfZ: 0.5 },
+        { center: { x: -3.5, z: 0 }, halfX: 0.5, halfZ: 0.5 },
+        { center: { x: -1, z: 2.5 }, halfX: 1, halfZ: 0.5 },
+      ],
+    })
+
+    // 摇杆对象也复用 —— 每帧 new 一个 StickState 就测不出 movement 自己的分配了
+    const stick = { dirX: 0, dirY: 0, magnitude: 1, active: true }
+    // 撞墙次数必须非零，否则这条只测了空地上转圈那条捷径
+    let blocked = 0
+    const run = (n: number): void => {
+      for (let i = 0; i < n; i++) {
+        const a = i * 0.017
+        stick.dirX = Math.cos(a)
+        stick.dirY = Math.sin(a)
+        stepMovement(m, stick, ISO_CAMERA_YAW, SIM_DT)
+        if (m.blocked) blocked++
+      }
+    }
+
+    run(2000)
+    const before = heapAfterGc()
+    run(FRAMES)
+    const after = heapAfterGc()
+
+    expect(blocked, '一次都没被挡住 → 碰撞解算那条路径没进去过').toBeGreaterThan(0)
 
     const grownMB = (after - before) / MB
     expect(grownMB, `10000 帧后堆增长 ${grownMB.toFixed(2)}MB`).toBeLessThan(2)

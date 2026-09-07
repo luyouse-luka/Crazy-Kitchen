@@ -47,7 +47,85 @@
 
 </details>
 
-## 📍 当前断点（2026-09-07 第六轮 · 每轮收工更新这一段）
+## 📍 当前断点（2026-09-07 第七轮 · 每轮收工更新这一段）
+
+**⏸ 第七轮：线 A 把场景清完了，线 B 补上 `logic/movement.ts`。M2 的「角色控制器」四条到齐。**
+
+### 这一轮挖出来的坑：alpha test 让影子成了开关
+
+ly 在编辑器里调 `M_Shadow` 的 Alpha 时报「76 一点黑色都不见，127→128 出现质的变化」。
+查 `.mtl` 发现 `_defines[0]` 被误开了三个：`USE_VERTEX_COLOR` / `USE_TEXTURE` / **`USE_ALPHA_TEST`**，
+外加 `alphaThreshold: 0.501`、`colorScale` 的红通道被写成 0。
+
+**`USE_ALPHA_TEST` 是二值的**：`if (alpha < alphaThreshold) discard`，低于阈值的像素整个不画。
+代进去正好解释全部现象 —— 76 是 0.298、127 是 0.4980，**两个都低于 0.501，压根没渲染**；
+128 是 0.50196，只高出 **0.00096** 才通过。「质的变化」不是观感渐变，是开关被拨过去了。
+
+⚠ 我第一版把它归因成「线性空间混合让暗色变淡」，**算了一堆数但机制是错的**。
+教训与 §6.5 那条同源：**先证伪再解释** —— `0.298` 当时就该跟阈值对一下。
+
+三个 define 与 `colorScale` 已复位，`Shadow` 的 `y` 也从误调的 0.092 写回 0.006
+（`pnpm scene:apply --write`，改前先证 JSON 往返逐字节无损）。
+
+### ⏳ 唯一待你拍板：影子的 Alpha
+
+`pnpm scene` 现在只剩一行红：材质是 **128**、定稿是 **76**。
+
+**128 是在 alpha test 还开着时选出来的，没有参考价值** —— 那时候它只是「刚好过阈值」，
+不是「看着刚好」。现在机制换成了真正的连续透明度，**76 第一次会被真的画出来**。
+重新看一眼再定，定完告诉我，我改 `tools/scene-spec.ts:68` 与 `docs/m2-scene-guide.md` 三处。
+
+### 线 B：`logic/movement.ts` 落地（23 测试）
+
+摇杆 → 相机相对速度 → 碰撞解算。分两层是刻意的：`moveAndSlide` 只认「一步位移」，
+`customer.ts` 之后直接复用；`stepMovement` 是玩家外壳，输入映射只在那一层。
+
+| 常量 | 值 | 出处 |
+|---|---|---|
+| `CHEF_RADIUS` | 0.35 | `Body` scale 0.7 → 直径 0.7 m |
+| `DEFAULT_CHEF_SPEED` | 4 m/s | 与 `sim.ts` 的 `chef.speed` 同值，M1 就是按它标定的 |
+| `MAX_STEP_DT` | 0.1 s | 切后台回来那帧 dt 可能几秒，不夹住会瞬移穿过灶台 |
+| `FLOOR_BOUNDS` | ±4 / ±3 | `Floor` scale [8, 0.1, 6] |
+
+后两个常量各有一条测试盯着**跨模块漂移**（速度对 `sim.ts`、边界对 `scene-spec.ts`），
+改一处忘了另一处会直接红。
+
+⚠ **写完先证伪再收工**：摘掉碰撞解算 → 5 条转红；摘掉边界夹取 → 5 条转红。
+第一版有两条是**假绿** —— 起点距盒面 0.4 m > 半径 0.35 m 根本没碰上，
+而且 `stick(1, 1)` 是非法输入（`dirX/dirY` 约定是单位方向，长度 √2 等于把速度放大 1.41 倍）。
+现在每条碰撞用例都先断言 `blocked === true` 当锚点。
+
+### ⏳ 还堵着的三件（都不是我能定的）
+
+1. **冰箱怎么选 8 种食材** —— ⚠「按订单自动给下一样」会剥夺「拿错」的失败路径
+2. **丢弃怎么触发** —— 空地长按，还是加个垃圾桶工位
+3. **`Station_Serve` 贴着南边界，顾客站 `z > 3` 会浮空** —— 这条直接卡 `customer.ts`，
+   顾客站哪是它的第一个字段。加 `Floor_Customer` / 地板往南延 / 顾客本来就站店外
+
+### ⏰ 外部时钟：游戏名
+
+M2 出口要定死提软著，等 6–12 周。今天 9-07，**9 月底到 10 月初必须定**。
+候选：疯狂后厨 / AI后厨 / 神经病餐厅 / 厨神营业中。
+
+### 第七轮新增/改动（`project/kitchen-chaos/` 下）
+
+```
+game/assets/logic/movement.ts   ← 新增 · 摇杆 → 相机相对速度 → 碰撞解算后的位置
+tests/movement.test.ts          ← 新增 · 23 个单测（含跨模块漂移的两条）
+tests/memory.test.ts            ← 改 · 加 movement 热路径零分配（含「撞墙次数非零」的守卫）
+game/assets/logic/API.md        ← 改 · 加 movement.ts 一节，v0.3 → v0.4
+game/assets/materials/M_Shadow.mtl ← 改 · 关掉三个误开的 define，colorScale 复位
+game/assets/main.scene          ← 改 · Shadow y 0.092 → 0.006
+ROADMAP.md                      ← 改 · 本段
+```
+
+`pnpm check` 全绿：铁律① 0 命中 · typecheck 无错 · **208 测试 / 13 文件**。
+⚠ typecheck 抓到过一个测试抓不到的错（`AABB` 的正主在 `collision.ts`，`types.ts` 没再导出）
+—— **vitest 不做类型检查，测试全绿不等于类型对**。
+
+---
+
+## 第六轮存档（2026-09-07 · M2 场景几何定稿）
 
 **⏸ 第六轮：M2 场景几何定稿，线 A 与线 B 交替改同一个 `.scene`。**
 场景的**数值**从这一轮起有了单一真相 `tools/scene-spec.ts` + 三个判据脚本，
@@ -1196,7 +1274,7 @@ Cocos 会给它生成 `.meta` 当未知资源导入，不引用就不进包 —�
 #### 我做
 
 - [x] 角色控制器：**左拇指摇杆 + 右拇指交互键，两者可同时按**
-      —— 🟡 逻辑层 `logic/input.ts` 已完成（23 个单测），等组件接线
+      —— 🟡 `logic/input.ts`（23 单测）+ `logic/movement.ts`（23 单测）已完成，等组件接线
 - [x] 移动走**相机相对映射**（见下方坑）
       —— 🟡 `stickToWorld` / `stickToVelocity` 已完成。**yaw 的符号必须真机验**，见 `API.md`
 - [x] 手持系统：同时只能拿一样，头顶显示持有物

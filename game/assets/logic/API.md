@@ -1,4 +1,4 @@
-# `logic/` 公开接口清单 · v0.3（2026-09-06）
+# `logic/` 公开接口清单 · v0.4（2026-09-07）
 
 `logic/` 是**服务器侧的代码**与**你的 Cocos 组件**之间唯一的接缝，接缝要有文档。
 
@@ -26,8 +26,9 @@
 | `difficulty.ts` | **难度曲线表**：第 1→20 天的参数与三星线 |
 | `input.ts` | **M2 输入层**：多点触摸路由、浮动摇杆、点按/长按、相机相对映射 |
 | `kitchen.ts` | **M2 厨房状态机**：手持、工位交互、烤炉计时 |
+| `movement.ts` | **M2 角色移动**：摇杆 → 相机相对速度 → 碰撞解算后的位置 |
 
-**尚未建**（按里程碑排）：`customer.ts`（M2 顾客状态机）· `movement.ts`（M2 角色移动，把 input + collision 串起来）·
+**尚未建**（按里程碑排）：`customer.ts`（M2 顾客状态机）·
 `chaos.ts`（M4 混乱事件调度）· `economy.ts`（M4 金币/升级/解锁）。
 
 ---
@@ -316,6 +317,47 @@ interface InteractResult {
 边界上算够得着 · 烤位满了不吞肉 · 烤过的不能回炉 · 不指定烤位取最久那块 ·
 重复食材挡下且东西还在手上 · 汉堡不会同时在手上和台上 · 缺骨架的半成品交不出去 ·
 送完手和台子都清空。
+
+---
+
+## `movement.ts`
+
+```ts
+CHEF_RADIUS      // 0.35 —— Body 的 scale 0.7 → 直径 0.7 m
+DEFAULT_CHEF_SPEED  // 4 m/s，与 sim.ts 的 chef.speed 同值
+MAX_STEP_DT      // 0.1 秒，单帧 dt 上限
+FLOOR_BOUNDS     // { xmin:-4, xmax:4, zmin:-3, zmax:3 } —— Floor scale [8,0.1,6]
+
+interface Bounds { xmin, xmax, zmin, zmax: number }
+
+// 通用一步解算，不认摇杆。customer.ts 之后直接复用这一个
+moveAndSlide(out, pos, step, radius, boxes, bounds): boolean   // 返回是否被挡过
+
+interface MovementState {
+  pos: Vec2
+  facing: Vec2       // 单位朝向，松手保持不回正
+  facingYaw: number  // atan2(facing.x, facing.z)
+  moving: boolean
+  blocked: boolean   // 本帧被工位或边界推回过
+}
+
+createMovement({ stations?, boxes?, speed?, radius?, bounds?, x?, z? }): MovementState
+stepMovement(st, stick, cameraYaw, dt)   // 每帧一次
+teleport(st, x, z)                        // 开局 / 重开，不走碰撞解算
+```
+
+**组件那边只做两件事**：`router.tick(dt)` 之后把 `router.stick` 交给 `stepMovement` ·
+把 `pos` 与 `facingYaw` 写回节点。碰撞、边界、朝向平滑一行都别在组件里重写。
+
+⚠ **`facingYaw` 的零点与符号真机上验一次**，跟 `input.ts` 顶部那三条一起验 ——
+这里锁死的是「朝向取自**碰撞前**的方向」这个结构，不是某个具体符号。
+用碰撞后的位移算朝向，角色蹭着灶台走时会来回扭头。
+
+**已经锁在测试里的**（23 个用例）：推满走 `speed × dt` · 轻推走得慢 · 对角不比直推快 ·
+掉帧那帧 dt 被夹住不瞬移 · 撞工位停在半径外 · 侧滑时另一维照走 · 陷在盒里能推出来 ·
+四边都留一个半径 · 出餐口贴南墙也挤不出地板 · 蹭墙不扭头 · 松手不回正 ·
+速度与 `sim.ts` 一致 · 边界与 `scene-spec` 的 Floor 一致。
+⚠ 摇杆的 `dirX/dirY` 是**单位方向**，测试里写 `stick(1, 1)` 会把速度放大 √2 倍。
 
 ---
 
