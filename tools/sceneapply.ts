@@ -121,6 +121,10 @@ function main(): void {
         setVec(p, ui.pos)
       }
     }
+    if (ui.active !== undefined && e['_active'] !== ui.active) {
+      changes.push(`UI    ${name.padEnd(18)} active ${String(e['_active'])} → ${ui.active}`)
+      e['_active'] = ui.active
+    }
     for (const c of own) {
       if (c['__type__'] === 'cc.Sprite' && ui.sizeMode !== undefined && num(c['_sizeMode']) !== ui.sizeMode) {
         const was = ['CUSTOM', 'TRIMMED', 'RAW'][num(c['_sizeMode'])] ?? '?'

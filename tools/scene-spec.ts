@@ -89,6 +89,15 @@ export interface UiSpec {
   /** cc.Sprite.SizeMode：0 CUSTOM / 1 TRIMMED / 2 RAW。不是 CUSTOM 的话 size 会被图片顶回去 */
   sizeMode?: number
   pos?: [number, number, number]
+  /**
+   * 节点的 `_active`。不写 = 不检查。
+   *
+   * ⚠ 这个必须由判据管，因为**编辑器里有两个长得很像的开关**：层级管理器里悬停冒出的
+   * 眼睛图标是「编辑器内可见性」，只影响你在编辑器里看不看得见，**运行时照样显示**；
+   * 真正的 active 在属性检查器最顶部、节点名左边那个复选框。
+   * 关错了的话编辑器里一切正常，要等真机跑起来才发现按钮一直挂在屏幕上。
+   */
+  active?: boolean
 }
 
 // ─────────────────────────── 冰箱面板的 8 格 ───────────────────────────
@@ -169,7 +178,8 @@ export function uiRectToCaptureZone(
  * 一个由 Widget 锚定，编辑器里的 position 运行时都会被覆盖。
  */
 export const UI_SPEC: Record<string, UiSpec> = {
-  UI_Joystick: { size: [180, 180], sizeMode: 0 },
+  // 浮动摇杆：按下才出现，运行时由组件移到手指位置并开 active
+  UI_Joystick: { size: [180, 180], sizeMode: 0, active: false },
   UI_ActionButton: { size: [160, 160], sizeMode: 0 },
   UI_HUD: { size: [1280, 720], pos: [0, 0, 0] },
 
@@ -179,14 +189,14 @@ export const UI_SPEC: Record<string, UiSpec> = {
    * 「右手一个键够用」那条能被推翻的前提。
    * Widget: right=140 bottom=300（= 动作键 bottom 120 + 高 160 + 间距 20）
    */
-  UI_DiscardButton: { size: [120, 120], sizeMode: 0, pos: [440, 0, 0] },
+  UI_DiscardButton: { size: [120, 120], sizeMode: 0, pos: [440, 0, 0], active: false },
 
   /**
    * 冰箱面板。4 列 × 2 行，格子 120、间距 16、内边距 16 → 560 × 288。
    * 中心抬到 y=+60，避开左下摇杆与右下动作键的拇指区；世界继续跑，所以它
    * **不能全屏遮挡** —— 玩家要看得见烤炉在糊。
    */
-  UI_FridgePanel: { size: [560, 288], pos: [0, 60, 0] },
+  UI_FridgePanel: { size: [560, 288], pos: [0, 60, 0], active: false },
   ...FRIDGE_SLOTS,
 }
 

@@ -93,6 +93,20 @@
 而不像坐标算错。转换收口到 `tools/scene-spec.ts` 的 `uiRectToCaptureZone()`，
 `screenW/screenH` 必传运行时实测值。`tests/input.test.ts` 有一组 2400×1080 的用例钉着它。
 
+### 判据补了一个空洞：`active`
+
+原先 `pnpm scene` **不检查 `_active`**，而这一轮有三个节点要求关掉
+（`UI_Joystick` / `UI_DiscardButton` / `UI_FridgePanel`）。忘了关或关错，判据一声不吭。
+
+⚠ **编辑器里有两个长得很像的开关**：层级管理器悬停冒出的**眼睛图标**是「编辑器内可见性」，
+**不影响运行时**；真正的 `active` 在属性检查器最顶部、节点名左边那个复选框。
+关错了编辑器里一切正常，要等真机才发现按钮一直挂在屏幕上。
+
+现在 `UiSpec` 有了 `active` 字段，`pnpm scene` 会报、`pnpm scene:apply --write` 会写 ——
+**这三个不用手点**。加完当场逮到一个：`UI_Joystick` 的 `active` 一直是 `true`，
+而 guide 从建场景起就写着该关（浮动摇杆按下才出现）。⏳ 留给线 A 跟 11 个节点一起 apply，
+**我没写 `.scene`** —— 你编辑器开着的话，保存是整份覆盖，我写了也会被冲掉。
+
 ### ⏳ 线 A 待做（`pnpm scene` 会一直报到做完为止）
 
 1. **影子的 Alpha**（第七轮就挂着的，见下）
@@ -143,7 +157,10 @@ tests/input.test.ts          ← 改 · 23 → 52 测试（捕获区优先 / 滑
                                     对 scene-spec 的漂移 / 2400×1080 真机分辨率）
 tests/memory.test.ts         ← 改 · 加「9 个捕获区跑 10000 帧」的零分配守卫
 tools/scene-spec.ts          ← 改 · 加 PANEL / FRIDGE_SLOTS / uiRectToCaptureZone；
-                                    UI_SPEC 加 UI_DiscardButton / UI_FridgePanel / Slot_0..7
+                                    UI_SPEC 加 UI_DiscardButton / UI_FridgePanel / Slot_0..7；
+                                    UiSpec 加 active 字段，三个 UI 节点定为 false
+tools/scenedump.ts           ← 改 · 对比 active（原先不查，是个判据空洞）
+tools/sceneapply.ts          ← 改 · 写 active
 game/assets/logic/API.md     ← 改 · input.ts 一节加「捕获区」，v0.4 → v0.5
 docs/m2-scene-guide.md       ← 改 · §2.1 树加三类 UI 节点；§2.3 Canvas 表加三行 + 建法；
                                     splitX 那条警告扩成「捕获区也踩同一条坑」

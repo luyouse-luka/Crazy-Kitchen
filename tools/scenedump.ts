@@ -297,6 +297,10 @@ function main(): void {
     if (ui.pos && !same(n.pos, ui.pos)) {
       diffs.push(`  ${n.name} Position ${fmt(n.pos)} ≠ 定稿 (${ui.pos.join(', ')})`)
     }
+    if (ui.active !== undefined && n.active !== ui.active) {
+      // 编辑器里眼睛图标（可见性）与 active 长得像但不是一回事，关错了只有真机看得出来
+      diffs.push(`  ${n.name} active=${n.active} ≠ 定稿 ${ui.active}`)
+    }
   })
 
   const missing = [...Object.keys(SPEC), ...Object.keys(UI_SPEC)].filter((k) => !seen.has(k))
