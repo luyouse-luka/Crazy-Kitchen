@@ -375,7 +375,7 @@
     "__prefab": null,
     "_materials": [
       {
-        "__uuid__": "620b6bf3-0369-4560-837f-2a2c00b73c26",
+        "__uuid__": "a529c95b-b533-4f35-9553-35794171e380",
         "__expectedType__": "cc.Material"
       }
     ],
@@ -475,7 +475,7 @@
     "__prefab": null,
     "_materials": [
       {
-        "__uuid__": "620b6bf3-0369-4560-837f-2a2c00b73c26",
+        "__uuid__": "5776190f-769f-4283-af58-33c75aa93ad5",
         "__expectedType__": "cc.Material"
       }
     ],
@@ -575,7 +575,7 @@
     "__prefab": null,
     "_materials": [
       {
-        "__uuid__": "620b6bf3-0369-4560-837f-2a2c00b73c26",
+        "__uuid__": "a36656bd-9a78-4f01-82a9-c2ec9c9b0a93",
         "__expectedType__": "cc.Material"
       }
     ],
@@ -675,7 +675,7 @@
     "__prefab": null,
     "_materials": [
       {
-        "__uuid__": "620b6bf3-0369-4560-837f-2a2c00b73c26",
+        "__uuid__": "5776190f-769f-4283-af58-33c75aa93ad5",
         "__expectedType__": "cc.Material"
       }
     ],
@@ -775,7 +775,7 @@
     "__prefab": null,
     "_materials": [
       {
-        "__uuid__": "620b6bf3-0369-4560-837f-2a2c00b73c26",
+        "__uuid__": "0efd68af-fa6f-483a-9727-0fa81059a3a5",
         "__expectedType__": "cc.Material"
       }
     ],
@@ -875,7 +875,7 @@
     "__prefab": null,
     "_materials": [
       {
-        "__uuid__": "620b6bf3-0369-4560-837f-2a2c00b73c26",
+        "__uuid__": "a2b1da9b-99d3-49a8-8760-e2274d0f03d9",
         "__expectedType__": "cc.Material"
       }
     ],
@@ -975,7 +975,7 @@
     "__prefab": null,
     "_materials": [
       {
-        "__uuid__": "620b6bf3-0369-4560-837f-2a2c00b73c26",
+        "__uuid__": "4bcf3895-4495-4401-94d2-b5217bad7b08",
         "__expectedType__": "cc.Material"
       }
     ],
@@ -1151,9 +1151,9 @@
     },
     "_lscale": {
       "__type__": "cc.Vec3",
-      "x": 1,
-      "y": 1,
-      "z": 1
+      "x": 0.7,
+      "y": 0.6,
+      "z": 0.7
     },
     "_mobility": 0,
     "_layer": 1073741824,
@@ -1251,9 +1251,9 @@
     },
     "_lscale": {
       "__type__": "cc.Vec3",
-      "x": 1,
-      "y": 1,
-      "z": 1
+      "x": 0.4,
+      "y": 0.4,
+      "z": 0.4
     },
     "_mobility": 0,
     "_layer": 1073741824,
@@ -1380,7 +1380,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 0.01,
+      "y": 0.006,
       "z": 0
     },
     "_lrot": {
@@ -1418,7 +1418,7 @@
     "__prefab": null,
     "_materials": [
       {
-        "__uuid__": "620b6bf3-0369-4560-837f-2a2c00b73c26",
+        "__uuid__": "ecd644bd-c3ca-4169-b1ef-847270e16887",
         "__expectedType__": "cc.Material"
       }
     ],
@@ -1430,7 +1430,7 @@
       "__uuid__": "1263d74c-8167-4928-91a6-4e2672411f47@2e76e",
       "__expectedType__": "cc.Mesh"
     },
-    "_shadowCastingMode": 0,
+    "_shadowCastingMode": 1,
     "_shadowReceivingMode": 1,
     "_shadowBias": 0,
     "_shadowNormalBias": 0,
@@ -1790,8 +1790,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 500,
-      "y": -222,
+      "x": 440,
+      "y": -160,
       "z": 0
     },
     "_lrot": {
