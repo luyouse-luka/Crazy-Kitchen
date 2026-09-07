@@ -34,8 +34,42 @@ export const SPEC: Record<string, NodeSpec> = {
   Anchor_Hand: { pos: [0, 1.75, 0] },
   // Plane 的内置 mesh 默认边长 10m（实测确认：scale=1 时它盖住了整个 8×6 地板），
   // 所以 0.08/0.06 出来是 0.8 × 0.6 米 —— 比玩家直径 0.7 略大一圈
-  Shadow: { pos: [0, 0.01, 0], scale: [0.08, 1, 0.06] },
+  Shadow: { pos: [0, 0.006, 0], scale: [0.08, 1, 0.06] },
 }
+
+// ─────────────────────────── 材质 ───────────────────────────
+
+export interface MatSpec {
+  /** materials/<mat>.mtl */
+  mat: string
+  /** mainColor, 0-255 */
+  rgba: [number, number, number, number]
+  /** _techIdx on builtin-unlit: 0 opaque / 1 transparent */
+  tech: number
+}
+
+/**
+ * 全部用 `builtin-unlit`（属性名 `mainColor`；`builtin-standard` 那边叫 `albedo`）。
+ * unlit 不吃光照，填什么色渲染出来就是什么色 —— 扁平卡通风要的正是这个，
+ * 也省掉「场景里偏暗，是光的问题还是材质的问题」这类查不动的问题。
+ *
+ * Shadow 是唯一 tech=1 的：opaque 下 alpha 被忽略，出来是一块不透明纯黑片。
+ */
+export const MAT_SPEC: Record<string, MatSpec> = {
+  Floor: { mat: 'M_Floor', rgba: [200, 200, 200, 255], tech: 0 },
+  Wall_N: { mat: 'M_Wall', rgba: [230, 230, 230, 255], tech: 0 },
+  Wall_E: { mat: 'M_Wall', rgba: [230, 230, 230, 255], tech: 0 },
+  Station_Fridge: { mat: 'M_Fridge', rgba: [58, 123, 213, 255], tech: 0 },
+  Station_Grill: { mat: 'M_Grill', rgba: [192, 57, 43, 255], tech: 0 },
+  Station_Assembly: { mat: 'M_Assembly', rgba: [200, 155, 90, 255], tech: 0 },
+  Station_Serve: { mat: 'M_Serve', rgba: [39, 174, 96, 255], tech: 0 },
+  Body: { mat: 'M_Player', rgba: [255, 45, 149, 255], tech: 0 },
+  Head: { mat: 'M_Player', rgba: [255, 45, 149, 255], tech: 0 },
+  Shadow: { mat: 'M_Shadow', rgba: [0, 0, 0, 76], tech: 1 },
+}
+
+/** 新建材质槽位的默认值，等于「还没挂」 */
+export const DEFAULT_MATERIAL_UUID = '620b6bf3-0369-4560-837f-2a2c00b73c26'
 
 // ─────────────────────────── UI ───────────────────────────
 

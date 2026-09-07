@@ -47,7 +47,73 @@
 
 </details>
 
-## 📍 当前断点（2026-09-06 第五轮 · 每轮收工更新这一段）
+## 📍 当前断点（2026-09-07 第六轮 · 每轮收工更新这一段）
+
+**⏸ 第六轮：M2 场景几何定稿，线 A 与线 B 交替改同一个 `.scene`。**
+场景的**数值**从这一轮起有了单一真相 `tools/scene-spec.ts` + 三个判据脚本，
+「摆得对不对」不再靠眼睛看。⚠ `.scene` **不 merge**（§6.5）—— 改场景前必须先 `pull`，
+编辑器保存是整份覆盖。
+
+### 场景现状（`b9cdc1e`，判据实测不是听说）
+
+`pnpm scene` 全绿三项：§0 三条红线 OK · Position / Scale 与 §2.3 完全一致 ·
+UI 三节点尺寸 / SizeMode / 位置到位。`pnpm layout` idle 70.2 vs M1 基线 70.8、带外 0 天。
+
+| | 值 |
+|---|---|
+| 相机 | ORTHO · `(-10.447, 10.505, 10.391)` · rot `(-35, -45, 0)` · **OrthoHeight 5**（半高，4.3 会裁掉场景）· ClearFlags SOLID_COLOR |
+| 厨房 | 地板 8×6 · 墙 `Wall_N` / `Wall_E`（相机 yaw −45，背对镜头的是北和东） |
+| 工位 | fridge `(2, −2.5)` grill `(−2, −2.5)` assembly `(−3.5, 0)` serve `(−1, 2.5)`，1×1 三个 + 出餐口 2×1 |
+| 玩家 | Body `(0.7, 0.6, 0.7)` · Head `(0.4, 0.4, 0.4)` · Shadow `y=0.006` scale `(0.08, 1, 0.06)` = 0.8×0.6 m |
+| UI | 1280×720 Fit Height · 摇杆 180 · 动作键 160 锚右下 120/120（Widget 算出中心 `(440, −160)`，对得上） |
+
+**摆位不是手摆的**：3793 个满足硬约束的候选 → 几何常识收窄到 713 → 全部跑 20 天难度曲线
+→ 取最贴近 M1 基线的那个（完成率 92.6% vs 92.4%、后期 84.7% vs 83.6%）。
+⚠ **「一圈路径长度」是个错指标** —— 真实动线是 F↔G↔A 往返，不是环形；
+候选 B 一圈同为 17.20m，完成率却掉到 86.0%。`idle` 才是最灵敏的那一维。
+
+### ⏳ 线 A 待做（`pnpm scene` 会一直报到做完为止）
+
+1. **`M_Shadow` 现在是一块不透明纯黑片** —— `Technique` 还是 `opaque`（alpha 在 opaque 下被
+   整个忽略），`mainColor` 的 Alpha 还是 255。切 **transparent** + Alpha **76**
+2. **`Body` / `Head` 还挂着默认材质** —— 该挂 `M_Player`（另外 7 个都挂对了）
+3. `UI_HUD` 加 `Widget`，四边 0
+
+### ⏳ 待拍板（铁律⑳，我没替你做主）
+
+- **八个材质全建成了 `builtin-unlit`**，而 guide §5 原本建议 `standard`。unlit 颜色所见即所得，
+  代价是六面同色、斜 45° 下 Cube 三个可见面一样亮，立体感只剩轮廓。换与不换都行，
+  **但别混着来**（一半受光一半不受光，同一个灰在两个工位上会差出一档）
+- **`Station_Serve` 贴着南边界**，顾客要站在 `z > 3` 的地板外会浮空。三条路：
+  加一块 `Floor_Customer` / 地板往南延 / 顾客本来就站店外。跟 `customer.ts` 一起定
+
+### 第六轮新增/改动（`project/kitchen-chaos/` 下）
+
+```
+tools/scene-spec.ts        ← 新增 · 场景数值的单一真相（SPEC / UI_SPEC / MAT_SPEC / RENAMES）
+tools/scenedump.ts         ← 新增 · `pnpm scene`：反扁平化 .scene，对红线 / Transform / UI / 材质
+tools/sceneapply.ts        ← 新增 · `pnpm scene:apply [--write]`：把 SPEC 写回 .scene
+                                    含活性守卫（先证 JSON 往返逐字节无损，否则中止）
+tools/layoutcheck.ts       ← 新增 · `pnpm layout`：几何间隙（欧氏，含对角）+ 线段-AABB 相交
+                                    + 20 天难度曲线对 M1 基线
+package.json               ← 改 · 加 layout / scene / scene:apply 三组脚本与 pre* 钩子
+game/assets/main.scene     ← 改 · 数值定稿（我 31 处纯数值）+ 材质拆分与 Body/Head 缩放（你）
+game/assets/materials/     ← 新增 · 八个 M_*.mtl（你在编辑器里建的）
+docs/m2-scene-guide.md     ← 改 · 加 §2.2 创建菜单对照表 + §2.3 定稿 Transform；
+                                  §5 材质改口径（unlit 现状 + 属性名 mainColor/albedo）；
+                                  §6 blob shadow 的 scale 修正（Plane 默认 10 米，不是 1 米）
+ROADMAP.md                 ← 改 · 本段
+```
+
+**这一轮踩到的两个坑**（细节在 memory，不重复）：
+① **Plane 的内置 mesh 默认边长是 10 米**（Cube 是 1 米）—— 按 1 米算的 blob shadow scale
+会铺出 8×6 米黑片盖住整个地板，看起来像「材质坏了」。
+② **`cc.Widget` 只存 `_alignFlags` 位掩码**，没有 `_isAlignTop` 这类布尔字段 ——
+我第一版判据读的是不存在的字段，于是恒报「未对齐」。**判据自己会骗人，负向断言先验它能报错。**
+
+---
+
+## 第五轮存档（2026-09-06 · M0 闸门通过）
 
 **⛔ M0 的 go/no-go 闸门在 2026-09-06 通过了。** ly 读完 `pipeline/handwritten/cards.json`
 那 25 张，结论是「基本没什么问题，可以继续进行」。**方向成立，可以建厨房了。**

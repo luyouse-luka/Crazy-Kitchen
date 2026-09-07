@@ -11,13 +11,14 @@
 declare const process: { argv: string[]; exit(code?: number): void }
 declare const console: { log(...args: unknown[]): void }
 
-import { SPEC, UI_SPEC } from './scene-spec'
+import { SPEC, UI_SPEC, MAT_SPEC, DEFAULT_MATERIAL_UUID } from './scene-spec'
 
 // @ts-expect-error Node builtin, typed locally — same stance as pkgsize.ts.
 import * as nodeFs from 'node:fs'
-const { readFileSync, existsSync } = nodeFs as {
+const { readFileSync, existsSync, readdirSync } = nodeFs as {
   readFileSync(p: string, enc: 'utf8'): string
   existsSync(p: string): boolean
+  readdirSync(p: string): string[]
 }
 
 // ─────────────────────────── 反扁平化 ───────────────────────────
@@ -93,6 +94,33 @@ const CLEAR_FLAG: Record<number, string> = {
   14: 'SKYBOX',
 }
 const clearName = (v: number): string => `${CLEAR_FLAG[v] ?? '?'}(${v})`
+
+// ─────────────────────────── 材质 ───────────────────────────
+
+interface Mtl { name: string; tech: number; rgba: [number, number, number, number] }
+
+/** uuid → 材质，由 materials/*.mtl.meta 与同名 .mtl 拼出来 */
+function readMaterials(dir: string): Map<string, Mtl> {
+  const out = new Map<string, Mtl>()
+  if (!existsSync(dir)) return out
+  for (const f of readdirSync(dir)) {
+    if (!f.endsWith('.mtl.meta')) continue
+    const name = f.slice(0, -'.mtl.meta'.length)
+    const meta = JSON.parse(readFileSync(`${dir}/${f}`, 'utf8')) as Record<string, unknown>
+    const uuid = str(meta['uuid'])
+    if (!uuid) continue
+    const body = JSON.parse(readFileSync(`${dir}/${name}.mtl`, 'utf8')) as Record<string, unknown>
+    const props = (Array.isArray(body['_props']) ? body['_props'] : []) as Record<string, unknown>[]
+    const c = (props.find((x) => x && x['mainColor']) ?? {})['mainColor'] as Record<string, unknown> | undefined
+    out.set(uuid, {
+      name,
+      tech: num(body['_techIdx']),
+      rgba: [num(c?.['r']), num(c?.['g']), num(c?.['b']), num(c?.['a'])],
+    })
+  }
+  return out
+}
+
 
 function main(): void {
   const arg = process.argv[2]
@@ -277,6 +305,40 @@ function main(): void {
   if (diffs.length > 0) console.log(diffs.join('\n'))
   if (missing.length === 0 && diffs.length === 0) console.log('  OK：Position / Scale 与 §2.3 完全一致')
   console.log('  （不检查 Scale 的：' + noScale.join(' ') + ' —— 内置几何体默认尺寸不在工程里，编辑器里量）')
+
+  // ── 材质
+  // 场景只存 uuid，颜色和 technique 在 .mtl 里 —— 两边都读到才判得了。
+  console.log('\n── 材质（MeshRenderer → .mtl）')
+  const mtls = readMaterials(file.replace(/[^/]+$/, 'materials'))
+  const matDiffs: string[] = []
+  walk(root, (n) => {
+    const want = MAT_SPEC[n.name]
+    const mr = n.comps.find((c) => str(c['__type__']) === 'cc.MeshRenderer')
+    if (!want || !mr) return
+    const slot = (Array.isArray(mr['_materials']) ? mr['_materials'] : [])[0] as Ref | null
+    const uuid = slot && typeof slot === 'object' ? str((slot as unknown as Entry)['__uuid__']) : ''
+    if (uuid === DEFAULT_MATERIAL_UUID || !uuid) {
+      matDiffs.push(`  ${n.name} 还挂着默认材质 —— 该挂 ${want.mat}`)
+      return
+    }
+    const got = mtls.get(uuid)
+    if (!got) {
+      matDiffs.push(`  ${n.name} 的材质 uuid ${uuid.slice(0, 8)} 在 materials/ 里找不到`)
+      return
+    }
+    const label = `  ${n.name} → ${got.name}`
+    if (got.name !== want.mat) matDiffs.push(`${label}，定稿是 ${want.mat}`)
+    if (got.rgba.join() !== want.rgba.join()) {
+      matDiffs.push(`${label} 颜色 rgba(${got.rgba.join(', ')}) ≠ 定稿 rgba(${want.rgba.join(', ')})`)
+    }
+    if (got.tech !== want.tech) {
+      const tn = (t: number): string => (t === 1 ? 'transparent' : t === 0 ? 'opaque' : String(t))
+      matDiffs.push(`${label} Technique=${tn(got.tech)} ≠ 定稿 ${tn(want.tech)}`)
+    }
+  })
+  if (mtls.size === 0) console.log('  materials/ 目录还是空的（8 个 M_* 都没建）')
+  else if (matDiffs.length === 0) console.log(`  OK：${mtls.size} 个材质，挂载 / 颜色 / Technique 全部对上定稿`)
+  else console.log(matDiffs.join('\n'))
 
   // ── 反向生成 layoutcheck 的输入
   const placed: string[] = []
