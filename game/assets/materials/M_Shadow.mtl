@@ -10,11 +10,7 @@
   },
   "_techIdx": 1,
   "_defines": [
-    {
-      "USE_VERTEX_COLOR": true,
-      "USE_TEXTURE": true,
-      "USE_ALPHA_TEST": true
-    },
+    {},
     {},
     {}
   ],
@@ -55,14 +51,7 @@
         "g": 0,
         "b": 0,
         "a": 128
-      },
-      "colorScale": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 1,
-        "z": 1
-      },
-      "alphaThreshold": 0.501
+      }
     },
     {},
     {}
