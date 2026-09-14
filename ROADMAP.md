@@ -47,7 +47,116 @@
 
 </details>
 
-## 📍 当前断点（2026-09-07 第八轮 · 每轮收工更新这一段）
+## 📍 当前断点（2026-09-14 第九轮 · 每轮收工更新这一段）
+
+**⏸ 第九轮：11 个场景节点建完了，影子 Alpha 也定了。`pnpm scene` 第一次全绿 ——
+线 A 手上没有待建的东西了，M2 只剩组件层接线。**
+
+### ✅ 这一轮落地的三件
+
+| | 做了什么 | 判据 |
+|---|---|---|
+| 11 个节点 | `Floor_Customer` · `UI_DiscardButton` · `UI_FridgePanel` + `Slot_0..7`，脚本直写 `.scene` | `pnpm scene` 不再报「场景里还没有」 |
+| 影子 Alpha | **定 76**（维持定稿），`M_Shadow.mtl` 128 → 76 | 材质一节全绿 |
+| 坐标系收口 | `localPos()`：`UI_SPEC.pos`（Canvas 绝对）→ `.scene` 的 `_lpos`（相对父节点） | `tests/input.test.ts` 新增 4 条 |
+
+### 影子为什么定 76 而不是别的数
+
+128 是 **alpha test 还开着时**选出来的 —— 那会儿它只是「刚好过 0.501 阈值」，
+不是「看着刚好」，没有参考价值（第七轮已把 `USE_ALPHA_TEST` 关掉）。
+
+76/255 = 0.298，正是 §5 那张表从一开始写的设计意图（`Alpha ≈ 0.3`）。代进实际混合：
+地板是 200 灰，压 0.3 的黑 → **140**（`#8C8C8C`），软影子；128 会压到 **100**（`#646464`），
+在 unlit 扁平卡通风下偏脏偏重。`scene-spec.ts` 与 guide 两处本来就写着 76，只需改 `.mtl`。
+
+⚠ **我看不见渲染结果**，这是按机制算的。你拉下来在编辑器里看一眼 —— 嫌淡就往 90~100 调，
+改 `MAT_SPEC.Shadow.rgba` 与 `M_Shadow.mtl` 两处，`pnpm scene` 会守着两边一致。
+
+### 这一轮挖出来的坑：`Slot_*` 有两套坐标，判据看不出用错了哪套
+
+`UI_SPEC` 里 `Slot_*` 的 `pos` 是 **Canvas 中心系的绝对坐标** —— `uiRectToCaptureZone()`
+要的就是它，`tests/input.test.ts` 也直接拿它算捕获区。而 `.scene` 存的 `_lpos` 是
+**相对父节点**的，格子挂在 `UI_FridgePanel` 底下（层级树本来就这么画的：关一次面板
+收掉 9 个节点），面板中心在 `y = +60` —— **两者恒差这 60**。
+
+拿 `pos` 直接写场景的话：8 个格子整体上移 60px，**而判据读的也是同一个数、照样全绿**。
+真机上的症状是「点得到点不到」，不像坐标错。
+
+换算收口在 `tools/scene-spec.ts` 的 `localPos()`，`scenedump` / `sceneapply` 都走它；
+`UiSpec` 加了 `parent` 字段，写成 `UI_SPEC` 里没有的名字会抛 ——
+**静默退回绝对坐标正是上面那个错法**。
+
+**证伪过的**：摘掉 `Slot_*` 的 `parent` → 2 条测试转红 + `pnpm scene` 报 8 处位置差。
+
+### 顺带补的一个判据空洞
+
+`UI_FridgePanel` 原先没写 `sizeMode`。它是 `Sprite`，`SizeMode` 不是 CUSTOM 的话
+560×288 会被内置白块的 **40×36** 顶回去，而判据 `if (ui.sizeMode !== undefined)` 直接跳过 ——
+补上一行就守住了。
+
+### ⏳ 线 A 待做
+
+1. **拉下来在编辑器里打开一次** —— 节点是脚本写的 JSON，编辑器认不认得等你打开才知道。
+   打开后**先别保存**，对着层级管理器核一眼 11 个节点在不在、面板底下是不是 8 个格子
+2. **看一眼影子**（见上），嫌淡就给个数
+3. **给 8 个格子加 `Label`**（可选）—— 我只给了占位色（bun 金棕 / patty 深褐 / cheese 亮黄 /
+   lettuce 亮绿 / tomato 红 / onion 淡紫 / pickle 橄榄绿 / bacon 粉红），编辑器里点一下就有 `Label`，
+   手写 JSON 反而要赌字段对不对，所以留给你
+4. **量 `Player` / `Body` / `Head` / `Anchor_Hand` 的 scale**（老账，内置几何体默认尺寸不在工程里）
+
+⚠ **`.scene` 不 merge**（§6.5）。我这一轮写过它，你那边**开工第一件事是 `git pull`** ——
+编辑器保存是整份覆盖，先开编辑器再 pull 会把这 11 个节点冲掉。
+
+### ⏰ 游戏名：时钟只剩两周
+
+暂定「疯狂大厨」，还是「暂定」。软著要 6–12 周，**9 月底到 10 月初**必须定死。
+⚠ 提交前先查重 —— 同名手游不少，证书名称与上架名必须完全一致，撞车要重新申请 = 再推两三个月。
+
+### ⏳ 还没做的：组件层接线
+
+逻辑层、场景、判据都就位了，剩下 `StationView` 那一层（与第八轮同，原样搬过来）：
+
+- 走到冰箱点动作键 → 开面板。⚠ **`carry.kind !== 'none'` 时根本不开**，
+  直接给「手满了」反馈 —— 否则玩家白开一次面板再吃 `blocked('hands-full')`
+- 面板打开时**冻结摇杆**（角色站住）。世界继续跑，但走出触发范围会让选中的食材
+  吃 `out-of-range`，白选一次
+- **选中即关**，一次点击；点面板外空白 = 取消
+- 丢弃键在 `carry.kind !== 'none'` 时淡入，`zone('discard').holdStarted` 触发 `discard(st)`
+- 捕获区用 `uiRectToCaptureZone()` 喂 `setCaptureZones()`，`screenW/screenH` 取
+  `view.getVisibleSize()` 的实测值，**别填常量**
+- ⚠ **同一条坑在组件层的形态**：`slotNode.position` 读出来是**相对面板**的（-204, 68），
+  而 `uiRectToCaptureZone()` 要 Canvas 绝对值（-204, 128）—— 直接喂进去，8 个格子的
+  命中区整体下移 60px。组件里要 `panel.position + slot.position` 再喂
+
+### 第九轮新增/改动（`project/kitchen-chaos/` 下）
+
+```
+game/assets/main.scene            ← 改 · 新增 11 个节点（67 → 101 条目）：Floor_Customer（Cube+
+                                         M_FloorOut）、UI_DiscardButton（Sprite+Widget r=140 b=300）、
+                                         UI_FridgePanel（Sprite 560×288）+ Slot_0..7（各 Sprite 120×120，
+                                         挂在面板下）；UI_Joystick active → false
+game/assets/materials/M_FloorOut.mtl      ← 新 · builtin-unlit tech=0，#969696
+game/assets/materials/M_FloorOut.mtl.meta ← 新 · uuid 768c08b3-353c-41cf-ab6f-2aaccbc1fa96
+game/assets/materials/M_Shadow.mtl        ← 改 · mainColor.a 128 → 76
+tools/scene-spec.ts               ← 改 · UiSpec 加 parent；Slot_* 挂 UI_FridgePanel；
+                                         UI_FridgePanel 补 sizeMode: 0；新增 localPos()
+tools/scenedump.ts                ← 改 · 位置对比走 localPos()
+tools/sceneapply.ts               ← 改 · 位置写入走 localPos()
+docs/m2-scene-guide.md            ← 改 · §2.3 Slot 那行注明建在面板下；加「两套坐标」警告与
+                                         「节点已建好、Label 没建」的说明
+tests/input.test.ts               ← 改 · 238 → 242 测试，新增「Slot 的两套坐标」一节
+ROADMAP.md                        ← 改 · 本段
+```
+
+`pnpm check` 全绿：铁律① 0 命中 · typecheck 无错 · **242 测试 / 13 文件**（原 238）。
+`pnpm scene` 全绿：§0 三条红线 · Position/Scale · 9 个材质 —— **第一次三节全 OK**。
+
+---
+
+## 第八轮存档（2026-09-07 · 输入层捕获区）
+
+> ✅ 这一段里「⏳ 线 A 待做」的 11 个节点与「⏳ 待你拍板：影子的 Alpha」
+> **都已在第九轮做完**（节点脚本建好、Alpha 定 76），原样留作历史。
 
 **⏸ 第八轮：冰箱怎么选食材、丢弃怎么触发 —— 两件堵了三轮的 UI 决策都定了，
 输入层的落点也写完了。M2 只剩组件层接线。**
@@ -246,7 +355,7 @@ ly 2026-09-07 实测「z=4 或 z=5 都能完全装下」，画面有余量。
 1. **冰箱怎么选 8 种食材** —— ⚠「按订单自动给下一样」会剥夺「拿错」的失败路径
 2. **丢弃怎么触发** —— 空地长按，还是加个垃圾桶工位
 
-> ✅ **两条都已于第八轮定案**（弹面板选 / 右下角丢弃键长按 0.3s），见「📍 当前断点」。
+> ✅ **两条都已于第八轮定案**（弹面板选 / 右下角丢弃键长按 0.3s），见「第八轮存档」。
 
 ### ⏰ 外部时钟：游戏名
 
@@ -422,7 +531,7 @@ ROADMAP.md                     ← 改 · 本段 + 相机复议 + M2 清单勾�
 
 `interact()` 不认输入映射，上面两条定了之后只改组件，逻辑层一行不用动。
 
-> ✅ **两条都已于第八轮定案**，见「📍 当前断点」。⚠ 但「只改组件，逻辑层一行不用动」
+> ✅ **两条都已于第八轮定案**，见「第八轮存档」。⚠ 但「只改组件，逻辑层一行不用动」
 > 这句**当时估错了** —— 弹面板与右下角第二个键都撞上 `TouchRouter` 的左右半屏分路，
 > `input.ts` 加了捕获区机制才做得成。`interact()` 本身确实没动。
 

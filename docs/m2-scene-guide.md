@@ -334,7 +334,7 @@ Capsule / Cylinder 的默认高度也不见得是 1。
 | `UI_Joystick` | 180 × 180 | 不锚定，脚本运行时移到手指位置 | `active` = false，浮动摇杆按下才出现 |
 | `UI_DiscardButton` | 120 × 120 | `Widget` 锚右下，`right = 140`、`bottom = 300` | `active` = false。手里有东西才显示，**长按 0.3s** 才丢 |
 | `UI_FridgePanel` | 560 × 288 | 不锚定，`position = (0, 60, 0)` | `active` = false。走到冰箱点动作键才开 |
-| `Slot_0` … `Slot_7` | 各 120 × 120 | 位置由 `pnpm scene:apply --write` 写入 | 只管建节点，别手摆坐标 |
+| `Slot_0` … `Slot_7` | 各 120 × 120 | **建在 `UI_FridgePanel` 底下**，位置由 `pnpm scene:apply --write` 写入 | 只管建节点，别手摆坐标 |
 
 **`active` 那三个 false 不用你手点** —— 已经写进 `UI_SPEC`，`pnpm scene` 会报、
 `pnpm scene:apply --write` 会写。建完节点跑一次，位置和 `active` 一起到位。
@@ -346,8 +346,22 @@ Capsule / Cylinder 的默认高度也不见得是 1。
 会被图片尺寸顶回去），下面挂一个 `Label` 写食材名。M2 阶段没有图标美术，
 **纯色块 + 文字就够**——这属于「上线前必须替换的占位内容」，已登记在 ROADMAP。
 
+> ✅ **节点本身已经建好了**（2026-09-14，脚本直接写的 `.scene`），八个格子各给了一个
+> 能分辨的占位色（bun 金棕 / patty 深褐 / cheese 亮黄 / lettuce 亮绿 / tomato 红 /
+> onion 淡紫 / pickle 橄榄绿 / bacon 粉红）。**`Label` 没建** —— 编辑器里点一下就有，
+> 手写 JSON 反而要赌字段对不对。要加就在每个 `Slot_i` 下面添 `Label` 子节点写食材名。
+
 建完 8 个空节点跑 `pnpm scene:apply --write`，位置自动写进去。手摆的话
 `pnpm scene` 会一直报差值——那张表是算出来的（`PANEL` 常量），不是量出来的。
+
+> ⚠ **格子有两套坐标，别混**。`UI_SPEC` 里 `Slot_*` 的 `pos` 是 **Canvas 中心系的绝对值**
+> （`uiRectToCaptureZone` 要的就是它），而场景文件存的 `_lpos` 是**相对面板**的 ——
+> 面板中心在 `y = +60`，两者恒差这 60。换算收口在 `tools/scene-spec.ts` 的 `localPos()`，
+> `scenedump` / `sceneapply` 都走它。
+>
+> 要命的是**两边读的是同一个字段**：哪边用错了坐标系，`pnpm scene` 照样报「完全一致」，
+> 只有真机上点得到点不到才暴露。`tests/input.test.ts` 最后一节钉着这条
+> （含一条反例锚点：拿 `localPos` 去算捕获区，下排格子会掉出面板）。
 
 > ⚠ **编辑器里有两个长得很像的开关，别关错**：
 >
