@@ -11,7 +11,7 @@
 declare const process: { argv: string[]; exit(code?: number): void }
 declare const console: { log(...args: unknown[]): void }
 
-import { SPEC, UI_SPEC, MAT_SPEC, DEFAULT_MATERIAL_UUID } from './scene-spec'
+import { SPEC, UI_SPEC, MAT_SPEC, DEFAULT_MATERIAL_UUID, localPos } from './scene-spec'
 
 // @ts-expect-error Node builtin, typed locally — same stance as pkgsize.ts.
 import * as nodeFs from 'node:fs'
@@ -294,8 +294,10 @@ function main(): void {
     if (ui.sizeMode !== undefined && mode >= 0 && mode !== ui.sizeMode) {
       diffs.push(`  ${n.name} Sprite SizeMode 不是 CUSTOM —— 填的尺寸会被图片顶回去`)
     }
-    if (ui.pos && !same(n.pos, ui.pos)) {
-      diffs.push(`  ${n.name} Position ${fmt(n.pos)} ≠ 定稿 (${ui.pos.join(', ')})`)
+    // 场景存的是 _lpos，Slot_* 挂在面板下 —— 拿 ui.pos（Canvas 绝对）直接比会差一个面板位置
+    const lp = localPos(n.name)
+    if (lp && !same(n.pos, lp)) {
+      diffs.push(`  ${n.name} Position ${fmt(n.pos)} ≠ 定稿 (${lp.join(', ')})`)
     }
     if (ui.active !== undefined && n.active !== ui.active) {
       // 编辑器里眼睛图标（可见性）与 active 长得像但不是一回事，关错了只有真机看得出来

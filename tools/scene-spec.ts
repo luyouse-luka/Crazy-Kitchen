@@ -98,6 +98,12 @@ export interface UiSpec {
    * 关错了的话编辑器里一切正常，要等真机跑起来才发现按钮一直挂在屏幕上。
    */
   active?: boolean
+  /**
+   * 父节点名。`pos` 恒是 Canvas 中心系的**绝对**坐标 —— 捕获区要的就是它
+   * （`uiRectToCaptureZone`），而场景文件存的 `_lpos` 是**相对父节点**的。
+   * 两者只在没有 parent 时才相等，所以读写场景一律走 `localPos()`，别直接用 `pos`。
+   */
+  parent?: string
 }
 
 // ─────────────────────────── 冰箱面板的 8 格 ───────────────────────────
@@ -126,7 +132,8 @@ function fridgeSlots(): Record<string, UiSpec> {
     for (let c = 0; c < cols; c++) {
       const x = center[0] - w / 2 + pad + cell / 2 + c * (cell + gap)
       const y = center[1] + h / 2 - pad - cell / 2 - r * (cell + gap)
-      out[`Slot_${r * cols + c}`] = { size: [cell, cell], sizeMode: 0, pos: [x, y, 0] }
+      // pos 是 Canvas 绝对坐标（捕获区直接用），场景里的 _lpos 由 localPos() 减掉面板位置
+      out[`Slot_${r * cols + c}`] = { size: [cell, cell], sizeMode: 0, pos: [x, y, 0], parent: 'UI_FridgePanel' }
     }
   }
   return out
@@ -196,8 +203,26 @@ export const UI_SPEC: Record<string, UiSpec> = {
    * 中心抬到 y=+60，避开左下摇杆与右下动作键的拇指区；世界继续跑，所以它
    * **不能全屏遮挡** —— 玩家要看得见烤炉在糊。
    */
-  UI_FridgePanel: { size: [560, 288], pos: [0, 60, 0], active: false },
+  UI_FridgePanel: { size: [560, 288], sizeMode: 0, pos: [0, 60, 0], active: false },
   ...FRIDGE_SLOTS,
+}
+
+/**
+ * `UiSpec.pos`（Canvas 绝对）→ 场景文件的 `_lpos`（相对父节点）。
+ *
+ * 只有 `Slot_*` 有父节点，它们挂在 `UI_FridgePanel` 下 —— 关一次面板就收掉 9 个节点。
+ * 面板中心在 y=+60，所以格子的绝对坐标和 `_lpos` **恒差这 60**：
+ * 拿 `pos` 直接写场景，8 个格子整体上移 60px，而判据读的也是同一个数、照样全绿。
+ *
+ * parent 写成 UI_SPEC 里没有的名字会抛 —— 静默退回绝对坐标正是上面那个错法。
+ */
+export function localPos(name: string): [number, number, number] | undefined {
+  const ui = UI_SPEC[name]
+  if (!ui?.pos) return undefined
+  if (!ui.parent) return ui.pos
+  const p = UI_SPEC[ui.parent]?.pos
+  if (!p) throw new Error(`localPos: ${name} 的 parent ${ui.parent} 不在 UI_SPEC 里`)
+  return [ui.pos[0] - p[0], ui.pos[1] - p[1], ui.pos[2] - p[2]]
 }
 
 /** cc.Camera.ClearFlag。SKYBOX(14) 是新建场景的默认值，正是它把天空盒拉进包里 */

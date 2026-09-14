@@ -13,7 +13,7 @@
 declare const process: { argv: string[]; exit(code?: number): void }
 declare const console: { log(...args: unknown[]): void }
 
-import { SPEC, UI_SPEC, RENAMES, CLEAR_SKYBOX, CLEAR_SOLID_COLOR } from './scene-spec'
+import { SPEC, UI_SPEC, RENAMES, CLEAR_SKYBOX, CLEAR_SOLID_COLOR, localPos } from './scene-spec'
 
 // @ts-expect-error Node builtin, typed locally — same stance as pkgsize.ts.
 import * as nodeFs from 'node:fs'
@@ -114,11 +114,13 @@ function main(): void {
       .map((r) => all[r.__id__])
       .filter((c): c is Entry => c !== undefined)
 
-    if (ui.pos) {
+    // _lpos 是相对父节点的；Slot_* 在面板下，写 ui.pos（Canvas 绝对）会整体偏一个面板位置
+    const lp = localPos(name)
+    if (lp) {
       const p = asVec(e['_lpos'])
-      if (p && !eq(p, ui.pos)) {
-        changes.push(`位置  ${name.padEnd(18)} ${fmt(p)} → (${ui.pos.join(', ')})`)
-        setVec(p, ui.pos)
+      if (p && !eq(p, lp)) {
+        changes.push(`位置  ${name.padEnd(18)} ${fmt(p)} → (${lp.join(', ')})`)
+        setVec(p, lp)
       }
     }
     if (ui.active !== undefined && e['_active'] !== ui.active) {

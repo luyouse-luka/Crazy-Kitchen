@@ -8,7 +8,7 @@ import {
 } from '../game/assets/logic/input'
 import type { CaptureZone } from '../game/assets/logic/input'
 import type { Vec2 } from '../game/assets/logic/vec2'
-import { UI_SPEC, uiRectToCaptureZone } from '../tools/scene-spec'
+import { UI_SPEC, localPos, uiRectToCaptureZone } from '../tools/scene-spec'
 
 const SPLIT = 640 // 1280 宽的一半
 const R = DEFAULT_STICK.radius // 90
@@ -575,5 +575,48 @@ describe('真机分辨率下的捕获区（编辑器 1280×720 预览永远看�
     r.onDown(1, z.x + z.w / 2, z.y + z.h / 2)
     expect(r.zone('discard')!.down).toBe(true)
     expect(r.action.down).toBe(false)
+  })
+})
+
+/**
+ * `UI_SPEC.pos` 是 Canvas 绝对坐标（捕获区要的），场景文件的 `_lpos` 是相对父节点的。
+ * 两者对 `Slot_*` 恒差一个面板位置（y=+60），而**两边都读同一个字段**——
+ * 哪边用错了坐标系，数值判据照样全绿，只有真机上点得到点不到才暴露。
+ */
+describe('Slot 的两套坐标：捕获区用绝对，场景文件用相对', () => {
+  it('八个格子的捕获区都落在面板的捕获区里', () => {
+    const p = zoneOf('UI_FridgePanel', 'panel')
+    for (let i = 0; i < 8; i++) {
+      const z = zoneOf(`Slot_${i}`, `slot${i}`)
+      expect(z.x, `Slot_${i} 左边越出面板`).toBeGreaterThanOrEqual(p.x)
+      expect(z.y, `Slot_${i} 下边越出面板`).toBeGreaterThanOrEqual(p.y)
+      expect(z.x + z.w, `Slot_${i} 右边越出面板`).toBeLessThanOrEqual(p.x + p.w)
+      expect(z.y + z.h, `Slot_${i} 上边越出面板`).toBeLessThanOrEqual(p.y + p.h)
+    }
+  })
+
+  it('反例锚点：拿 localPos 当捕获区算，有格子会掉出面板', () => {
+    const p = zoneOf('UI_FridgePanel', 'panel')
+    // 整体少了面板的 +60，而上下留白只有 pad(16) —— 下排必然越出面板底边。
+    // 不指定是哪一格：面板参数改了这条照样成立。
+    const out = [...Array(8).keys()].filter((i) => {
+      const lp = localPos(`Slot_${i}`)!
+      const w = uiRectToCaptureZone(`slot${i}`, lp[0], lp[1], 120, 120, 1280, 720)
+      return w.y < p.y || w.y + w.h > p.y + p.h
+    })
+    expect(out.length).toBeGreaterThan(0)
+  })
+
+  it('localPos 减掉的正好是面板位置', () => {
+    const panel = UI_SPEC['UI_FridgePanel']!.pos!
+    for (let i = 0; i < 8; i++) {
+      const abs = UI_SPEC[`Slot_${i}`]!.pos!
+      const loc = localPos(`Slot_${i}`)!
+      expect([loc[0] + panel[0], loc[1] + panel[1], loc[2] + panel[2]]).toEqual(abs)
+    }
+  })
+
+  it('没有 parent 的节点，localPos 就是 pos 本身', () => {
+    expect(localPos('UI_DiscardButton')).toEqual(UI_SPEC['UI_DiscardButton']!.pos)
   })
 })
