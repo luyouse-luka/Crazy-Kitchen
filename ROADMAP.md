@@ -116,6 +116,24 @@ ROADMAP 预告的是面板那 60px。**实际最危险的不是它** —— 是 
 4. 顺带把上一轮没做的看了：11 个节点在不在、影子 76 够不够深（嫌淡给个数）、
    8 个格子要不要加 `Label`、`Player`/`Body`/`Head`/`Anchor_Hand` 的 scale
 
+### 编辑器预览为什么一开始完全没反应
+
+全局 `input` 在桌面浏览器上**不把鼠标转成触摸**，`Input.EventType.TOUCH_*` 一个都不来 ——
+预览里看着像组件死了，而手机构建其实是好的。组件里补了一条鼠标兜底
+（`MOUSE_DOWN/MOVE/UP` → 同一个 `TouchRouter`，占位 id `-99`），
+**只要收到过一次真触摸就永久关掉**，所以真机上这条路径不存在、不会双发。
+
+同时加了两行日志，用来把「组件没跑起来」和「输入没进来」分开：
+
+| 控制台 | 说明 |
+|---|---|
+| 没有 `[StationView] ready` | 组件没跑：没挂上 / 预览的不是 `main.scene` / `find()` 没找到节点（会有红色 error） |
+| 有 `ready`、没有 `first input` | 输入没进来 |
+| 两行都有还是不动 | 逻辑层的事，看 `blocked:` 那些行 |
+
+⚠ 预览只有一根「手指」，**边走边按测不了**；窗口又接近 1280×720，
+**Fit Height 的缩放坑在预览里恒不发生**。预览只用来验接线，手感和坐标仍然必须上真机。
+
 ### ⚠ 只有真机能暴露的三条（我测不出来）
 
 | 位置 | 赌的是什么 | 错了会怎样 |
@@ -145,6 +163,7 @@ ROADMAP 预告的是面板那 60px。**实际最危险的不是它** —— 是 
 
 ```
 game/assets/scripts/StationView.ts  ← 新 · 组件层接线（触摸 / 移动 / 厨房 / 面板 / 丢弃 / 摇杆）
+                                       + 桌面预览的鼠标兜底与 ready / first input 两行日志
 game/assets/logic/input.ts          ← 改 · 加 stickOriginX/Y；uiRectToCaptureZone 从 tools/ 搬来；
                                            新增 panelChildZone / screenToCanvasX / screenToCanvasY
 game/assets/logic/recipe.ts         ← 改 · 新增 DEFAULT_COOK（火候窗口唯一来源）

@@ -1,6 +1,7 @@
 import {
   _decorator,
   Component,
+  EventMouse,
   EventTouch,
   Game,
   Input,
@@ -54,6 +55,9 @@ const NODES = {
 /** Visible size is polled, not read every frame — getVisibleSize() allocates. */
 const RESIZE_POLL_SEC = 0.25
 
+/** Touch id for the desktop mouse fallback. Real touch ids start at 0 and go up. */
+const MOUSE_ID = -99
+
 /**
  * Wires logic/ to the scene: touch -> TouchRouter -> movement + kitchen -> nodes.
  *
@@ -90,6 +94,10 @@ export class StationView extends Component {
    *  it must run on change only — every frame would kill the discard hold. */
   private zonesKey = ''
   private touchPoint = new CCVec2()
+  /** Real touches win: on a phone the mouse path never runs, so the two cannot double up. */
+  private sawTouch = false
+  private mouseDown = false
+  private loggedInput = false
 
   override start(): void {
     const kitchenRoot = this.need(NODES.kitchen)
@@ -133,7 +141,16 @@ export class StationView extends Component {
     input.on(Input.EventType.TOUCH_MOVE, this.onTouchMove, this)
     input.on(Input.EventType.TOUCH_END, this.onTouchEnd, this)
     input.on(Input.EventType.TOUCH_CANCEL, this.onTouchCancel, this)
+    // Desktop preview: the global input does not turn mouse into touch, and without this
+    // the editor preview looks dead while the phone build works.
+    input.on(Input.EventType.MOUSE_DOWN, this.onMouseDown, this)
+    input.on(Input.EventType.MOUSE_MOVE, this.onMouseMove, this)
+    input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this)
     game.on(Game.EVENT_HIDE, this.onTouchCancel, this)
+
+    console.log(
+      `[StationView] ready — stations=${stations.length} slots=${this.slotNodes.length} screen=${this.screenW}x${this.screenH}`,
+    )
   }
 
   override onDestroy(): void {
@@ -141,6 +158,9 @@ export class StationView extends Component {
     input.off(Input.EventType.TOUCH_MOVE, this.onTouchMove, this)
     input.off(Input.EventType.TOUCH_END, this.onTouchEnd, this)
     input.off(Input.EventType.TOUCH_CANCEL, this.onTouchCancel, this)
+    input.off(Input.EventType.MOUSE_DOWN, this.onMouseDown, this)
+    input.off(Input.EventType.MOUSE_MOVE, this.onMouseMove, this)
+    input.off(Input.EventType.MOUSE_UP, this.onMouseUp, this)
     game.off(Game.EVENT_HIDE, this.onTouchCancel, this)
   }
 
@@ -196,6 +216,8 @@ export class StationView extends Component {
   }
 
   private onTouchStart(e: EventTouch): void {
+    this.sawTouch = true
+    this.firstInput('touch')
     this.route(e, (id, x, y) => this.router.onDown(id, x, y))
   }
 
@@ -208,7 +230,35 @@ export class StationView extends Component {
   }
 
   private onTouchCancel(): void {
+    this.mouseDown = false
     this.router.cancelAll()
+  }
+
+  private onMouseDown(e: EventMouse): void {
+    if (this.sawTouch) return
+    this.firstInput('mouse')
+    this.mouseDown = true
+    e.getLocation(this.touchPoint)
+    this.router.onDown(MOUSE_ID, this.touchPoint.x, this.touchPoint.y)
+  }
+
+  private onMouseMove(e: EventMouse): void {
+    if (this.sawTouch || !this.mouseDown) return
+    e.getLocation(this.touchPoint)
+    this.router.onMove(MOUSE_ID, this.touchPoint.x, this.touchPoint.y)
+  }
+
+  private onMouseUp(): void {
+    if (this.sawTouch || !this.mouseDown) return
+    this.mouseDown = false
+    this.router.onUp(MOUSE_ID)
+  }
+
+  /** One line the first time anything arrives — tells a dead preview from a dead component. */
+  private firstInput(src: string): void {
+    if (this.loggedInput) return
+    this.loggedInput = true
+    console.log(`[StationView] first input via ${src}`)
   }
 
   // ─────────────────────────── 每帧 ───────────────────────────
