@@ -292,7 +292,7 @@ function main(): void {
   // ── 组件写死的节点路径
   // StationView 全靠 find() 认路，路径是字符串 —— 改个节点名，TypeScript 一声不吭，
   // 要等真机跑起来看 console 才知道。这里把组件里的 NODES / STATION_KINDS 抠出来对一遍。
-  console.log('\n── StationView 认的节点路径')
+  console.log('\n── StationView 源码自检')
   const compFile = 'game/assets/scripts/StationView.ts'
   if (!existsSync(compFile)) console.log(`  跳过：找不到 ${compFile}`)
   else {
@@ -320,6 +320,18 @@ function main(): void {
     } else {
       for (const m of missing) console.log(`  ✗ 组件要找 ${m}，场景里没有`)
       console.log('    ⚠ 组件会打一行 console.error 然后自己禁用 —— 改名字，别改代码（guide §2.1）')
+    }
+
+    // update() 里 router.tick() 必须排在读脉冲之后。反了的话 tapped 全被清掉，
+    // 而摇杆与长按照常工作 —— 症状是「能走、长按还灵、就是点不动」。
+    // tests/ 钉的是 input.ts 的契约，看不见组件里的调用顺序，只能在这儿守。
+    const iRead = Math.max(src.indexOf('this.tickPlay()'), src.indexOf('this.tickPanel()'))
+    const iTick = src.indexOf('this.router.tick(')
+    if (iRead < 0 || iTick < 0) console.log('  ? 读不到 update() 里的顺序，跳过检查')
+    else if (iTick > iRead) console.log('  OK：router.tick() 排在读脉冲之后')
+    else {
+      console.log('  ✗ router.tick() 排在了读脉冲之前 —— tapped 会被整批清掉')
+      console.log('    ⚠ 症状是「能走、长按还灵、就是点不动」。见 input.ts 的 tick() 说明')
     }
   }
 

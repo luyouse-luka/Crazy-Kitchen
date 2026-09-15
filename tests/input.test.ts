@@ -687,3 +687,64 @@ describe('摇杆按下点：给浮动摇杆的视觉用', () => {
     expect([r.stickOriginX, r.stickOriginY]).toEqual([120, 300])
   })
 })
+
+/**
+ * 帧循环里的读写顺序。写反过一次：组件里 `tick()` 排在读之前，结果**点按和长按一个都读不到，
+ * 而摇杆照常工作** —— 现象是「能走路，按钮全死」，看起来像按钮没接上，不像顺序问题。
+ *
+ * 真因：触摸事件在两帧之间到达，而 `tick()` 进门先清上一帧的脉冲。先 tick 再读，
+ * 读到的永远是刚被清空的那份。
+ */
+describe('帧循环里的读写顺序', () => {
+  type Order = 'read-then-tick' | 'tick-then-read'
+
+  // 事件在两帧之间到达，组件在 update 里读 —— 浏览器与引擎的实际时序
+  const runFrames = (order: Order, events: Array<(r: TouchRouter) => void>): string[] => {
+    const r = mk()
+    const seen: string[] = []
+    events.forEach((ev, n) => {
+      ev(r)
+      const read = (): void => {
+        if (r.action.tapped) seen.push(`f${n}:tapped`)
+        if (r.action.holdStarted) seen.push(`f${n}:holdStarted`)
+      }
+      if (order === 'tick-then-read') {
+        r.tick(0.2)
+        read()
+      } else {
+        read()
+        r.tick(0.2)
+      }
+    })
+    return seen
+  }
+
+  const TAP = [(r: TouchRouter) => r.onDown(1, 900, 200), (r: TouchRouter) => r.onUp(1), () => {}]
+  const HOLD = [(r: TouchRouter) => r.onDown(1, 900, 200), () => {}, () => {}, () => {}]
+
+  it('读在前、tick 在后：点按读得到', () => {
+    expect(runFrames('read-then-tick', TAP)).toContain('f1:tapped')
+  })
+
+  it('读在前、tick 在后：长按读得到', () => {
+    expect(runFrames('read-then-tick', HOLD).some((s) => s.endsWith('holdStarted'))).toBe(true)
+  })
+
+  it('反例锚点：先 tick 再读，点按消失 —— 长按却还在，所以更难查', () => {
+    // tapped 由两帧之间的 onUp 产生，被 tick 进门那一下清掉
+    expect(runFrames('tick-then-read', TAP)).toEqual([])
+    // holdStarted 是 tick 自己产生的，同一帧内读得到 —— 于是「点不动但长按还灵」，
+    // 看起来更像某个按钮没接上，不像顺序问题
+    expect(runFrames('tick-then-read', HOLD).some((x) => x.endsWith('holdStarted'))).toBe(true)
+  })
+
+  it('同一时序下摇杆照常工作 —— 所以症状是「能走、按钮全死」', () => {
+    const r = mk()
+    r.onDown(1, 100, 200)
+    r.tick(0.2)
+    r.onMove(1, 100, 320)
+    r.tick(0.2)
+    expect(r.stick.active).toBe(true)
+    expect(r.stick.magnitude).toBeGreaterThan(0)
+  })
+})

@@ -134,6 +134,28 @@ ROADMAP 预告的是面板那 60px。**实际最危险的不是它** —— 是 
 ⚠ 预览只有一根「手指」，**边走边按测不了**；窗口又接近 1280×720，
 **Fit Height 的缩放坑在预览里恒不发生**。预览只用来验接线，手感和坐标仍然必须上真机。
 
+### 这一轮第二次炸：`tick()` 排在读之前，点按全被吞
+
+预览跑起来之后：**能走路，走到冰箱按右半屏没反应**。
+
+真因是 `update()` 里的调用顺序。`tapped` / `holdStarted` 是单帧脉冲，而触摸事件是在
+**两帧之间**到达的；`tick()` 进门第一件事就是清掉上一帧的脉冲。所以「先 tick 再读」
+读到的永远是刚被清空的那份 —— `tapped` 全没了。
+
+**难查在哪**：`holdStarted` 是 `tick()` 自己产生的，同一帧内照样读得到；摇杆是连续状态，
+更不受影响。于是症状是「**能走、长按还灵、就是点不动**」，看起来像某个按钮没接上。
+
+`input.ts` 的 `tick()` 注释原本写的是「组件的 update 里先 tick 再读，顺序反了会漏掉点按」
+—— **写反了，而且是我自己照着它写的组件**。已改。
+
+守住它的两道：
+
+- `tests/input.test.ts`「帧循环里的读写顺序」一节，含反例锚点（先 tick 再读时
+  `tapped` 为空、`holdStarted` 仍在 —— 反例本身也是这条坑难查的证据）
+- ⚠ 但测试**看不见组件里的调用顺序**（组件 import `cc`，vitest 加载不了）。
+  实测：把组件改回错误顺序，252 个测试全绿。所以 `pnpm scene` 的「StationView 源码自检」
+  多加一条，直接比 `router.tick(` 与 `tickPlay/tickPanel` 在源码里的先后。反验过。
+
 ### ⚠ 只有真机能暴露的三条（我测不出来）
 
 | 位置 | 赌的是什么 | 错了会怎样 |
@@ -171,18 +193,20 @@ game/assets/logic/sim.ts            ← 改 · defaultSimConfig 改读 DEFAULT_C
 game/assets/scripts/A7Probe.ts      ← 改 · start 补 override（纳入 typecheck 后才暴露）
 game/assets/logic/API.md            ← 改 · v0.5 → v0.6，recipe/input 两节
 tools/scene-spec.ts                 ← 改 · uiRectToCaptureZone 改为 re-export
-tools/scenedump.ts                  ← 改 · 新增「── StationView 认的节点路径」一节
+tools/scenedump.ts                  ← 改 · 新增「── StationView 源码自检」：9 条 find() 路径
+                                           + router.tick() 与读脉冲的先后
 tsconfig.json                       ← 改 · include 收 scripts/**、types/**；
                                            加 experimentalDecorators、lib 加 DOM
 types/cocos.d.ts                    ← 新 · 引进 @cocos/creator-types 的引擎声明
 package.json                        ← 改 · devDep 加 @cocos/creator-types@3.8.8
-tests/input.test.ts                 ← 改 · 242 → 248 测试（panelChildZone / screenToCanvas / 摇杆按下点）
+tests/input.test.ts                 ← 改 · 242 → 252 测试（panelChildZone / screenToCanvas /
+                                           摇杆按下点 / 帧循环里的读写顺序）
 docs/m2-scene-guide.md              ← 改 · §8 补「怎么挂上去」与两个可调值
 ROADMAP.md                          ← 改 · 本段
 ```
 
-`pnpm check` 全绿：铁律① 0 命中 · typecheck 无错（**首次覆盖 `scripts/`**）· **248 测试 / 13 文件**。
-`pnpm scene` 全绿：§0 三条红线 · 79 个 `_id` · Position/Scale · 9 个材质 · **9 条组件路径**。
+`pnpm check` 全绿：铁律① 0 命中 · typecheck 无错（**首次覆盖 `scripts/`**）· **252 测试 / 13 文件**。
+`pnpm scene` 全绿：§0 三条红线 · 79 个 `_id` · **组件源码自检两条** · Position/Scale · 9 个材质。
 
 ---
 

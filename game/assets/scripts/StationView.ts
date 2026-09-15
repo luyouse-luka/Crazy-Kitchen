@@ -270,14 +270,18 @@ export class StationView extends Component {
       this.syncScreen()
     }
 
-    this.router.tick(dt)
     stepKitchen(this.kitchen, dt)
     // World keeps running while the panel is open; the stick is frozen because every
     // touch lands in a capture zone, so this is a no-op then.
     stepMovement(this.movement, this.router.stick, this.cameraYaw, dt)
 
+    // Read the pulses BEFORE tick(), never after: touch events land between frames and
+    // tick() clears last frame's pulses on the way in, so reading after it never sees a
+    // tap. holdStarted still works (tick produces it), so the symptom is "walks fine,
+    // long-press fine, taps dead" — which looks like one unwired button, not an ordering bug.
     if (this.panelOpen) this.tickPanel()
     else this.tickPlay()
+    this.router.tick(dt)
 
     this.refreshZones()
     this.syncNodes()

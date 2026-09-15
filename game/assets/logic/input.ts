@@ -303,10 +303,13 @@ export class TouchRouter {
   }
 
   /**
-   * 每帧调一次，在读 action 之前。
+   * 每帧调一次，**在读完 action / zone 之后**。
    *
-   * tapped / holdStarted 是**单帧脉冲**：这里先清掉上一帧的，本帧内产生的留到下次调用前
-   * 都读得到。组件的 update 里先 tick 再读，顺序反了会漏掉点按。
+   * tapped / holdStarted 是单帧脉冲，而触摸事件是在两帧之间到达的。tick 进门先清掉上一帧的
+   * 脉冲 —— 所以「先 tick 再读」读到的永远是刚被清空的那份：**tapped 全部消失**。
+   * 而 holdStarted 是 tick 自己产生的，同一帧内照样读得到，摇杆也照常工作（连续状态）
+   * —— 于是症状是「能走、长按还灵、就是点不动」，看起来像某个按钮没接上。
+   * 顺序反了写过一次，`tests/input.test.ts` 的「帧循环里的读写顺序」一节钉住了这条。
    */
   tick(dt: number): void {
     this.advance(this.action, dt)
