@@ -263,6 +263,32 @@ function main(): void {
   if (red.length === 0) console.log('  OK：无物理组件、无实时阴影、Skybox 无贴图')
   else for (const r of red) console.log('  ✗', r)
 
+  // ── 条目 _id 的格式
+  // 节点 _id 是**压缩 uuid**：标准 uuid 的前 2 个 hex 原样保留，剩下 30 个 hex 每 3 个
+  // （12 bit）压成 2 个 base64 字符 —— 2 + 20 = 22。随机 base64 串长度对、字符集也对，
+  // 但反解出来不是合法 uuid，Cocos 加载时整个场景静默变空（脚本建节点踩过一次）。
+  console.log('\n── 条目 _id')
+  const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+  const decompress = (id: string): string => {
+    let hex = id.slice(0, 2)
+    for (let i = 2; i < 22; i += 2) {
+      const n = B64.indexOf(id[i] ?? '') * 64 + B64.indexOf(id[i + 1] ?? '')
+      hex += n.toString(16).padStart(3, '0')
+    }
+    return hex
+  }
+  const badIds = all
+    .map((e, i) => ({ i, id: str(e['_id']), type: str(e['__type__']), name: str(e['_name']) }))
+    .filter((x) => x.id !== '')
+    // cc.Scene 根用的是未压缩的完整 uuid，两种都合法
+    .filter((x) => !/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(x.id))
+    .filter((x) => x.id.length !== 22 || !/^[0-9a-f]{32}$/.test(decompress(x.id)))
+  if (badIds.length === 0) console.log(`  OK：${all.filter((e) => str(e['_id']) !== '').length} 个 _id 都是合法的压缩 uuid`)
+  else {
+    for (const b of badIds) console.log(`  ✗ [${b.i}] ${b.type} ${b.name} 的 _id 不是合法压缩 uuid：${b.id}`)
+    console.log('    ⚠ 这会让 Cocos 打开场景时整个变空。前 2 位必须是 hex —— 随机 base64 串过不了。')
+  }
+
   // ── 与 §2.3 对比
   console.log('\n── 与 §2.3 定稿对比')
   const seen = new Set<string>()

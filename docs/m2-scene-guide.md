@@ -346,6 +346,13 @@ Capsule / Cylinder 的默认高度也不见得是 1。
 会被图片尺寸顶回去），下面挂一个 `Label` 写食材名。M2 阶段没有图标美术，
 **纯色块 + 文字就够**——这属于「上线前必须替换的占位内容」，已登记在 ROADMAP。
 
+> ⚠ **脚本建节点的话，`_id` 不能随便生成** —— 它是**压缩 uuid**（标准 uuid 的前 2 个 hex
+> 原样 + 剩下 30 个每 3 个压成 2 个 base64，共 22 位），所以**前两位必须是 hex**。
+> 拿随机 base64 串填：长度对、字符集也对、JSON 合法、`pnpm scene` 全绿，
+> **但 Cocos 打开时整个场景是空的**（2026-09-14 实测踩过）。
+> `pnpm scene` 现在有「── 条目 _id」一节守着这个。同理，照抄既有组件要**整份照抄别挑字段** ——
+> 漏掉 `cc.Widget` 的 `_isAbsHorizontalCenter` / `_isAbsVerticalCenter` 就是那次一起漏的。
+
 > ✅ **节点本身已经建好了**（2026-09-14，脚本直接写的 `.scene`），八个格子各给了一个
 > 能分辨的占位色（bun 金棕 / patty 深褐 / cheese 亮黄 / lettuce 亮绿 / tomato 红 /
 > onion 淡紫 / pickle 橄榄绿 / bacon 粉红）。**`Label` 没建** —— 编辑器里点一下就有，

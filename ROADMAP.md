@@ -94,6 +94,28 @@
 560×288 会被内置白块的 **40×36** 顶回去，而判据 `if (ui.sizeMode !== undefined)` 直接跳过 ——
 补上一行就守住了。
 
+### ⚠ 这一轮炸过一次：脚本写的 `_id` 让整个场景打开变空
+
+第一版推上去之后，线 A 拉下来打开编辑器 —— **场景全空**。
+
+真因：节点 `_id` 是**压缩 uuid**（标准 uuid 的前 2 个 hex 原样 + 剩下 30 个每 3 个压成
+2 个 base64，共 22 位），**前两位必须是 hex**。我拿 `randomBytes(22)` 映射 base64 生成，
+长度对、字符集也对、JSON 合法、`pnpm scene` 四节全绿 —— Cocos 反解成非法 uuid，
+**整个场景静默变空**，不是「那几个节点没了」。
+
+证据：既有 46 个 `_id` 前两位**全是 hex**（45 个压缩格式 + `cc.Scene` 根那个未压缩完整
+uuid），我生成的 33 个只有 1 个碰巧是。
+
+同批还漏了 `cc.Widget` 的 `_isAbsHorizontalCenter` / `_isAbsVerticalCenter` ——
+照抄既有组件时挑着抄，跳掉了两行。**照抄就整份照抄**，比一次 `Object.keys()` 就查得出。
+
+已修，并加进判据：`pnpm scene` 新增「── 条目 _id」一节，反解回 32 位 hex，不是就点名报。
+反向验证过（塞一个坏 id 进去当场逮到）。
+
+⚠ **这一条脚本这边测不出来** —— JSON 合法、引用完整、判据全绿，只有编辑器打开才暴露。
+判据只能守住「格式对不对」，守不住「Cocos 认不认」。详见 memory `cocos-scene-json-gotchas` 第 0 条。
+
+
 ### ⏳ 线 A 待做
 
 1. **拉下来在编辑器里打开一次** —— 节点是脚本写的 JSON，编辑器认不认得等你打开才知道。
@@ -140,7 +162,8 @@ game/assets/materials/M_FloorOut.mtl.meta ← 新 · uuid 768c08b3-353c-41cf-ab6
 game/assets/materials/M_Shadow.mtl        ← 改 · mainColor.a 128 → 76
 tools/scene-spec.ts               ← 改 · UiSpec 加 parent；Slot_* 挂 UI_FridgePanel；
                                          UI_FridgePanel 补 sizeMode: 0；新增 localPos()
-tools/scenedump.ts                ← 改 · 位置对比走 localPos()
+tools/scenedump.ts                ← 改 · 位置对比走 localPos()；新增「── 条目 _id」一节
+                                         （反解回 32 位 hex，守住压缩 uuid 格式）
 tools/sceneapply.ts               ← 改 · 位置写入走 localPos()
 docs/m2-scene-guide.md            ← 改 · §2.3 Slot 那行注明建在面板下；加「两套坐标」警告与
                                          「节点已建好、Label 没建」的说明
