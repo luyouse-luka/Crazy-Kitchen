@@ -1,8 +1,10 @@
 import {
   _decorator,
   Component,
+  EventKeyboard,
   EventMouse,
   EventTouch,
+  KeyCode,
   Game,
   Input,
   Node,
@@ -16,6 +18,7 @@ import {
 } from 'cc'
 import {
   DEFAULT_ACTION,
+  DEFAULT_STICK,
   ISO_CAMERA_YAW,
   TouchRouter,
   panelChildZone,
@@ -55,8 +58,15 @@ const NODES = {
 /** Visible size is polled, not read every frame — getVisibleSize() allocates. */
 const RESIZE_POLL_SEC = 0.25
 
-/** Touch id for the desktop mouse fallback. Real touch ids start at 0 and go up. */
+/** Touch ids for the desktop fallbacks. Real touch ids start at 0 and go up. */
 const MOUSE_ID = -99
+const KEY_STICK_ID = -98
+const KEY_ACTION_ID = -97
+
+/** Where the synthetic fingers press. Left half for the stick; upper right for the action
+ *  key, clear of the action and discard buttons which both sit bottom-right. */
+const KEY_STICK_ORIGIN = [0.25, 0.4]
+const KEY_ACTION_POINT = [0.75, 0.8]
 
 /**
  * Wires logic/ to the scene: touch -> TouchRouter -> movement + kitchen -> nodes.
@@ -98,6 +108,9 @@ export class StationView extends Component {
   private sawTouch = false
   private mouseDown = false
   private loggedInput = false
+  private keys = { w: false, a: false, s: false, d: false }
+  private keyStickDown = false
+  private spaceDown = false
 
   override start(): void {
     const kitchenRoot = this.need(NODES.kitchen)
@@ -146,6 +159,8 @@ export class StationView extends Component {
     input.on(Input.EventType.MOUSE_DOWN, this.onMouseDown, this)
     input.on(Input.EventType.MOUSE_MOVE, this.onMouseMove, this)
     input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this)
+    input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this)
+    input.on(Input.EventType.KEY_UP, this.onKeyUp, this)
     game.on(Game.EVENT_HIDE, this.onTouchCancel, this)
 
     console.log(
@@ -161,6 +176,8 @@ export class StationView extends Component {
     input.off(Input.EventType.MOUSE_DOWN, this.onMouseDown, this)
     input.off(Input.EventType.MOUSE_MOVE, this.onMouseMove, this)
     input.off(Input.EventType.MOUSE_UP, this.onMouseUp, this)
+    input.off(Input.EventType.KEY_DOWN, this.onKeyDown, this)
+    input.off(Input.EventType.KEY_UP, this.onKeyUp, this)
     game.off(Game.EVENT_HIDE, this.onTouchCancel, this)
   }
 
@@ -254,6 +271,74 @@ export class StationView extends Component {
     this.router.onUp(MOUSE_ID)
   }
 
+  // ── 键盘（只为桌面预览好操作；真机上没人按，这几条路径不存在）
+
+  private keyFlag(code: number, down: boolean): boolean {
+    if (code === KeyCode.KEY_W) this.keys.w = down
+    else if (code === KeyCode.KEY_A) this.keys.a = down
+    else if (code === KeyCode.KEY_S) this.keys.s = down
+    else if (code === KeyCode.KEY_D) this.keys.d = down
+    else return false
+    return true
+  }
+
+  private onKeyDown(e: EventKeyboard): void {
+    if (e.keyCode === KeyCode.SPACE) {
+      if (this.spaceDown) return
+      this.spaceDown = true
+      this.firstInput('keyboard')
+      this.router.onDown(
+        KEY_ACTION_ID,
+        this.screenW * KEY_ACTION_POINT[0]!,
+        this.screenH * KEY_ACTION_POINT[1]!,
+      )
+      return
+    }
+    if (this.keyFlag(e.keyCode, true)) this.firstInput('keyboard')
+  }
+
+  private onKeyUp(e: EventKeyboard): void {
+    if (e.keyCode === KeyCode.SPACE) {
+      if (!this.spaceDown) return
+      this.spaceDown = false
+      this.router.onUp(KEY_ACTION_ID)
+      return
+    }
+    this.keyFlag(e.keyCode, false)
+  }
+
+  /**
+   * WASD -> a synthetic finger on the left half, so the keys go through the same router,
+   * deadzone and camera mapping as a real thumb. Nothing downstream knows the difference.
+   */
+  private syncKeyStick(): void {
+    let dx = 0
+    let dy = 0
+    if (this.keys.a) dx -= 1
+    if (this.keys.d) dx += 1
+    if (this.keys.s) dy -= 1
+    if (this.keys.w) dy += 1
+    // The panel freezes movement anyway, and the full-screen cancel zone would swallow
+    // this press and close the panel on a stray W.
+    if (this.panelOpen || (dx === 0 && dy === 0)) {
+      if (this.keyStickDown) {
+        this.keyStickDown = false
+        this.router.onUp(KEY_STICK_ID)
+      }
+      return
+    }
+    const ox = this.screenW * KEY_STICK_ORIGIN[0]!
+    const oy = this.screenH * KEY_STICK_ORIGIN[1]!
+    const len = Math.sqrt(dx * dx + dy * dy)
+    // radius exactly saturates magnitude, so a key press is always a full push
+    const r = DEFAULT_STICK.radius
+    if (!this.keyStickDown) {
+      this.keyStickDown = true
+      this.router.onDown(KEY_STICK_ID, ox, oy)
+    }
+    this.router.onMove(KEY_STICK_ID, ox + (dx / len) * r, oy + (dy / len) * r)
+  }
+
   /** One line the first time anything arrives — tells a dead preview from a dead component. */
   private firstInput(src: string): void {
     if (this.loggedInput) return
@@ -270,6 +355,7 @@ export class StationView extends Component {
       this.syncScreen()
     }
 
+    this.syncKeyStick()
     stepKitchen(this.kitchen, dt)
     // World keeps running while the panel is open; the stick is frozen because every
     // touch lands in a capture zone, so this is a no-op then.

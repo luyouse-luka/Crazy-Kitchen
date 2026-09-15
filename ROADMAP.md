@@ -131,6 +131,18 @@ ROADMAP 预告的是面板那 60px。**实际最危险的不是它** —— 是 
 | 有 `ready`、没有 `first input` | 输入没进来 |
 | 两行都有还是不动 | 逻辑层的事，看 `blocked:` 那些行 |
 
+### 预览里怎么操作
+
+| 键 | 作用 |
+|---|---|
+| `W A S D` | 移动（合成成左半屏的一根手指，走同一套死区/饱和/相机映射） |
+| `空格` | 动作键（点一下 = 点按，按住 0.3 秒 = 长按） |
+| 鼠标 | 点面板格子、点丢弃键 —— 面板里的格子还得用鼠标 |
+
+三条路径（触摸 / 鼠标 / 键盘）都喂同一个 `TouchRouter`，用的是负数占位 id
+（`-99/-98/-97`），所以下游一行都不用知道输入从哪来。**收到过真触摸就把鼠标那条关掉**；
+键盘不关（平板插键盘也能用），但同一路被占时后来的整根忽略，不会串。
+
 ⚠ 预览只有一根「手指」，**边走边按测不了**；窗口又接近 1280×720，
 **Fit Height 的缩放坑在预览里恒不发生**。预览只用来验接线，手感和坐标仍然必须上真机。
 
@@ -185,7 +197,7 @@ ROADMAP 预告的是面板那 60px。**实际最危险的不是它** —— 是 
 
 ```
 game/assets/scripts/StationView.ts  ← 新 · 组件层接线（触摸 / 移动 / 厨房 / 面板 / 丢弃 / 摇杆）
-                                       + 桌面预览的鼠标兜底与 ready / first input 两行日志
+                                       + 桌面预览的鼠标 / WASD+空格 兜底与两行诊断日志
 game/assets/logic/input.ts          ← 改 · 加 stickOriginX/Y；uiRectToCaptureZone 从 tools/ 搬来；
                                            新增 panelChildZone / screenToCanvasX / screenToCanvasY
 game/assets/logic/recipe.ts         ← 改 · 新增 DEFAULT_COOK（火候窗口唯一来源）
@@ -200,12 +212,12 @@ tsconfig.json                       ← 改 · include 收 scripts/**、types/**
 types/cocos.d.ts                    ← 新 · 引进 @cocos/creator-types 的引擎声明
 package.json                        ← 改 · devDep 加 @cocos/creator-types@3.8.8
 tests/input.test.ts                 ← 改 · 242 → 252 测试（panelChildZone / screenToCanvas /
-                                           摇杆按下点 / 帧循环里的读写顺序）
+                                           摇杆按下点 / 帧循环里的读写顺序 / 键盘合成的摇杆）
 docs/m2-scene-guide.md              ← 改 · §8 补「怎么挂上去」与两个可调值
 ROADMAP.md                          ← 改 · 本段
 ```
 
-`pnpm check` 全绿：铁律① 0 命中 · typecheck 无错（**首次覆盖 `scripts/`**）· **252 测试 / 13 文件**。
+`pnpm check` 全绿：铁律① 0 命中 · typecheck 无错（**首次覆盖 `scripts/`**）· **255 测试 / 13 文件**。
 `pnpm scene` 全绿：§0 三条红线 · 79 个 `_id` · **组件源码自检两条** · Position/Scale · 9 个材质。
 
 ---

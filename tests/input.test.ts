@@ -748,3 +748,38 @@ describe('帧循环里的读写顺序', () => {
     expect(r.stick.magnitude).toBeGreaterThan(0)
   })
 })
+
+/**
+ * 键盘兜底只在桌面预览里用，但它合成的是**一根真手指**（按下左半屏 + 拖到 radius）——
+ * 走的是同一套死区、饱和、相机映射。这里钉住合成方式本身：组件里换个写法就会漂。
+ */
+describe('键盘合成的摇杆', () => {
+  const R = DEFAULT_STICK.radius
+  const OX = 320 // 1280 的 0.25，落在左半屏
+  const OY = 288 // 720 的 0.4
+
+  const press = (dx: number, dy: number): TouchRouter => {
+    const r = mk()
+    const len = Math.sqrt(dx * dx + dy * dy)
+    r.onDown(-98, OX, OY)
+    r.onMove(-98, OX + (dx / len) * R, OY + (dy / len) * R)
+    return r
+  }
+
+  it('推到 radius 正好满格', () => {
+    expect(press(0, 1).stick.magnitude).toBeCloseTo(1, 6)
+    expect(press(1, 1).stick.magnitude).toBeCloseTo(1, 6)
+  })
+
+  it('W 是屏幕向上 —— 与真拇指上推同向', () => {
+    const s = press(0, 1).stick
+    expect(s.dirY).toBeCloseTo(1, 6)
+    expect(s.dirX).toBeCloseTo(0, 6)
+  })
+
+  it('合成点落在左半屏，不会被当成动作键', () => {
+    expect(OX + R).toBeLessThan(640)
+    expect(press(1, 0).stick.active).toBe(true)
+    expect(press(1, 0).action.down).toBe(false)
+  })
+})
