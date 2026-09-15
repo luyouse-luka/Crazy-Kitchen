@@ -47,7 +47,130 @@
 
 </details>
 
-## 📍 当前断点（2026-09-14 第九轮 · 每轮收工更新这一段）
+## 📍 当前断点（2026-09-15 第十轮 · 每轮收工更新这一段）
+
+**⏸ 第十轮：组件层接线写完了 —— `StationView.ts`。M2 的三层（逻辑 / 场景 / 组件）
+现在都有东西了，剩下的全是「拖上去跑一次」。**
+
+### ✅ 这一轮落地的
+
+| | 做了什么 | 判据 |
+|---|---|---|
+| `StationView` 组件 | 触摸 → TouchRouter → 移动 + 厨房状态 → 节点。冰箱面板、丢弃键、浮动摇杆全接上 | `pnpm typecheck`（**这层第一次被检查到**） |
+| 引擎类型 | 装 `@cocos/creator-types@3.8.8`，`scripts/` 纳入 typecheck | 反验过：写错 `view.getVisibleSizeTypo()` 当场报 |
+| 路径判据 | `pnpm scene` 新增「StationView 认的节点路径」，组件里 9 条 `find()` 路径对一遍场景 | 反验过：改错两条，两条都点名 |
+| 两处收口 | `panelChildZone()`（面板偏移）· `DEFAULT_COOK`（火候窗口唯一来源） | 测试 242 → 248 |
+
+### 组件层的坑，这轮真正踩到的是哪一条
+
+ROADMAP 预告的是面板那 60px。**实际最危险的不是它** —— 是 `game/assets/scripts/`
+**整个目录都不在 `pnpm typecheck` 的 include 里**（tsconfig 原注释写着「这里没有引擎类型声明」）。
+也就是说组件层写多少行都没人查，而它恰好是判据唯一够不着的那层 —— 上一轮 `_id` 炸场景，
+根因也是同一句话。
+
+装上 `@cocos/creator-types@3.8.8`（版本与工程完全对齐）之后，第一次 typecheck 就抓到四处：
+
+| 抓到的 | 要是没抓到 |
+|---|---|
+| `BlockReason` 从 `kitchen.ts` 导出，不在 `types.ts` | 构建期才报，或者被 `any` 吞掉 |
+| `@property({...})` 需要 `experimentalDecorators` | 装饰器按 TS5 原生规则解析，整片 TS1240 |
+| `start` / `update` / `onDestroy` 缺 `override` | `noImplicitOverride` 下不过 |
+| `console` 不在 `lib: ["ES2020"]` 里 | —— |
+
+> ⚠ 但边界没变：typecheck 守住的是「API 名字和签名对不对」，**守不住「运行时行为对不对」**。
+> `event.getTouches()` 在多点触摸下到底返回哪些、`Widget.updateAlignment()` 的时机、
+> `Touch.getLocation()` 的原点 —— 这三条只有真机能验，见下面的清单。
+
+### 面板那 60px：组件侧的收口
+
+`panelChildZone(id, panelX, panelY, childX, childY, …)` 在 `logic/input.ts`，是场景侧
+`localPos()` 的逆。组件从 `slotNode.position` 读到的是**相对面板**的 (-204, 68)，
+而捕获区要 Canvas 绝对值 (-204, 128) —— 直接喂就是 8 个格子整体差一个面板偏移，
+**两边读同一个数，判据全绿**。测试里有反例锚点盯着（漏掉面板位置 → 差值必须等于面板 y × 缩放）。
+
+`uiRectToCaptureZone` 顺手从 `tools/scene-spec.ts` **搬进了 `game/assets/logic/input.ts`**
+—— Cocos 只编译 `assets/` 下的脚本，留在 `tools/` 的话组件 import 不到，只能各写一份。
+`scene-spec.ts` 原样 re-export，判据与测试一行没改。
+
+### 面板/摇杆/丢弃键是怎么接的
+
+- **开面板**：走到冰箱点动作键。`carry.kind !== 'none'` 时**根本不开**，直接记 `hands-full`
+- **冻结摇杆**：开面板时 `router.cancelAll()`，同时压一个**全屏捕获区** `panel-outside`
+  （登记在 8 个格子之后，所以格子先赢）。手指全被捕获 → 分路收不到 → 摇杆自然是死的，
+  而且不用在组件里写第二套「面板开着就别读摇杆」的判断
+- **选中即关**：一次点击，**拒绝了也关**（`out-of-range` 就是白选一次，ROADMAP 原文）
+- **点面板外**：命中 `panel-outside` → 取消
+- **丢弃键**：`carry.kind !== 'none'` 时 active，`zone('discard').holdStarted` 触发
+- **浮动摇杆**：`TouchRouter` 新增 `stickOriginX/Y`（按下那一点），
+  `screenToCanvasX/Y` 换回 Canvas 坐标 —— 组件自己按 `splitX` 判左半屏就是把分路抄了第二份
+- **捕获区只在变化时重发**：`setCaptureZones()` 会让正按着的手指整根作废，每帧发一次
+  会把长按丢弃打断。用 `(面板开没开 · 手上有没有东西 · 屏幕尺寸)` 做 key，变了才发
+
+### ⏳ 线 A 待做（拖上去跑一次）
+
+1. **`git pull` 之后，在 `Canvas` 上添加组件 `StationView`**（挂哪个节点都行，全靠 `find()`）。
+   编辑器会生成 `StationView.ts.meta`，**记得一起提交**
+2. **四个方向各推一次摇杆** —— 前后反了就把检查器里的 `Camera Yaw` 填负值。
+   这是 `input.ts` 从第一天就标着「真机验、别靠推理」的那条
+3. **走到每个工位点动作键**，够不着就调 `Reach`（默认 0.7 米）
+4. 顺带把上一轮没做的看了：11 个节点在不在、影子 76 够不够深（嫌淡给个数）、
+   8 个格子要不要加 `Label`、`Player`/`Body`/`Head`/`Anchor_Hand` 的 scale
+
+### ⚠ 只有真机能暴露的三条（我测不出来）
+
+| 位置 | 赌的是什么 | 错了会怎样 |
+|---|---|---|
+| `route()` 里的 `e.getTouches()` | 它返回的是**本次事件变化的那些触点** | 返回全部触点的话，多指时会给已在案的手指重复发 `onDown` |
+| `refreshZones()` 里的 `Widget.updateAlignment()` | 节点刚 `active = true` 时调一次就能拿到对齐后的 position | 拿到的是对齐前的位置 → 丢弃键的命中区偏在别处 |
+| `Touch.getLocation()` | 左下原点、y 向上 | 上下颠倒：摇杆推上角色往下走 |
+
+前两条看 console 与实际命中就能判；第三条推一次摇杆就知道。
+
+### ⏳ 还没接的（这轮没做，不是漏了）
+
+- **`UI_HUD`**：订单 / 金币 / 计时。要等顾客流接上（`sim.ts` 有那套循环，但没进组件）
+- **出餐**：`interact` 的 serve 分支要 `spec: OrderSpec`，没有订单流就恒 `no-order`
+- **「手满了」的可见反馈**：现在只记在 `lastBlock` + 打一行 log。场景里没有提示节点，
+  脚本手写 `cc.Label` 正是上一轮说好不做的事（见第九轮存档）
+- **丢弃键「淡入」**：现在是直接 `active` 开关。淡入要 `UIOpacity` 组件，编辑器里加一下
+- **角色转向**：`movement.facingYaw` 算着但没往节点上写 —— 胶囊 + 球看不出朝向，
+  等有正脸模型再接，顺便把 yaw 符号一起验
+
+### ⏰ 游戏名：时钟只剩两周
+
+暂定「疯狂大厨」，还是「暂定」。软著要 6–12 周，**9 月底到 10 月初**必须定死。
+⚠ 提交前先查重 —— 同名手游不少，证书名称与上架名必须完全一致，撞车要重新申请 = 再推两三个月。
+
+### 第十轮新增/改动（`project/kitchen-chaos/` 下）
+
+```
+game/assets/scripts/StationView.ts  ← 新 · 组件层接线（触摸 / 移动 / 厨房 / 面板 / 丢弃 / 摇杆）
+game/assets/logic/input.ts          ← 改 · 加 stickOriginX/Y；uiRectToCaptureZone 从 tools/ 搬来；
+                                           新增 panelChildZone / screenToCanvasX / screenToCanvasY
+game/assets/logic/recipe.ts         ← 改 · 新增 DEFAULT_COOK（火候窗口唯一来源）
+game/assets/logic/sim.ts            ← 改 · defaultSimConfig 改读 DEFAULT_COOK
+game/assets/scripts/A7Probe.ts      ← 改 · start 补 override（纳入 typecheck 后才暴露）
+game/assets/logic/API.md            ← 改 · v0.5 → v0.6，recipe/input 两节
+tools/scene-spec.ts                 ← 改 · uiRectToCaptureZone 改为 re-export
+tools/scenedump.ts                  ← 改 · 新增「── StationView 认的节点路径」一节
+tsconfig.json                       ← 改 · include 收 scripts/**、types/**；
+                                           加 experimentalDecorators、lib 加 DOM
+types/cocos.d.ts                    ← 新 · 引进 @cocos/creator-types 的引擎声明
+package.json                        ← 改 · devDep 加 @cocos/creator-types@3.8.8
+tests/input.test.ts                 ← 改 · 242 → 248 测试（panelChildZone / screenToCanvas / 摇杆按下点）
+docs/m2-scene-guide.md              ← 改 · §8 补「怎么挂上去」与两个可调值
+ROADMAP.md                          ← 改 · 本段
+```
+
+`pnpm check` 全绿：铁律① 0 命中 · typecheck 无错（**首次覆盖 `scripts/`**）· **248 测试 / 13 文件**。
+`pnpm scene` 全绿：§0 三条红线 · 79 个 `_id` · Position/Scale · 9 个材质 · **9 条组件路径**。
+
+---
+
+## 第九轮存档（2026-09-14 · 建节点 + 影子定稿 + `_id` 事故）
+
+> ✅ 这一段里「⏳ 线 A 待做」的第 1 条（打开编辑器核节点）**仍未做**，
+> 已并进第十轮的待做清单。其余原样留作历史。
 
 **⏸ 第九轮：11 个场景节点建完了，影子 Alpha 也定了。`pnpm scene` 第一次全绿 ——
 线 A 手上没有待建的东西了，M2 只剩组件层接线。**
@@ -614,7 +737,7 @@ docs/workflow-plan.html                               ← 线 A 的执行视图
 | 3 | **读 25 张卡打分** | ✅ **2026-09-06 通过** —— 「基本没什么问题，可以继续进行」。手写路线到此为止，不写 c_0026–c_0200 |
 | 3b | `ANTHROPIC_API_KEY` | ⏸ **不是阻塞**。真正必需的时机是 M5 扩产到 2000–10000 张。要用就 `pnpm gen sample 3` 先花几分钱看质量 |
 | 8 | ⏰ **定游戏名** | 🟡 **暂定「疯狂大厨」**（2026-09-07，⚠ 不在原候选表里，且是「暂定」不是定死）。**有外部时钟**：M2 出口要定死并提软著，等 6–12 周 → 约 **9 月底至 10 月初**。提交前**先查重**。原候选：疯狂后厨 / AI后厨 / 神经病餐厅 / 厨神营业中 |
-| 9 | 搭 M2 场景 | 🟡 对着 `docs/m2-scene-guide.md` 做，摆完把 §12 那四组数贴给我，我写 `StationView` 组件 |
+| 9 | 搭 M2 场景 | 🟡 节点与材质都齐了，`pnpm scene` 全绿。`StationView` 组件已写好（2026-09-15）—— 剩下**在 `Canvas` 上添加组件、跑一次、调 `Camera Yaw` 与 `Reach`**，见「当前断点」 |
 | 4 | A6 `iOSHighPerformance` | ✅ **已通过** |
 | 5 | A7 | ✅ **已通过**。可以把 `A7Probe` 从场景上摘掉了（组件那栏右上角三点 → 移除组件），两个文件留着，M2 换版本时重跑 |
 | 6 | **决策：微信引擎插件开不开** | ⏸ 这次构建没走插件，主包多了约 1388 KB。见 §2.4a |

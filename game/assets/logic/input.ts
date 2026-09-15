@@ -162,6 +162,19 @@ export class TouchRouter {
     return i === undefined ? undefined : this.zoneStates[i]
   }
 
+  /**
+   * Where the stick finger went down, in screen pixels. Meaningless unless stick.active.
+   * The floating joystick visual needs it; deciding "left half" in the component would
+   * be a second copy of the routing, and ownership is locked at press time here.
+   */
+  get stickOriginX(): number {
+    return this.left.originX
+  }
+
+  get stickOriginY(): number {
+    return this.left.originY
+  }
+
   /** 命中的区索引，没有则 -1。含左下边、不含右上边 —— 相邻格子共边时只会中一个 */
   private hitZone(x: number, y: number): number {
     for (let i = 0; i < this.zones.length; i++) {
@@ -394,4 +407,77 @@ export function stickToVelocity(
   out.x *= v
   out.z *= v
   return true
+}
+
+// ─────────────────────────── UI 矩形 → 捕获区 ───────────────────────────
+
+/**
+ * UI node centre (Canvas-centre coords) -> capture zone (touch pixels, bottom-left origin).
+ * The only place this conversion may happen. Two independent traps, either one alone
+ * ruins the whole panel — see docs/m2-scene-guide.md §2.3:
+ *
+ * - origin differs by half a screen: Canvas x is -640..640, Touch.getLocation() is
+ *   bottom-left. Feeding node positions straight in parks every zone in the lower left.
+ * - units are real touch pixels, not design resolution. Fit Height on a 2400x1080 phone
+ *   scales by 1080/720 = 1.5; zones computed against 1280 are wrong on device and
+ *   perfect in the 1280x720 editor preview.
+ *
+ * So screenW/screenH are required: read view.getVisibleSize() at runtime, never constants.
+ */
+export function uiRectToCaptureZone(
+  id: string,
+  centerX: number,
+  centerY: number,
+  w: number,
+  h: number,
+  screenW: number,
+  screenH: number,
+  designH = 720,
+): CaptureZone {
+  const k = screenH / designH // Fit Height: scale comes from height, width just stretches
+  const sw = w * k
+  const sh = h * k
+  return {
+    id,
+    x: screenW / 2 + centerX * k - sw / 2,
+    y: screenH / 2 + centerY * k - sh / 2,
+    w: sw,
+    h: sh,
+  }
+}
+
+/**
+ * Same, for a node parented to the fridge panel. Slot positions read off the scene are
+ * relative to the panel (-204, 68); uiRectToCaptureZone wants Canvas-absolute (-204, 128).
+ * Feeding slot.position straight in drops all 8 hit areas by the panel offset, and every
+ * judge stays green because both sides read the same number.
+ *
+ * Component-layer twin of localPos() in tools/scene-spec.ts, same trap, other direction.
+ */
+export function panelChildZone(
+  id: string,
+  panelX: number,
+  panelY: number,
+  childX: number,
+  childY: number,
+  w: number,
+  h: number,
+  screenW: number,
+  screenH: number,
+  designH = 720,
+): CaptureZone {
+  return uiRectToCaptureZone(id, panelX + childX, panelY + childY, w, h, screenW, screenH, designH)
+}
+
+/**
+ * Inverse of uiRectToCaptureZone's mapping, for the floating joystick: touch pixel
+ * -> Canvas-centre coords, so the visual lands exactly under the thumb on any device.
+ * Two scalar functions rather than a point, to keep the per-frame path allocation-free.
+ */
+export function screenToCanvasX(x: number, screenW: number, screenH: number, designH = 720): number {
+  return ((x - screenW / 2) * designH) / screenH
+}
+
+export function screenToCanvasY(y: number, screenH: number, designH = 720): number {
+  return ((y - screenH / 2) * designH) / screenH
 }

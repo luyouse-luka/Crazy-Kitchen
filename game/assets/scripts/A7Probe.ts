@@ -9,7 +9,7 @@ const { ccclass } = _decorator
  */
 @ccclass('A7Probe')
 export class A7Probe extends Component {
-  start(): void {
+  override start(): void {
     for (const line of a7Lines()) console.log(line)
     console.log(`${A7_MARKER} DONE`)
   }

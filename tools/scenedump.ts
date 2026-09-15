@@ -289,6 +289,40 @@ function main(): void {
     console.log('    ⚠ 这会让 Cocos 打开场景时整个变空。前 2 位必须是 hex —— 随机 base64 串过不了。')
   }
 
+  // ── 组件写死的节点路径
+  // StationView 全靠 find() 认路，路径是字符串 —— 改个节点名，TypeScript 一声不吭，
+  // 要等真机跑起来看 console 才知道。这里把组件里的 NODES / STATION_KINDS 抠出来对一遍。
+  console.log('\n── StationView 认的节点路径')
+  const compFile = 'game/assets/scripts/StationView.ts'
+  if (!existsSync(compFile)) console.log(`  跳过：找不到 ${compFile}`)
+  else {
+    const src = readFileSync(compFile, 'utf8')
+    const paths = new Set<string>()
+    const kitchenKids = new Set<string>()
+    const grab = (name: string, into: Set<string>): void => {
+      const m = new RegExp(`const ${name} = \\{([^}]*)\\}`, 's').exec(src)
+      if (!m) return
+      for (const q of m[1]!.matchAll(/'([^']+)'/g)) into.add(q[1]!)
+    }
+    grab('NODES', paths)
+    // STATION_KINDS 的键是 Kitchen 的子节点名，值是 logic 的 kind —— 只取键
+    const km = /const STATION_KINDS[^=]*= \{([^}]*)\}/s.exec(src)
+    if (km) for (const q of km[1]!.matchAll(/(Station_\w+)\s*:/g)) kitchenKids.add(q[1]!)
+
+    const known = new Set<string>()
+    walk(root, (n) => known.add(n.path.replace(/^[^/]+\//, '')))
+    const missing: string[] = []
+    for (const p of paths) if (!known.has(p)) missing.push(p)
+    const kitchenPath = [...paths].find((p) => !p.includes('/')) ?? 'Kitchen'
+    for (const k of kitchenKids) if (!known.has(`${kitchenPath}/${k}`)) missing.push(`${kitchenPath}/${k}`)
+    if (missing.length === 0) {
+      console.log(`  OK：${paths.size + kitchenKids.size} 条路径在场景里都找得到`)
+    } else {
+      for (const m of missing) console.log(`  ✗ 组件要找 ${m}，场景里没有`)
+      console.log('    ⚠ 组件会打一行 console.error 然后自己禁用 —— 改名字，别改代码（guide §2.1）')
+    }
+  }
+
   // ── 与 §2.3 对比
   console.log('\n── 与 §2.3 定稿对比')
   const seen = new Set<string>()

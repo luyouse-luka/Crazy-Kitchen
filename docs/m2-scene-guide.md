@@ -704,8 +704,22 @@ M2 最省事的做法（不需要贴图）：
    偏移了的话节点 position 不等于方块中心，读出来的 AABB 就是错的
 3. 缩放**只用节点的 `scale`**，别去改 mesh 的尺寸参数。两个地方都能改尺寸，只用一个
 
-我这边写 `StationView` 组件读 `node.worldPosition` 和 `node.scale` 生成 `Station`。
-**你摆完位置告诉我一声，我把组件写好你拖上去。**
+`StationView` 组件读 `node.worldPosition` 和 `node.worldScale` 生成 `Station`。
+**已经写好了**：`game/assets/scripts/StationView.ts`（2026-09-15）。
+
+### 怎么挂上去
+
+1. 选中 `Canvas` → 属性检查器 → 添加组件 → 自定义脚本 → `StationView`
+   （挂在哪个节点上都行，它全靠 `find()` 认路；`Canvas` 只是最好找）
+2. 编辑器会给脚本生成一个 `StationView.ts.meta`，**记得一起提交** —— 没有它，
+   换台机器打开时节点上那个组件会变成一个丢了引用的空槽
+3. 两个可调值直接在检查器里改：
+   - `Reach` —— 工位方块半径之外还能够着多少米，默认 0.7。够不着就加，隔着半个屋子能取料就减
+   - `Camera Yaw` —— 默认 π/4。**四个方向各推一次摇杆**，前后反了填负值（`input.ts` 的说明）
+
+⚠ 组件找不到节点时会打一行 `console.error` 然后**把自己禁用**，不会静默半死。
+但更早一步：`pnpm scene` 有一节「StationView 认的节点路径」，会把组件里写死的 9 条路径
+和场景对一遍 —— **改节点名之前先跑它**。
 
 ---
 

@@ -26,7 +26,7 @@
  * 4. 顾客满员时新客在门外等，不算流失 —— `maxConcurrent` 是「同时在场上限」不是「流失阈值」
  */
 import { chance, createRng, nextInt, reseed } from './rng'
-import { addCookedPatty, addIngredient, cookLevelAt } from './recipe'
+import { addCookedPatty, addIngredient, cookLevelAt, DEFAULT_COOK } from './recipe'
 import { judge } from './order'
 import { DONENESS } from './types'
 import type { Burger, CookWindows, Doneness, Ingredient, OrderSpec, StationKind } from './types'
@@ -117,7 +117,7 @@ export function defaultSimConfig(): SimConfig {
       spread: 1,
     },
     chef: { speed: 4, interactSec: 0.4 },
-    cook: { rareAt: 3, mediumAt: 6, wellAt: 9, burntAt: 13 },
+    cook: { ...DEFAULT_COOK },
     grillSlots: 2,
     flow: { intervalSec: 12, intervalJitter: 0, maxConcurrent: 6, patienceSec: 45 },
     orders: { extraMin: 0, extraMax: 2, bannedChance: 0.3 },

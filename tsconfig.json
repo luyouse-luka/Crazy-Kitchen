@@ -1,11 +1,14 @@
 {
   "//": "仅供仓库根的 vitest 与 pnpm typecheck 使用。Cocos 用的是 game/tsconfig.json，两者互不干扰。",
+  "//experimentalDecorators": "Cocos 用旧版装饰器。关掉的话 @property({...}) 会按 TS5 原生装饰器解析，整片报 TS1240",
+  "//lib": "DOM 只为拿到 console —— 引擎运行时有，ES2020 的 lib 里没有",
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2020"],
+    "lib": ["ES2020", "DOM"],
     "strict": true,
+    "experimentalDecorators": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noEmit": true,
@@ -13,10 +16,11 @@
     "skipLibCheck": true,
     "types": ["vitest/globals"]
   },
-  "//include": "scripts/ 里只收 a7-check.ts —— 同目录的 Cocos 组件 import 'cc'，这里没有引擎类型声明",
+  "//include": "组件用的引擎类型来自 @cocos/creator-types（types/cocos.d.ts 引进来）—— 没有它，scripts/ 下这两个组件整年不过类型检查，而它们正是判据看不见的那一层",
   "include": [
+    "types/**/*.ts",
     "game/assets/logic/**/*.ts",
-    "game/assets/scripts/a7-check.ts",
+    "game/assets/scripts/**/*.ts",
     "tests/**/*.ts",
     "pipeline/**/*.ts",
     "tools/**/*.ts",

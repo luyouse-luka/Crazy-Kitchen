@@ -142,40 +142,10 @@ function fridgeSlots(): Record<string, UiSpec> {
 export const FRIDGE_SLOTS = fridgeSlots()
 
 /**
- * UI 节点中心 → TouchRouter 的捕获区。**唯一该做这次转换的地方。**
- *
- * 两处不一致，各错一次就够毁掉整块面板：
- *
- * ① **原点差半屏** —— Canvas 锚点在中心（x∈[-640,640]），而 `Touch.getLocation()`
- *    是左下原点。直接拿节点 position 当捕获区，整块区偏到屏幕左下角，
- *    **偏得像「没生效」，不像坐标错**。
- * ② **单位不是设计分辨率，是真实触摸像素** —— 与 §2.3 那条「`splitX` 别写死 640」同源。
- *    Fit Height 下 2400×1080 的手机 scale = 1080/720 = 1.5，按 1280 硬算的区
- *    在真机上全部错位，而在编辑器 1280×720 预览里**完全正常** —— 只有真机能暴露。
- *
- * 所以 screenW / screenH 必传，运行时取 `view.getVisibleSize()`，别填常量。
+ * 捕获区换算搬去了 `game/assets/logic/input.ts` —— Cocos 只编译 `assets/` 下的脚本，
+ * 留在这里的话运行时组件 import 不到，只能各写一份。这里原样转出去，判据与测试照旧。
  */
-export function uiRectToCaptureZone(
-  id: string,
-  centerX: number,
-  centerY: number,
-  w: number,
-  h: number,
-  screenW: number,
-  screenH: number,
-  designH = 720,
-): { id: string; x: number; y: number; w: number; h: number } {
-  const k = screenH / designH // Fit Height：缩放由高度定，宽度随比例延展
-  const sw = w * k
-  const sh = h * k
-  return {
-    id,
-    x: screenW / 2 + centerX * k - sw / 2,
-    y: screenH / 2 + centerY * k - sh / 2,
-    w: sw,
-    h: sh,
-  }
-}
+export { uiRectToCaptureZone, panelChildZone } from '../game/assets/logic/input'
 
 /**
  * 设计分辨率 1280×720，Canvas 锚点在中心，所以 x∈[-640,640] y∈[-360,360]。

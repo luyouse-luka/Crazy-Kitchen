@@ -11,6 +11,9 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.72.1
         version: 0.72.1
+      '@cocos/creator-types':
+        specifier: 3.8.8
+        version: 3.8.8
       ajv:
         specifier: ^8.20.0
         version: 8.20.0
@@ -38,6 +41,9 @@ packages:
   '@babel/runtime@7.29.7':
     resolution: {integrity: sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==}
     engines: {node: '>=6.9.0'}
+
+  '@cocos/creator-types@3.8.8':
+    resolution: {integrity: sha512-VAn8lWxUZ7LwPWwU/Lj7BOjsy0EoNFtjTqO7jz9bysYdjAJu7Jht/WKJbWYNHeZEC/omE7rTw98giuVRiTuELg==}
 
   '@esbuild/aix-ppc64@0.28.1':
     resolution: {integrity: sha512-Svl7tq8k/08+p6CXPpRjQ1fKX+1odH/BQbb48fV6fj3CWHhsoIOoY87w1oHXm0qEpkIK3ZfVgp0hed3XBXzXMQ==}
@@ -868,6 +874,8 @@ snapshots:
       json-schema-to-ts: 3.1.1
 
   '@babel/runtime@7.29.7': {}
+
+  '@cocos/creator-types@3.8.8': {}
 
   '@esbuild/aix-ppc64@0.28.1':
     optional: true

@@ -41,6 +41,13 @@ export function hasCore(burger: Burger): boolean {
 }
 
 /**
+ * The calibrated grill timeline (M1 headless sweep). Single source: sim.ts's
+ * defaultSimConfig and the runtime component both read it from here, because a
+ * second copy is a game that plays differently from the one we tuned.
+ */
+export const DEFAULT_COOK: CookWindows = { rareAt: 3, mediumAt: 6, wellAt: 9, burntAt: 13 }
+
+/**
  * 肉饼在烤炉上待了 elapsed 秒之后是什么火候。
  *
  * 一条单向时间轴：raw → rare → medium → well → burnt，糊了就回不去。

@@ -1,4 +1,4 @@
-# `logic/` 公开接口清单 · v0.5（2026-09-07）
+# `logic/` 公开接口清单 · v0.6（2026-09-15）
 
 `logic/` 是**服务器侧的代码**与**你的 Cocos 组件**之间唯一的接缝，接缝要有文档。
 
@@ -133,10 +133,14 @@ addIngredient(burger, ing): boolean       // 已有则拒绝；传 'patty' 视�
 addCookedPatty(burger, cook): boolean     // 从烤炉拿的肉饼；一个汉堡只能有一块
 hasCore(burger): boolean                  // 面包 + 肉饼齐不齐
 cookLevelAt(elapsed, windows): CookLevel  // 烤了 elapsed 秒是什么火候
+DEFAULT_COOK: CookWindows                 // { rareAt: 3, mediumAt: 6, wellAt: 9, burntAt: 13 }
 ```
 
 > 烤炉计时**只存一个开始时刻**，每帧用 `cookLevelAt` 现算即可 —— 不要在组件里另存一份火候状态，
-> 那会和逻辑层不同步。`CookWindows` 的数值来自 M1 的难度曲线表，别在组件里写死。
+> 那会和逻辑层不同步。
+>
+> `DEFAULT_COOK` 是 M1 标定出来的那组窗口，`sim.ts` 的 `defaultSimConfig()` 与运行时组件
+> **都从这里读**。第二份拷贝 = 玩到的游戏和调过的游戏不是同一个。
 
 ---
 
@@ -240,7 +244,13 @@ class TouchRouter {
   setSplitX(x)
   setCaptureZones(zones: readonly CaptureZone[])   // 换一批；正按着的手指整根作废
   zone(id: string): ActionState | undefined        // 语义与 action 完全一致
+  get stickOriginX / stickOriginY: number          // 摇杆按下的那一点，浮动摇杆的视觉用
 }
+
+// UI 矩形 ↔ 捕获区（唯一该做这个换算的地方）
+uiRectToCaptureZone(id, cx, cy, w, h, screenW, screenH, designH?): CaptureZone
+panelChildZone(id, panelX, panelY, childX, childY, w, h, screenW, screenH, designH?): CaptureZone
+screenToCanvasX(x, screenW, screenH, designH?) / screenToCanvasY(y, screenH, designH?)
 
 // 相机相对映射
 ISO_CAMERA_YAW                                   // Math.PI / 4
@@ -280,8 +290,20 @@ stickToVelocity(out, stick, cameraYaw, speed): boolean   // 带 magnitude，回�
 
 ⚠ **坐标系差一个半屏的平移**：UI 节点的 position 是 Canvas 中心原点（x∈[-640,640]），
 捕获区是触摸的左下原点（x∈[0,1280]）。直接拿节点 position 当捕获区，整块区会偏到
-屏幕左下角 —— 而且**偏得像「没生效」，不像坐标错**。转换只走
-`tools/scene-spec.ts` 的 `uiRectToCaptureZone()`，别在组件里重写。
+屏幕左下角 —— 而且**偏得像「没生效」，不像坐标错**。转换只走 `uiRectToCaptureZone()`，
+别在组件里重写。
+
+> 它原先在 `tools/scene-spec.ts`，2026-09-15 搬来这里 —— Cocos 只编译 `assets/` 下的脚本，
+> 留在 `tools/` 的话运行时组件根本 import 不到，只能各写一份。`scene-spec.ts` 原样转出去。
+
+⚠ **面板底下的格子还差第二次平移**：组件从 `slotNode.position` 读到的是**相对面板**的
+（-204, 68），而 `uiRectToCaptureZone` 要的是 Canvas 绝对值（-204, 128）。直接喂进去，
+8 个格子的命中区整体差一个面板偏移，**而判据照样全绿**（两边读同一个数）。
+所以挂在面板下的节点一律走 `panelChildZone()` —— 它是场景那侧 `localPos()` 的逆，
+两边各有反例锚点盯着。
+
+`screenToCanvasX/Y` 是反向换算，给浮动摇杆用：把 `stickOriginX/Y`（触摸像素）换成
+Canvas 坐标，视觉才会正好落在拇指底下。
 
 ---
 

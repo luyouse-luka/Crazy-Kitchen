@@ -9,6 +9,7 @@ import {
 import type { CaptureZone } from '../game/assets/logic/input'
 import type { Vec2 } from '../game/assets/logic/vec2'
 import { UI_SPEC, localPos, uiRectToCaptureZone } from '../tools/scene-spec'
+import { panelChildZone, screenToCanvasX, screenToCanvasY } from '../game/assets/logic/input'
 
 const SPLIT = 640 // 1280 宽的一半
 const R = DEFAULT_STICK.radius // 90
@@ -618,5 +619,71 @@ describe('Slot 的两套坐标：捕获区用绝对，场景文件用相对', ()
 
   it('没有 parent 的节点，localPos 就是 pos 本身', () => {
     expect(localPos('UI_DiscardButton')).toEqual(UI_SPEC['UI_DiscardButton']!.pos)
+  })
+})
+
+/**
+ * 同一条坑在组件层的形态。组件读不到 `UI_SPEC`，它读的是节点 —— 而 `slotNode.position`
+ * 出来就是相对面板的那份，直接喂 `uiRectToCaptureZone` 会让 8 个命中区整体差一个面板位置。
+ * `panelChildZone` 是这一侧的收口，和 `localPos()` 互为逆。
+ */
+describe('panelChildZone：组件层的同一条坑', () => {
+  const SW = 2400
+  const SH = 1080
+
+  it('拿场景里的相对坐标算，结果等于拿绝对坐标算', () => {
+    const panel = UI_SPEC['UI_FridgePanel']!.pos!
+    for (let i = 0; i < 8; i++) {
+      const lp = localPos(`Slot_${i}`)! // 组件从 slotNode.position 读到的就是这个
+      const viaChild = panelChildZone(`slot${i}`, panel[0], panel[1], lp[0], lp[1], 120, 120, SW, SH)
+      const abs = UI_SPEC[`Slot_${i}`]!.pos!
+      const viaAbs = uiRectToCaptureZone(`slot${i}`, abs[0], abs[1], 120, 120, SW, SH)
+      expect(viaChild).toEqual(viaAbs)
+    }
+  })
+
+  it('反例锚点：漏掉面板位置，命中区整体差一个面板偏移', () => {
+    const panel = UI_SPEC['UI_FridgePanel']!.pos!
+    const lp = localPos('Slot_0')!
+    const right = panelChildZone('slot0', panel[0], panel[1], lp[0], lp[1], 120, 120, SW, SH)
+    const wrong = uiRectToCaptureZone('slot0', lp[0], lp[1], 120, 120, SW, SH)
+    expect(right.y - wrong.y).toBeCloseTo((panel[1] * SH) / 720, 6)
+    expect(right.y).not.toBeCloseTo(wrong.y, 3)
+  })
+})
+
+describe('screenToCanvas：浮动摇杆的反向换算', () => {
+  it('捕获区中心换回去，正好是节点的 Canvas 坐标', () => {
+    for (const [sw, sh] of [
+      [1280, 720],
+      [2400, 1080],
+      [1920, 1080],
+    ]) {
+      const z = uiRectToCaptureZone('discard', 440, -80, 120, 120, sw!, sh!)
+      expect(screenToCanvasX(z.x + z.w / 2, sw!, sh!)).toBeCloseTo(440, 6)
+      expect(screenToCanvasY(z.y + z.h / 2, sh!)).toBeCloseTo(-80, 6)
+    }
+  })
+
+  it('反例锚点：按 1280×720 硬算，在 2400×1080 上偏掉', () => {
+    const z = uiRectToCaptureZone('discard', 440, -80, 120, 120, 2400, 1080)
+    expect(screenToCanvasX(z.x + z.w / 2, 1280, 720)).not.toBeCloseTo(440, 1)
+  })
+})
+
+describe('摇杆按下点：给浮动摇杆的视觉用', () => {
+  it('读到的是按下那一点，手指滑动不改它', () => {
+    const r = mk()
+    r.onDown(1, 120, 300)
+    expect([r.stickOriginX, r.stickOriginY]).toEqual([120, 300])
+    r.onMove(1, 200, 380)
+    expect([r.stickOriginX, r.stickOriginY]).toEqual([120, 300])
+  })
+
+  it('右半屏按下不动它 —— 归属在按下那一刻就定死了', () => {
+    const r = mk()
+    r.onDown(1, 120, 300)
+    r.onDown(2, 900, 100)
+    expect([r.stickOriginX, r.stickOriginY]).toEqual([120, 300])
   })
 })
