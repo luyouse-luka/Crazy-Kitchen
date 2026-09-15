@@ -19,7 +19,6 @@ import {
 import {
   DEFAULT_ACTION,
   DEFAULT_STICK,
-  ISO_CAMERA_YAW,
   TouchRouter,
   panelChildZone,
   screenToCanvasX,
@@ -50,6 +49,7 @@ const STATION_KINDS: Record<string, StationKind> = {
 const NODES = {
   kitchen: 'Kitchen',
   player: 'Actors/Player',
+  camera: 'Main Camera',
   joystick: 'Canvas/UI_Joystick',
   discard: 'Canvas/UI_DiscardButton',
   panel: 'Canvas/UI_FridgePanel',
@@ -79,11 +79,17 @@ export class StationView extends Component {
   @property({ tooltip: '工位方块半径之外还能够着多少米。手感旋钮，真机上调' })
   reach = 0.7
 
-  @property({ tooltip: '相机绕 Y 的偏航。四个方向各推一次，前后反了就填负值（input.ts stickToWorld）' })
-  cameraYaw = ISO_CAMERA_YAW
-
   /** Last blocked interaction. No toast node exists yet; HUD can read this later. */
   lastBlock: BlockReason = 'none'
+
+  /**
+   * Read off Main Camera, never guessed: stickToWorld maps screen-up onto
+   * (-sin yaw, -cos yaw), and the camera's own forward on XZ is (-sin eulerY, -cos eulerY),
+   * so the two are equal exactly when yaw === eulerY in radians. Hardcoding +45 against a
+   * -45 camera is a clean 90 degree error — W walks left — and rotating the camera later
+   * would silently break movement again.
+   */
+  private cameraYaw = 0
 
   private router!: TouchRouter
   private kitchen!: KitchenState
@@ -114,14 +120,16 @@ export class StationView extends Component {
 
   override start(): void {
     const kitchenRoot = this.need(NODES.kitchen)
+    const camera = this.need(NODES.camera)
     const player = this.need(NODES.player)
     const joystick = this.need(NODES.joystick)
     const discardBtn = this.need(NODES.discard)
     const panel = this.need(NODES.panel)
-    if (!kitchenRoot || !player || !joystick || !discardBtn || !panel) {
+    if (!kitchenRoot || !camera || !player || !joystick || !discardBtn || !panel) {
       this.enabled = false
       return
     }
+    this.cameraYaw = (camera.eulerAngles.y * Math.PI) / 180
     this.playerNode = player
     this.joystickNode = joystick
     this.discardNode = discardBtn
@@ -164,7 +172,8 @@ export class StationView extends Component {
     game.on(Game.EVENT_HIDE, this.onTouchCancel, this)
 
     console.log(
-      `[StationView] ready — stations=${stations.length} slots=${this.slotNodes.length} screen=${this.screenW}x${this.screenH}`,
+      `[StationView] ready — stations=${stations.length} slots=${this.slotNodes.length}` +
+        ` screen=${this.screenW}x${this.screenH} cameraYaw=${camera.eulerAngles.y}°`,
     )
   }
 

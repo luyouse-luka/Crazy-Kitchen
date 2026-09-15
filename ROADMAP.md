@@ -110,8 +110,8 @@ ROADMAP 预告的是面板那 60px。**实际最危险的不是它** —— 是 
 
 1. **`git pull` 之后，在 `Canvas` 上添加组件 `StationView`**（挂哪个节点都行，全靠 `find()`）。
    编辑器会生成 `StationView.ts.meta`，**记得一起提交**
-2. **四个方向各推一次摇杆** —— 前后反了就把检查器里的 `Camera Yaw` 填负值。
-   这是 `input.ts` 从第一天就标着「真机验、别靠推理」的那条
+2. **四个方向各推一次摇杆** —— 偏航现在从 `Main Camera` 的 `eulerAngles.y` 读，
+   没有旋钮了。还不对就是相机本身转过，改相机
 3. **走到每个工位点动作键**，够不着就调 `Reach`（默认 0.7 米）
 4. 顺带把上一轮没做的看了：11 个节点在不在、影子 76 够不够深（嫌淡给个数）、
    8 个格子要不要加 `Label`、`Player`/`Body`/`Head`/`Anchor_Hand` 的 scale
@@ -168,6 +168,35 @@ ROADMAP 预告的是面板那 60px。**实际最危险的不是它** —— 是 
   实测：把组件改回错误顺序，252 个测试全绿。所以 `pnpm scene` 的「StationView 源码自检」
   多加一条，直接比 `router.tick(` 与 `tickPlay/tickPanel` 在源码里的先后。反验过。
 
+### 第三次：`cameraYaw` 写死了 +45，而相机是 −45 —— 整整差 90°
+
+预览里按 W 角色往**屏幕左边**走，A/D 变成上下。不是符号反了（那是 180°），是**差 90°**。
+
+场景的 `Main Camera` `euler = (-35, -45, 0)`，而 `ISO_CAMERA_YAW = Math.PI / 4`（+45）。
+推导：`stickToWorld` 把「屏幕上」映到 `(-sin yaw, -cos yaw)`，相机自己在 XZ 上的前方是
+`(-sin eulerY, -cos eulerY)` —— **两者相等当且仅当 `yaw === eulerY`（弧度）**。
+拿 +45 配 −45 的相机，结果与相机前方正交，正好 90°。
+
+⚠ `ROADMAP` 的相机表里早就写着「场景实际用的是第二行（yaw −45）」，`scene-spec.ts` 的
+`RENAMES` 注释也写着「相机 yaw = −45」—— **两处都写对了，我写组件时没查**。
+
+**修法不是改常数，是不猜**：组件 `start()` 里读 `Main Camera` 的 `eulerAngles.y`。
+`@property cameraYaw` 那个旋钮**删掉了** —— 真相在相机节点上，留个旋钮只会多一处能对不上的地方，
+而且以后转相机，走位方向自动跟着变。`Main Camera` 也进了 `NODES`，路径判据一并盯着。
+
+`tests/input.test.ts` 加「相机偏航 = Main Camera 的 euler.y」：任意机位下「屏幕上推 =
+相机正前方」，反例锚点是 −45 的相机配 +45 的 yaw 点积为 0。
+
+### 🎨 待你拍板：丢弃键和番茄格子撞色
+
+`UI_DiscardButton` 是 `(200,60,50)`，`Slot_4`（番茄）是 `(225,70,55)` —— 两块红几乎一样，
+实测里被当成了「第五张图跑出来了」。两个都是占位色，改哪个都行，**但这是决策不是还原**：
+
+- 丢弃键改成深灰 `(70,70,78)`，靠位置和图标区分（推荐 —— 番茄的红是食材色，该留给食材）
+- 或者丢弃键留红、番茄换成更橙的 `(240,110,60)`
+
+给个数我就改 `scene-spec` + 场景，`pnpm scene` 会守着两边一致。
+
 ### ⚠ 只有真机能暴露的三条（我测不出来）
 
 | 位置 | 赌的是什么 | 错了会怎样 |
@@ -205,19 +234,20 @@ game/assets/logic/sim.ts            ← 改 · defaultSimConfig 改读 DEFAULT_C
 game/assets/scripts/A7Probe.ts      ← 改 · start 补 override（纳入 typecheck 后才暴露）
 game/assets/logic/API.md            ← 改 · v0.5 → v0.6，recipe/input 两节
 tools/scene-spec.ts                 ← 改 · uiRectToCaptureZone 改为 re-export
-tools/scenedump.ts                  ← 改 · 新增「── StationView 源码自检」：9 条 find() 路径
-                                           + router.tick() 与读脉冲的先后
+tools/scenedump.ts                  ← 改 · 新增「── StationView 源码自检」：10 条 find() 路径
+                                           + router.tick() 与读脉冲的先后；相机一行加 euler
 tsconfig.json                       ← 改 · include 收 scripts/**、types/**；
                                            加 experimentalDecorators、lib 加 DOM
 types/cocos.d.ts                    ← 新 · 引进 @cocos/creator-types 的引擎声明
 package.json                        ← 改 · devDep 加 @cocos/creator-types@3.8.8
 tests/input.test.ts                 ← 改 · 242 → 252 测试（panelChildZone / screenToCanvas /
-                                           摇杆按下点 / 帧循环里的读写顺序 / 键盘合成的摇杆）
+                                           摇杆按下点 / 帧循环里的读写顺序 /
+                                           键盘合成的摇杆 / 相机偏航 = euler.y）
 docs/m2-scene-guide.md              ← 改 · §8 补「怎么挂上去」与两个可调值
 ROADMAP.md                          ← 改 · 本段
 ```
 
-`pnpm check` 全绿：铁律① 0 命中 · typecheck 无错（**首次覆盖 `scripts/`**）· **255 测试 / 13 文件**。
+`pnpm check` 全绿：铁律① 0 命中 · typecheck 无错（**首次覆盖 `scripts/`**）· **257 测试 / 13 文件**。
 `pnpm scene` 全绿：§0 三条红线 · 79 个 `_id` · **组件源码自检两条** · Position/Scale · 9 个材质。
 
 ---
@@ -792,7 +822,7 @@ docs/workflow-plan.html                               ← 线 A 的执行视图
 | 3 | **读 25 张卡打分** | ✅ **2026-09-06 通过** —— 「基本没什么问题，可以继续进行」。手写路线到此为止，不写 c_0026–c_0200 |
 | 3b | `ANTHROPIC_API_KEY` | ⏸ **不是阻塞**。真正必需的时机是 M5 扩产到 2000–10000 张。要用就 `pnpm gen sample 3` 先花几分钱看质量 |
 | 8 | ⏰ **定游戏名** | 🟡 **暂定「疯狂大厨」**（2026-09-07，⚠ 不在原候选表里，且是「暂定」不是定死）。**有外部时钟**：M2 出口要定死并提软著，等 6–12 周 → 约 **9 月底至 10 月初**。提交前**先查重**。原候选：疯狂后厨 / AI后厨 / 神经病餐厅 / 厨神营业中 |
-| 9 | 搭 M2 场景 | 🟡 节点与材质都齐了，`pnpm scene` 全绿。`StationView` 组件已写好（2026-09-15）—— 剩下**在 `Canvas` 上添加组件、跑一次、调 `Camera Yaw` 与 `Reach`**，见「当前断点」 |
+| 9 | 搭 M2 场景 | 🟡 节点与材质都齐了，`pnpm scene` 全绿。`StationView` 组件已写好（2026-09-15）—— 组件已挂在 `Canvas` 上、预览跑通（走位 / 冰箱面板 / 丢弃都对）。剩下**真机构建**，见「当前断点」 |
 | 4 | A6 `iOSHighPerformance` | ✅ **已通过** |
 | 5 | A7 | ✅ **已通过**。可以把 `A7Probe` 从场景上摘掉了（组件那栏右上角三点 → 移除组件），两个文件留着，M2 换版本时重跑 |
 | 6 | **决策：微信引擎插件开不开** | ⏸ 这次构建没走插件，主包多了约 1388 KB。见 §2.4a |

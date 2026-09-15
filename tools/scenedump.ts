@@ -167,7 +167,9 @@ function main(): void {
       if (t === 'cc.Camera') {
         const proj = num(c['_projection'])
         console.log(`  ${n.path}  Projection=${CAM_PROJ[proj] ?? proj}  OrthoHeight=${r3(num(c['_orthoHeight']))}` +
-          `  Near=${num(c['_near'])}  Far=${num(c['_far'])}  ClearFlags=${clearName(num(c['_clearFlags']))}`)
+          `  Near=${num(c['_near'])}  Far=${num(c['_far'])}  ClearFlags=${clearName(num(c['_clearFlags']))}` +
+          // StationView 拿它当摇杆的相机偏航 —— 转了相机，走位方向跟着变
+          `  euler=${fmt(n.euler)}`)
       }
       if (t === 'cc.DirectionalLight') {
         console.log(`  ${n.path}  Illuminance=${num(c['_illuminance'])}  ShadowEnabled=${c['_shadowEnabled'] === true}`)

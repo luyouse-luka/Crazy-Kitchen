@@ -783,3 +783,34 @@ describe('键盘合成的摇杆', () => {
     expect(press(1, 0).action.down).toBe(false)
   })
 })
+
+/**
+ * 摇杆的相机偏航**必须等于 Main Camera 的 `euler.y`**，不是某个写死的常数。
+ *
+ * 场景的相机是 `euler.y = -45`，而组件一开始写死了 `+45` —— **正好差 90°**：
+ * 按 W 角色往屏幕左边走。推导：`stickToWorld` 把「屏幕上」映到 `(-sin yaw, -cos yaw)`，
+ * 而相机自己在 XZ 上的前方是 `(-sin eulerY, -cos eulerY)`，两者相等当且仅当 yaw === eulerY。
+ */
+describe('相机偏航 = Main Camera 的 euler.y', () => {
+  const UP = { dirX: 0, dirY: 1, magnitude: 1, active: true }
+  // 相机本地 -Z 绕 Y 转 eulerY 之后在 XZ 平面上的投影
+  const cameraForwardXZ = (deg: number): Vec2 => {
+    const p = (deg * Math.PI) / 180
+    return { x: -Math.sin(p), z: -Math.cos(p) }
+  }
+
+  it('屏幕上推 = 相机正前方（任意机位都成立）', () => {
+    for (const deg of [-45, 45, 0, 90, -135]) {
+      const o = stickToWorld(out(), UP, (deg * Math.PI) / 180)
+      const f = cameraForwardXZ(deg)
+      expect(o.x, `euler.y=${deg}`).toBeCloseTo(f.x, 6)
+      expect(o.z, `euler.y=${deg}`).toBeCloseTo(f.z, 6)
+    }
+  })
+
+  it('反例锚点：−45° 的相机配 +45° 的 yaw，正好正交 —— 90° 的错', () => {
+    const wrong = stickToWorld(out(), UP, Math.PI / 4)
+    const f = cameraForwardXZ(-45)
+    expect(wrong.x * f.x + wrong.z * f.z).toBeCloseTo(0, 6)
+  })
+})
