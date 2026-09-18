@@ -76,7 +76,7 @@ const NODES = {
   orders: 'Canvas/UI_HUD/UI_Orders',
   result: 'Canvas/UI_Result',
   resultTitle: 'Canvas/UI_Result/Panel/Title',
-  resultBody: 'Canvas/UI_Result/Panel/Body',
+  resultBody: 'Canvas/UI_Result/Panel/Stats',
   again: 'Canvas/UI_Result/Panel/Btn_Again',
 }
 
@@ -488,35 +488,35 @@ export class StationView extends Component {
       this.syncScreen()
     }
 
-    // 打烊后世界停住，只剩「再来一局」一个去处
-    if (this.resultOpen) {
-      if (this.router.zone('again')?.tapped) this.restart()
-      this.router.tick(dt)
-      this.refreshZones()
-      return
-    }
-
-    this.syncKeyStick()
-    stepKitchen(this.kitchen, dt)
-    stepShift(this.shift, dt)
-    // World keeps running while the panel is open; the stick is frozen because every
-    // touch lands in a capture zone, so this is a no-op then.
-    stepMovement(this.movement, this.router.stick, this.cameraYaw, dt)
-
     // Read the pulses BEFORE tick(), never after: touch events land between frames and
     // tick() clears last frame's pulses on the way in, so reading after it never sees a
     // tap. holdStarted still works (tick produces it), so the symptom is "walks fine,
     // long-press fine, taps dead" — which looks like one unwired button, not an ordering bug.
-    if (this.panelOpen) this.tickPanel()
-    else this.tickPlay()
+    //
+    // 只有这一处 tick()，所有读都排在它前面 —— 分支里各调一次的话，`pnpm scene` 那条
+    // 顺序判据只认第一处，剩下的静默失守。
+    if (this.resultOpen) {
+      // 打烊后世界停住，只剩「再来一局」一个去处
+      if (this.router.zone('again')?.tapped) this.restart()
+    } else {
+      this.syncKeyStick()
+      stepKitchen(this.kitchen, dt)
+      stepShift(this.shift, dt)
+      // World keeps running while the panel is open; the stick is frozen because every
+      // touch lands in a capture zone, so this is a no-op then.
+      stepMovement(this.movement, this.router.stick, this.cameraYaw, dt)
+      if (this.panelOpen) this.tickPanel()
+      else this.tickPlay()
+    }
     this.router.tick(dt)
 
-    if (this.shift.over) {
+    if (this.shift.over && !this.resultOpen) {
       this.showResult()
       return
     }
 
     this.refreshZones()
+    if (this.resultOpen) return
     this.syncNodes()
     this.syncHud()
   }
