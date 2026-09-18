@@ -15,6 +15,8 @@
     "size": "vite-node tools/pkgsize.ts --",
     "prea7": "node tools/ensure-cocos-tsconfig.mjs",
     "a7": "vite-node tools/a7-expect.ts",
+    "precam": "node tools/ensure-cocos-tsconfig.mjs",
+    "cam": "vite-node tools/camcheck.ts",
     "prelayout": "node tools/ensure-cocos-tsconfig.mjs",
     "layout": "vite-node tools/layoutcheck.ts",
     "prescene": "node tools/ensure-cocos-tsconfig.mjs",

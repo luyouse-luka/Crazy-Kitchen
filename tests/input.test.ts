@@ -268,9 +268,9 @@ describe('stickToVelocity', () => {
  * 坐标不手填，从 scene-spec 的定稿算出来 —— 面板挪一格、格子改大小，
  * 下面这些用例会跟着动，不会悄悄测一个早就不存在的布局。
  */
-const zoneOf = (name: string, id: string, sw = 1280, sh = 720): CaptureZone => {
+const zoneOf = (name: string, id: string, sw = 1280, sh = 720, designH = 720): CaptureZone => {
   const u = UI_SPEC[name]!
-  return uiRectToCaptureZone(id, u.pos![0], u.pos![1], u.size![0], u.size![1], sw, sh)
+  return uiRectToCaptureZone(id, u.pos![0], u.pos![1], u.size![0], u.size![1], sw, sh, designH)
 }
 const SLOT_L = zoneOf('Slot_0', 'slot0') // 左上格，落在摇杆那半屏
 const SLOT_R = zoneOf('Slot_3', 'slot3') // 右上格，落在动作键那半屏
@@ -524,22 +524,36 @@ describe('捕获区对 scene-spec 的跨模块漂移', () => {
 })
 
 describe('真机分辨率下的捕获区（编辑器 1280×720 预览永远看不出问题的那一类）', () => {
-  // 2400×1080：常见的 20:9 手机。Fit Height → scale = 1080/720 = 1.5
-  const SW = 2400
-  const SH = 1080
-  const K = SH / 720
+  // 2532×1170，实测那台。工程是 **Fit Width**（1280×720, fitWidth=true）：
+  // 设计宽锁死 1280，getVisibleSize() 给出 1280×591.47，而触摸走 2532×1170。
+  // 缩放因子是 1170/591.47 = 1.978，不是 1170/720 = 1.625 —— 差的这一截就是下面那条反例。
+  const SW = 2532
+  const SH = 1170
+  const DESIGN_H = (SH * 1280) / SW
+  const K = SH / DESIGN_H
 
   it('区随屏幕缩放，不是钉在设计分辨率上', () => {
-    const z = zoneOf('UI_DiscardButton', 'discard', SW, SH)
+    const z = zoneOf('UI_DiscardButton', 'discard', SW, SH, DESIGN_H)
     expect(z.w).toBeCloseTo(120 * K, 6)
     expect(z.h).toBeCloseTo(120 * K, 6)
   })
 
   it('丢弃键仍贴着右下角 —— 按 1280 硬算的话它会落到屏幕正中偏左', () => {
-    const z = zoneOf('UI_DiscardButton', 'discard', SW, SH)
+    const z = zoneOf('UI_DiscardButton', 'discard', SW, SH, DESIGN_H)
     const wrong = uiRectToCaptureZone('discard', 440, 0, 120, 120, 1280, 720) // 写死常量的错法
     expect(z.x).toBeGreaterThan(SW / 2) // 右半屏
     expect(wrong.x).toBeLessThan(SW / 2) // 反例：错法把它扔到了左半边
+  })
+
+  it('designH 漏传就整片错位 —— 上一轮真机上「点了没反应」的那个 bug', () => {
+    const right = zoneOf('UI_DiscardButton', 'discard', SW, SH, DESIGN_H)
+    const missing = zoneOf('UI_DiscardButton', 'discard', SW, SH) // designH 退回 720
+    // 手指落在正确区的中心，漏传 designH 的那份接不住 —— 差了几百像素，不是几像素
+    const [fx, fy] = mid(right)
+    const inside = fx >= missing.x && fx <= missing.x + missing.w &&
+      fy >= missing.y && fy <= missing.y + missing.h
+    expect(inside).toBe(false)
+    expect(Math.abs(right.x - missing.x)).toBeGreaterThan(100)
   })
 
   it('8 格仍横跨真实中线 —— splitX 也得取真实宽度', () => {

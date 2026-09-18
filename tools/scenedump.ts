@@ -329,6 +329,11 @@ function main(): void {
     // tests/ 钉的是 input.ts 的契约，看不见组件里的调用顺序，只能在这儿守。
     const iRead = Math.max(src.indexOf('this.tickPlay()'), src.indexOf('this.tickPanel()'))
     const iTick = src.indexOf('this.router.tick(')
+    // 只认第一处 tick()：分散在各分支里的话这条判据会静默失守，所以先拦住「有好几处」
+    const ticks = src.split('this.router.tick(').length - 1
+    if (ticks > 1) {
+      console.log(`  ✗ update() 里有 ${ticks} 处 router.tick() —— 这条判据只认第一处，合并成一处`)
+    }
     if (iRead < 0 || iTick < 0) console.log('  ? 读不到 update() 里的顺序，跳过检查')
     else if (iTick > iRead) console.log('  OK：router.tick() 排在读脉冲之后')
     else {

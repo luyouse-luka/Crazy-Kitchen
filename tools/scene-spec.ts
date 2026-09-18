@@ -35,6 +35,19 @@ export const SPEC: Record<string, NodeSpec> = {
    */
   Floor_Customer: { pos: [0, -0.05, 4], scale: [8, 0.1, 2] },
 
+  /**
+   * 厨房外面的地面。**纯装饰** —— 不参与碰撞、不进 movement 的 FLOOR_BOUNDS、
+   * 也不进 camcheck 的 CONTENT（那份决定相机跟随边界，把它算进去相机会跟到天边）。
+   *
+   * 它存在的唯一理由是把画面填满。正交投影没有地平线，视线全都以同一个俯角射向地面，
+   * 所以地面够大，每条视线都打在地上，画面就不会空。实测：场景本体只有 64㎡，
+   * 而半高 3 的画面在地面上铺开 136㎡ —— 差的那一倍就是这块补的。
+   * `pnpm cam` 的「视角对比」一节证明过：光调相机角度，覆盖率天花板只有 69%。
+   *
+   * 顶面 y=-0.05 压在 Floor 底面（-0.1）之下，不共面所以不闪；侧面看店内地板高出一档。
+   */
+  Floor_Outer: { pos: [1, -0.1, 0], scale: [24, 0.1, 24] },
+
   // 玩家：位置是定的，scale 取决于内置 Capsule/Sphere/Plane 的默认尺寸 —— 编辑器里量（§2.2 的 _Ruler）
   Player: { pos: [0, 0, 0] },
   Body: { pos: [0, 0.6, 0] },
@@ -67,6 +80,8 @@ export const MAT_SPEC: Record<string, MatSpec> = {
   Floor: { mat: 'M_Floor', rgba: [200, 200, 200, 255], tech: 0 },
   // 比店内深一档，只为把柜台内外分开；⏳ 色相待定，别当定稿
   Floor_Customer: { mat: 'M_FloorOut', rgba: [150, 150, 150, 255], tech: 0 },
+  // 比店内暗两档、偏冷 —— 和 200/150 拉开三层，玩家一眼看得出哪边走不过去
+  Floor_Outer: { mat: 'M_FloorOuter', rgba: [85, 92, 105, 255], tech: 0 },
   Wall_N: { mat: 'M_Wall', rgba: [230, 230, 230, 255], tech: 0 },
   Wall_E: { mat: 'M_Wall', rgba: [230, 230, 230, 255], tech: 0 },
   Station_Fridge: { mat: 'M_Fridge', rgba: [58, 123, 213, 255], tech: 0 },
@@ -174,6 +189,16 @@ export const UI_SPEC: Record<string, UiSpec> = {
    * **不能全屏遮挡** —— 玩家要看得见烤炉在糊。
    */
   UI_FridgePanel: { size: [560, 288], sizeMode: 0, pos: [0, 60, 0], active: false },
+
+  /**
+   * 结算面板。打烊后盖住一切，只有「再来一局」可点。
+   * 这三个尺寸必须进判据 —— `Btn_Again` 的捕获区是按它们算出来的，
+   * 在编辑器里随手拖一下位置，真机上按钮就点不中，而画面看起来完全正常。
+   */
+  UI_Result: { size: [1280, 720], pos: [0, 0, 0], active: false },
+  Panel: { size: [540, 380], sizeMode: 0, pos: [0, 0, 0], parent: 'UI_Result' },
+  Btn_Again: { size: [260, 76], sizeMode: 0, pos: [0, -132, 0], parent: 'Panel' },
+
   ...FRIDGE_SLOTS,
 }
 

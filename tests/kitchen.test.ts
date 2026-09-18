@@ -76,12 +76,30 @@ describe('触发范围', () => {
 })
 
 describe('手持：同时只能拿一样', () => {
-  it('手上有东西时冰箱不给第二样', () => {
+  it('手上拿着生料时再点一样 = 换掉，不是被挡', () => {
     const st = mk()
     expect(take(st, 'bun').kind).toBe('take-ingredient')
     const r = take(st, 'cheese')
-    expect(r.reason).toBe('hands-full')
-    expect(st.carry.ingredient).toBe('bun')
+    expect(r.kind).toBe('take-ingredient')
+    expect(st.carry.ingredient).toBe('cheese')
+  })
+
+  it('换成生肉也行 —— 面板里 patty 和配料是同一排格子', () => {
+    const st = mk()
+    take(st, 'bun')
+    expect(take(st, 'patty').kind).toBe('take-ingredient')
+    expect(st.carry.kind).toBe('patty')
+    expect(st.carry.cook).toBe('raw')
+  })
+
+  it('手上是盘子时冰箱仍然不给 —— 换食材等于把整个汉堡扔了，要丢得自己按 discard', () => {
+    const st = mk()
+    take(st, 'bun')
+    put(st) // 放进组装台
+    put(st) // 再按一次 = 端起盘子
+    expect(st.carry.kind).toBe('plate')
+    expect(take(st, 'cheese').reason).toBe('hands-full')
+    expect(st.carry.kind).toBe('plate')
   })
 
   it('从冰箱拿的生肉也是 patty，cook 为 raw', () => {
