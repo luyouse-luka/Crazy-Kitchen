@@ -324,8 +324,14 @@ Capsule / Cylinder 的默认高度也不见得是 1。
 
 #### `Canvas` 底下
 
-先去 **项目 → 项目设置 → 项目数据 → 设计分辨率** 改成 **1280 × 720**（工程现在还是默认值），
-适配选 **Fit Height** —— 横屏手机比例从 16:9 到 20:9 都有，锁高度、让宽度随比例延展最稳。
+**设计分辨率 1280 × 720，适配 Fit Width**（`game/settings/v2/packages/project.json`
+的 `general.designResolution`，已显式落盘 —— 在那之前它只活在编辑器内存里，
+换台机器打开会退回引擎默认值，UI 与捕获区整片偏移）。
+
+⏳ **这一条与本文最初写的 Fit Height 不一致，待拍板**：工程实跑的一直是 Fit Width
+（`fitWidth: true / fitHeight: false`，实测 `getVisibleSize()` = 1280 × 591.47）。
+Fit Width 锁宽、高随比例缩；Fit Height 锁高、宽随比例延展，横屏游戏通常后者更合适。
+换过去不难（`uiRectToCaptureZone` 那套换算两种模式通用），但 UI 会整体重排，要重验一轮。
 
 | 节点 | 尺寸 | 定位 | 备注 |
 |---|---|---|---|
@@ -391,11 +397,13 @@ Capsule / Cylinder 的默认高度也不见得是 1。
 >
 > ⚠ **同一条坑，捕获区也踩**：`UI_DiscardButton` 与 8 个 `Slot_*` 要喂给
 > `TouchRouter.setCaptureZones()`，而它们的 `position` 是**设计分辨率下的 Canvas 中心坐标**。
-> 两处不一致——原点差半屏、单位差一个缩放因子（Fit Height 下 2400×1080 的手机是 1.5 倍）。
-> 转换只走 `tools/scene-spec.ts` 的 `uiRectToCaptureZone(id, cx, cy, w, h, screenW, screenH)`，
-> **`screenW/screenH` 必须传运行时实测值**。
+> 两处不一致——原点差半屏、单位差一个缩放因子（Fit Width 下 2532×1170 的手机是 1.978 倍）。
+> 转换只走 `tools/scene-spec.ts` 的 `uiRectToCaptureZone(id, cx, cy, w, h, screenW, screenH, designH)`，
+> **`screenW/screenH` 取 `view.getVisibleSizeInPixel()`、`designH` 取 `view.getVisibleSize().height`，
+> 三个都必须是运行时实测值**。Fit Width 下 `designH` 不是 720（实测 591.47），
+> 漏传它的症状是「面板点了没反应、摇杆飘在别处」。
 > 按 1280×720 硬算的话，**编辑器预览里完全正常，只有真机会错位**，
-> 且错的样子像「按钮没反应」而不像坐标算错——`tests/input.test.ts` 有一组 2400×1080 的用例钉着它。
+> 且错的样子像「按钮没反应」而不像坐标算错——`tests/input.test.ts` 有一组 2532×1170 的用例钉着它，含一条 `designH` 漏传的反例。
 
 #### 材质颜色
 
@@ -725,7 +733,8 @@ M2 最省事的做法（不需要贴图）：
 三条路径都喂同一个 `TouchRouter`，真机上只走触摸那条。
 
 ⚠ 预览只有一根「手指」，**边走边按测不了**；窗口又接近 1280×720，
-**Fit Height 的缩放坑在预览里恒不发生**。预览只验接线，手感和坐标必须上真机。
+**Fit Width 的缩放坑在预览里恒不发生**（预览里 `designH` 正好 ≈ 720，缩放因子 ≈ 1）。
+预览只验接线，手感和坐标必须上真机。
 
 ⚠ 组件找不到节点时会打一行 `console.error` 然后**把自己禁用**，不会静默半死。
 但更早一步：`pnpm scene` 有一节「StationView 认的节点路径」，会把组件里写死的 9 条路径

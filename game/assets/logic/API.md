@@ -1,4 +1,4 @@
-# `logic/` 公开接口清单 · v0.6（2026-09-15）
+# `logic/` 公开接口清单 · v0.7（2026-09-18）
 
 `logic/` 是**服务器侧的代码**与**你的 Cocos 组件**之间唯一的接缝，接缝要有文档。
 
@@ -27,9 +27,11 @@
 | `input.ts` | **M2 输入层**：多点触摸路由、浮动摇杆、点按/长按、相机相对映射 |
 | `kitchen.ts` | **M2 厨房状态机**：手持、工位交互、烤炉计时 |
 | `movement.ts` | **M2 角色移动**：摇杆 → 相机相对速度 → 碰撞解算后的位置 |
+| `camera.ts` | **M2 相机跟随**：玩家位置 → 注视点，视图坐标钳制 + 窄屏兜底 |
+| `customer.ts` | **M2 顾客流**：到达、点单、耐心、离店。**与 `sim.ts` 共用同一份** |
+| `shift.ts` | **M2 一局**：计时、上菜记账、结算 |
 
-**尚未建**（按里程碑排）：`customer.ts`（M2 顾客状态机）·
-`chaos.ts`（M4 混乱事件调度）· `economy.ts`（M4 金币/升级/解锁）。
+**尚未建**（按里程碑排）：`chaos.ts`（M4 混乱事件调度）· `economy.ts`（M4 金币/升级/解锁）。
 
 ---
 
@@ -404,6 +406,78 @@ teleport(st, x, z)                        // 开局 / 重开，不走碰撞解�
 四边都留一个半径 · 出餐口贴南墙也挤不出地板 · 蹭墙不扭头 · 松手不回正 ·
 速度与 `sim.ts` 一致 · 边界与 `scene-spec` 的 Floor 一致。
 ⚠ 摇杆的 `dirX/dirY` 是**单位方向**，测试里写 `stick(1, 1)` 会把速度放大 √2 倍。
+
+---
+
+## `customer.ts`
+
+顾客流。**`sim.ts` 与真人局共用这一份** —— 各写一份的话 M1 标定出来的难度曲线对真游戏
+就不成立了，而这种偏差要真机玩几十局才看得出来。`pnpm layout` 盯着这条。
+
+```ts
+interface Customer {
+  active: boolean
+  id: number            // 全局递增，换人时组件靠它判断要不要重画订单卡
+  patienceLeft: number
+  patienceMax: number   // 进度条的分母。别去读 FlowParams，难度是逐天变的
+  spec: OrderSpec
+  burger: Burger        // 模拟器专用；真人局玩家手上的汉堡在 kitchen.carry
+}
+
+interface CustomerFlow {
+  customers: Customer[] // 长度 = maxConcurrent，预分配后只复用。**索引即排队位**
+  activeCount, arrived, timedOut, peakConcurrent: number
+}
+
+createCustomerFlow(flow, orders, rng) -> CustomerFlow
+resetCustomerFlow(st, flow, orders)
+stepCustomerFlow(st, t, dt, onTimeout?, onArrive?)   // 先到达再倒耐心
+releaseCustomer(st, c)                               // 幂等
+closeShop(st, onLeave?)                              // 在场的一律记超时
+matchCustomer(st, burger) -> Customer | null         // 上菜给谁
+```
+
+⚠ `onTimeout` / `onLeave` 在顾客被释放**之前**调用，回调里还看得见是谁。
+
+**`matchCustomer` 的规则**：先找吃得下这一盘的，找不到就砸在最急的那位头上。
+**没有匹配也一定要有人接** —— 否则做错了没有代价，`banned` 那一维就白设计了。
+多个都吃得下时给最急的。
+
+⚠ 改这个文件时 **RNG 的调用次数与顺序不能变**。少调一次 `nextInt`，之后每一单的食材、
+火候、抖动全部错位，判据只会报「偏离基线」，看不出是这里动的。
+
+---
+
+## `shift.ts`
+
+一个班次（真人局）：开门 → 顾客来 → 打烊 → 结算。不管厨房状态（那是 `kitchen.ts`）。
+
+```ts
+interface ShiftConfig { seed, durationSec, flow, orders }
+interface ShiftState  { t, over, flow: CustomerFlow, served, wrong }
+interface ShiftResult { arrived, served, wrong, timedOut, completionRate }
+
+createShift(cfg) -> ShiftState
+resetShift(st, cfg?)                       // 重开一局，不分配
+stepShift(st, dt, onLeave?)
+timeLeft(st) -> number                     // 倒计时用，打烊后恒 0
+settleServe(st, customer, verdict)         // 上菜记账，顾客离场
+shiftResult(st) -> ShiftResult
+```
+
+**上菜那一下由组件把两边接起来**，这是唯一需要跨模块的地方：
+
+```ts
+const c = matchCustomer(shift.flow, kitchen.burger)
+const r = interact(kitchen, pos, serveStation, { spec: c?.spec })
+if (r.kind === 'serve' && c && r.verdict) settleServe(shift, c, r.verdict)
+```
+
+⚠ 上错菜**不给第二次机会**（顾客照样走）。能重试的话玩家会拿出餐口当试错工具，
+一单一单试到对为止。
+
+星级走 `difficulty.ts` 的 `starsFor(served, day, durationSec)` —— 第三个参数不传
+就是标定局长（210s）。**短局必须传**，否则用 210 秒的门槛，玩家永远拿不到星。
 
 ---
 
