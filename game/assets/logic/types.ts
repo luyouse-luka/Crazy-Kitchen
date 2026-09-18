@@ -164,3 +164,29 @@ export interface Station {
   box: AABB
   triggerRange: number
 }
+
+// ─────────────────────────── 显示名 ───────────────────────────
+
+/**
+ * 词表 → 中文。放在这里而不是组件里：同一个词在订单卡、结算面板、
+ * 将来的顾客台词里都要出现，散在三处早晚会不一致。
+ * 键是封闭词表，漏一个 TypeScript 当场报错。
+ */
+export const INGREDIENT_LABEL: Record<Ingredient, string> = {
+  bun: '面包',
+  patty: '肉饼',
+  cheese: '芝士',
+  lettuce: '生菜',
+  tomato: '番茄',
+  onion: '洋葱',
+  pickle: '酸黄瓜',
+  bacon: '培根',
+}
+
+export const COOK_LABEL: Record<CookLevel, string> = {
+  raw: '生的',
+  rare: '三分',
+  medium: '五分',
+  well: '全熟',
+  burnt: '糊了',
+}

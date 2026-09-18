@@ -203,9 +203,16 @@ export function interact(
   }
 }
 
+/**
+ * 从冰箱取料。**手上已经拿着生料时直接换掉** —— 点错一样食材不该逼玩家先跑一趟垃圾桶，
+ * 那趟路在 30 秒一局里是实打实的惩罚，而错因只是眼花。
+ *
+ * 盘子是唯一的例外：那是组装好的汉堡，换食材等于整个扔掉，
+ * 代价和「拿错一片生菜」完全不是一回事，要丢得走 discard，让玩家自己按那一下。
+ */
 function takeFromFridge(st: KitchenState, ing: Ingredient | undefined): InteractResult {
   if (ing === undefined) return blocked('unsupported')
-  if (st.carry.kind !== 'none') return blocked('hands-full')
+  if (st.carry.kind === 'plate') return blocked('hands-full')
   if (ing === 'patty') {
     st.carry.kind = 'patty'
     st.carry.cook = 'raw'
@@ -316,6 +323,25 @@ function serveTo(st: KitchenState, spec: OrderSpec | undefined): InteractResult 
 /**
  * 丢掉手上的东西。烤糊的肉只有这一条出路 —— 触发方式（长按 / 垃圾桶工位）由 UI 定。
  */
+/**
+ * 重开一局：清空手上、组装台与全部烤位。
+ *
+ * 不重建对象，原地清 —— 结算面板上按「再来一局」是高频操作，
+ * 每次重建 KitchenState 等于每局丢一批垃圾给 GC（铁律②）。
+ */
+export function resetKitchen(st: KitchenState): void {
+  st.t = 0
+  st.carry.kind = 'none'
+  st.carry.ingredient = 'bun'
+  st.carry.cook = 'raw'
+  for (const g of st.grill) {
+    g.busy = false
+    g.elapsed = 0
+  }
+  resetBurger(st.burger)
+  st.assemblyOccupied = false
+}
+
 export function discard(st: KitchenState): InteractResult {
   if (st.carry.kind === 'none') return blocked('hands-empty')
   if (st.carry.kind === 'plate') resetBurger(st.burger)

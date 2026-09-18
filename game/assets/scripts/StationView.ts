@@ -8,6 +8,7 @@ import {
   KeyCode,
   Game,
   Input,
+  Label,
   Node,
   UITransform,
   Vec2 as CCVec2,
@@ -30,8 +31,21 @@ import {
 import type { CaptureZone } from '../logic/input'
 import { ORTHO_HEIGHT, effectiveOrthoHeight, focusBounds, focusForPlayer } from '../logic/camera'
 import type { FocusBounds } from '../logic/camera'
-import { createKitchen, discard, interact, stationInReach, stepKitchen } from '../logic/kitchen'
+import {
+  createKitchen,
+  discard,
+  interact,
+  resetKitchen,
+  stationInReach,
+  stepKitchen,
+} from '../logic/kitchen'
 import type { BlockReason, KitchenState } from '../logic/kitchen'
+import { createShift, resetShift, settleServe, shiftResult, stepShift, timeLeft } from '../logic/shift'
+import type { ShiftState } from '../logic/shift'
+import { matchCustomer } from '../logic/customer'
+import type { Customer } from '../logic/customer'
+import { difficultyForDay, starsFor } from '../logic/difficulty'
+import { COOK_LABEL, INGREDIENT_LABEL } from '../logic/types'
 import { createMovement, stepMovement } from '../logic/movement'
 import type { MovementState } from '../logic/movement'
 import { DEFAULT_COOK } from '../logic/recipe'
@@ -57,7 +71,27 @@ const NODES = {
   joystick: 'Canvas/UI_Joystick',
   discard: 'Canvas/UI_DiscardButton',
   panel: 'Canvas/UI_FridgePanel',
+  time: 'Canvas/UI_HUD/Label_Time',
+  score: 'Canvas/UI_HUD/Label_Score',
+  orders: 'Canvas/UI_HUD/UI_Orders',
+  result: 'Canvas/UI_Result',
+  resultTitle: 'Canvas/UI_Result/Panel/Title',
+  resultBody: 'Canvas/UI_Result/Panel/Body',
+  again: 'Canvas/UI_Result/Panel/Btn_Again',
 }
+
+/**
+ * 一局多长，秒。M2 只要证明「有始有终有结算」这个闭环成立；
+ * 正式局长是 sim 标定用的 210s（difficulty.ts 的 CALIBRATION_SEC），留给 M4 一起定。
+ * 星级线会按这个时长按比例缩，见 starsFor 的第三个参数。
+ */
+const SHIFT_SEC = 60
+
+/** 第几天的难度。M2 固定第 1 天，接上存档后改成读进度 */
+const SHIFT_DAY = 1
+
+/** 场景里建了几张订单卡。难度曲线的 maxConcurrent 上限是 6，卡按它备足 */
+const ORDER_CARDS = 6
 
 /** Visible size is polled, not read every frame — getVisibleSize() allocates. */
 const RESIZE_POLL_SEC = 0.25
@@ -112,6 +146,23 @@ export class StationView extends Component {
   private panelNode!: Node
   private slotNodes: Node[] = []
 
+  private shift!: ShiftState
+  private orderCards: Node[] = []
+  private orderTexts: Label[] = []
+  private orderBars: Node[] = []
+  /** 每张卡当前画的是哪位顾客。只在换人时重算文本，省掉每帧的字符串拼接（铁律②） */
+  private orderShown: number[] = []
+  private timeLabel!: Label
+  private scoreLabel!: Label
+  private resultNode!: Node
+  private resultTitle!: Label
+  private resultBody!: Label
+  private againNode!: Node
+  private resultOpen = false
+  /** 上一帧画出来的秒数与分数。Label.string 每次赋值都会重排，值没变就别碰 */
+  private shownSec = -1
+  private shownScore = -1
+
   private screenW = 0
   private screenH = 0
   /** Visible design-unit height. Fit Width shrinks it below 720, and the capture-zone
@@ -138,10 +189,26 @@ export class StationView extends Component {
     const joystick = this.need(NODES.joystick)
     const discardBtn = this.need(NODES.discard)
     const panel = this.need(NODES.panel)
-    if (!kitchenRoot || !camera || !player || !joystick || !discardBtn || !panel) {
+    const ordersRoot = this.need(NODES.orders)
+    const result = this.need(NODES.result)
+    const again = this.need(NODES.again)
+    const timeLabel = this.label(NODES.time)
+    const scoreLabel = this.label(NODES.score)
+    const resultTitle = this.label(NODES.resultTitle)
+    const resultBody = this.label(NODES.resultBody)
+    if (
+      !kitchenRoot || !camera || !player || !joystick || !discardBtn || !panel ||
+      !ordersRoot || !result || !again || !timeLabel || !scoreLabel || !resultTitle || !resultBody
+    ) {
       this.enabled = false
       return
     }
+    this.resultNode = result
+    this.againNode = again
+    this.timeLabel = timeLabel
+    this.scoreLabel = scoreLabel
+    this.resultTitle = resultTitle
+    this.resultBody = resultBody
     this.cameraYaw = (camera.eulerAngles.y * Math.PI) / 180
     const camComp = camera.getComponent(Camera)
     if (!camComp) {
@@ -169,6 +236,21 @@ export class StationView extends Component {
       this.slotNodes.push(slot)
     }
 
+    for (let i = 0; i < ORDER_CARDS; i++) {
+      const card = ordersRoot.getChildByName(`Order_${i}`)
+      const text = card?.getChildByName('Text')?.getComponent(Label)
+      const bar = card?.getChildByName('Bar')
+      if (!card || !text || !bar) {
+        console.error(`[StationView] ${NODES.orders} 底下的 Order_${i} 结构不对（要 Text + Bar）`)
+        this.enabled = false
+        return
+      }
+      this.orderCards.push(card)
+      this.orderTexts.push(text)
+      this.orderBars.push(bar)
+      this.orderShown.push(-1)
+    }
+
     const stations = this.readStations(kitchenRoot)
     if (stations.length === 0) {
       console.error(`[StationView] ${NODES.kitchen} 底下一个 Station_* 都没有`)
@@ -178,6 +260,15 @@ export class StationView extends Component {
     this.fridge = stations.find((s) => s.kind === 'fridge') ?? null
 
     this.kitchen = createKitchen({ stations, cook: { ...DEFAULT_COOK }, grillSlots: 2 })
+    const day = difficultyForDay(SHIFT_DAY)
+    this.shift = createShift({
+      // 每次进游戏换一批单，但同一局内可复现。M4 接存档后改成从存档读
+      seed: (Date.now() & 0x7fffffff) || 1,
+      durationSec: SHIFT_SEC,
+      flow: day.flow,
+      orders: day.orders,
+    })
+    this.resultNode.active = false
     this.movement = createMovement({ stations })
     this.router = new TouchRouter(view.getVisibleSize().width / 2, undefined, DEFAULT_ACTION)
     this.syncScreen()
@@ -247,6 +338,14 @@ export class StationView extends Component {
     const n = find(path)
     if (!n) console.error(`[StationView] 场景里找不到 ${path}（名字见 m2-scene-guide §2.1）`)
     return n
+  }
+
+  private label(path: string): Label | null {
+    const n = this.need(path)
+    if (!n) return null
+    const l = n.getComponent(Label)
+    if (!l) console.error(`[StationView] ${path} 上没有 cc.Label`)
+    return l
   }
 
   // ─────────────────────────── 触摸 ───────────────────────────
@@ -389,8 +488,17 @@ export class StationView extends Component {
       this.syncScreen()
     }
 
+    // 打烊后世界停住，只剩「再来一局」一个去处
+    if (this.resultOpen) {
+      if (this.router.zone('again')?.tapped) this.restart()
+      this.router.tick(dt)
+      this.refreshZones()
+      return
+    }
+
     this.syncKeyStick()
     stepKitchen(this.kitchen, dt)
+    stepShift(this.shift, dt)
     // World keeps running while the panel is open; the stick is frozen because every
     // touch lands in a capture zone, so this is a no-op then.
     stepMovement(this.movement, this.router.stick, this.cameraYaw, dt)
@@ -403,8 +511,14 @@ export class StationView extends Component {
     else this.tickPlay()
     this.router.tick(dt)
 
+    if (this.shift.over) {
+      this.showResult()
+      return
+    }
+
     this.refreshZones()
     this.syncNodes()
+    this.syncHud()
   }
 
   private syncScreen(): void {
@@ -436,11 +550,18 @@ export class StationView extends Component {
     const station = stationInReach(this.kitchen, this.movement.pos)
     if (!station) return
     if (station.kind === 'fridge') {
-      // Open only with empty hands, otherwise the player pays for a panel round trip
-      // just to eat blocked('hands-full') on the way out.
-      if (this.kitchen.carry.kind !== 'none') return this.report('hands-full')
+      // 手上拿着生料也让开 —— 点错一样食材不该逼玩家先跑一趟垃圾桶。
+      // 盘子例外，换食材等于把整个汉堡扔了，那一下要玩家自己按 discard。
+      if (this.kitchen.carry.kind === 'plate') return this.report('hands-full')
       this.openPanel()
       return
+    }
+    if (station.kind === 'serve') {
+      // 谁接这一盘是玩法规则，不在组件里挑：logic 先找吃得下的，找不到砸给最急的那位
+      const c = matchCustomer(this.shift.flow, this.kitchen.burger)
+      const r = interact(this.kitchen, this.movement.pos, station, { spec: c?.spec })
+      if (r.kind === 'serve' && c && r.verdict) settleServe(this.shift, c, r.verdict)
+      return this.report(r.reason)
     }
     this.report(interact(this.kitchen, this.movement.pos, station).reason)
   }
@@ -481,16 +602,29 @@ export class StationView extends Component {
 
   private refreshZones(): void {
     const carrying = this.kitchen.carry.kind !== 'none'
-    const key = `${this.panelOpen ? 'panel' : carrying ? 'discard' : 'none'}|${this.screenW}x${this.screenH}`
+    const mode = this.resultOpen ? 'result' : this.panelOpen ? 'panel' : carrying ? 'discard' : 'none'
+    const key = `${mode}|${this.screenW}x${this.screenH}`
     if (key === this.zonesKey) return
     this.zonesKey = key
 
     // Widgets only align on active nodes, and the zone is built from the aligned position.
-    this.panelNode.active = this.panelOpen
-    this.discardNode.active = carrying && !this.panelOpen
+    this.panelNode.active = this.panelOpen && !this.resultOpen
+    this.discardNode.active = carrying && !this.panelOpen && !this.resultOpen
 
     const zones: CaptureZone[] = []
-    if (this.panelOpen) {
+    if (this.resultOpen) {
+      const t = this.againNode.getComponent(UITransform)
+      const p = this.againNode.parent
+      const a = this.againNode.position
+      if (t && p) {
+        zones.push(
+          panelChildZone('again', p.position.x, p.position.y, a.x, a.y, t.width, t.height,
+            this.screenW, this.screenH, this.designH),
+        )
+      }
+      // 兜底吞掉其余触摸：打烊了还能走路会让人以为局没结束
+      zones.push({ id: 'result-outside', x: 0, y: 0, w: this.screenW, h: this.screenH })
+    } else if (this.panelOpen) {
       const p = this.panelNode.position
       for (let i = 0; i < this.slotNodes.length; i++) {
         const slot = this.slotNodes[i]!
@@ -524,6 +658,77 @@ export class StationView extends Component {
       }
     }
     this.router.setCaptureZones(zones)
+  }
+
+  /** 订单卡文本。只在换人时调用，不在每帧热路径上 */
+  private static orderText(c: Customer): string {
+    const req = c.spec.required.map((i) => INGREDIENT_LABEL[i]).join(' ')
+    const ban =
+      c.spec.banned.length > 0
+        ? `\n忌 ${c.spec.banned.map((i) => INGREDIENT_LABEL[i]).join(' ')}`
+        : ''
+    return `${req}\n${COOK_LABEL[c.spec.doneness]}${ban}`
+  }
+
+  private syncHud(): void {
+    const sec = Math.ceil(timeLeft(this.shift))
+    if (sec !== this.shownSec) {
+      this.shownSec = sec
+      this.timeLabel.string = `${sec}`
+    }
+    if (this.shift.served !== this.shownScore) {
+      this.shownScore = this.shift.served
+      this.scoreLabel.string = `完成 ${this.shift.served}`
+    }
+
+    const cs = this.shift.flow.customers
+    for (let i = 0; i < this.orderCards.length; i++) {
+      const c = i < cs.length ? cs[i] : undefined
+      const card = this.orderCards[i]!
+      const on = c !== undefined && c.active
+      if (card.active !== on) card.active = on
+      if (!on || !c) {
+        this.orderShown[i] = -1
+        continue
+      }
+      if (this.orderShown[i] !== c.id) {
+        this.orderShown[i] = c.id
+        this.orderTexts[i]!.string = StationView.orderText(c)
+      }
+      // Bar 的锚点在左端，所以缩 x 就是从左往右退
+      const k = c.patienceMax > 0 ? c.patienceLeft / c.patienceMax : 0
+      this.orderBars[i]!.setScale(k > 0 ? k : 0, 1, 1)
+    }
+  }
+
+  private showResult(): void {
+    this.resultOpen = true
+    this.panelOpen = false
+    this.router.cancelAll()
+
+    const r = shiftResult(this.shift)
+    const stars = starsFor(r.served, SHIFT_DAY, SHIFT_SEC)
+    this.resultTitle.string = stars > 0 ? '★'.repeat(stars) : '打烊'
+    this.resultBody.string =
+      `来客 ${r.arrived}    完成 ${r.served}\n` +
+      `上错 ${r.wrong}    跑单 ${r.timedOut}\n` +
+      `完成率 ${Math.round(r.completionRate * 100)}%`
+    this.resultNode.active = true
+    this.zonesKey = ''
+    this.refreshZones()
+    console.log(`[StationView] 打烊 — ${JSON.stringify(r)} stars=${stars}`)
+  }
+
+  private restart(): void {
+    this.resultOpen = false
+    this.resultNode.active = false
+    resetShift(this.shift)
+    resetKitchen(this.kitchen)
+    this.shownSec = -1
+    this.shownScore = -1
+    for (let i = 0; i < this.orderShown.length; i++) this.orderShown[i] = -1
+    this.router.cancelAll()
+    this.zonesKey = ''
   }
 
   private syncNodes(): void {

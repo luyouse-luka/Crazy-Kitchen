@@ -25,11 +25,18 @@
  * 3. 火候烤过头没有垃圾桶：肉到 `burnt` 档直接从槽位消失，只记一笔 `burnt`（V1 没有垃圾桶工位）
  * 4. 顾客满员时新客在门外等，不算流失 —— `maxConcurrent` 是「同时在场上限」不是「流失阈值」
  */
-import { chance, createRng, nextInt, reseed } from './rng'
+import { createRng, reseed } from './rng'
 import { addCookedPatty, addIngredient, cookLevelAt, DEFAULT_COOK } from './recipe'
 import { judge } from './order'
-import { DONENESS } from './types'
-import type { Burger, CookWindows, Doneness, Ingredient, OrderSpec, StationKind } from './types'
+import {
+  closeShop,
+  createCustomerFlow,
+  releaseCustomer as releaseFlowCustomer,
+  resetCustomerFlow,
+  stepCustomerFlow,
+} from './customer'
+import type { Customer, CustomerFlow, FlowParams, OrderDifficulty } from './customer'
+import type { Burger, CookWindows, Doneness, Ingredient, StationKind } from './types'
 import type { Rng } from './rng'
 import type { Vec2 } from './vec2'
 import { dist } from './vec2'
@@ -52,24 +59,8 @@ export interface ChefParams {
   interactSec: number
 }
 
-export interface FlowParams {
-  /** 客流间隔（秒） */
-  intervalSec: number
-  /** 间隔抖动比例，0 = 完全均匀 */
-  intervalJitter: number
-  /** 同时在场上限 */
-  maxConcurrent: number
-  /** 顾客耐心（秒） */
-  patienceSec: number
-}
-
-export interface OrderDifficulty {
-  /** 除 bun+patty 外额外要的食材数量下限 */
-  extraMin: number
-  extraMax: number
-  /** 出现 banned 食材的概率 */
-  bannedChance: number
-}
+/** 顾客流参数与真人局共用一份，定义在 customer.ts。这里原样转出，difficulty.ts 照旧 import */
+export type { FlowParams, OrderDifficulty } from './customer'
 
 export interface SimConfig {
   seed: number
@@ -131,9 +122,6 @@ const GRILL = 1
 const ASSEMBLY = 2
 const SERVE = 3
 
-/** 除骨架外的可选配料。rollOrder 从这里挑 required 的额外项与 banned。 */
-const OPTIONAL: readonly Ingredient[] = ['cheese', 'lettuce', 'tomato', 'onion', 'pickle', 'bacon']
-
 type Carry = 'none' | 'ingredient' | 'raw_patty' | 'cooked_patty' | 'plate'
 type Phase = 'idle' | 'moving' | 'acting'
 type Action =
@@ -145,14 +133,6 @@ type Action =
   | 'place_assembly'
   | 'take_plate'
   | 'serve'
-
-interface CustomerSlot {
-  active: boolean
-  id: number
-  patienceLeft: number
-  spec: OrderSpec
-  burger: Burger
-}
 
 interface GrillSlotState {
   busy: boolean
@@ -178,11 +158,11 @@ interface InternalState extends SimState {
   cfg: SimConfig
   rng: Rng
   distance: number[]
-  customers: CustomerSlot[]
+  /** 顾客流：与真人局共用 customer.ts 那一份 */
+  flow: CustomerFlow
+  /** flow.customers 的别名，纯为少改十几处决策代码 */
+  customers: Customer[]
   grill: GrillSlotState[]
-  nextArrivalAt: number
-  nextId: number
-  activeCount: number
   // 厨师
   at: number
   phase: Phase
@@ -195,8 +175,6 @@ interface InternalState extends SimState {
   actionCustomer: number
   actionIng: Ingredient
   actionGrill: number
-  // rollOrder 用的洗牌池，复用避免每单分配
-  pool: Ingredient[]
 }
 
 function stationVec(layout: KitchenLayout, i: number): Vec2 {
@@ -210,17 +188,17 @@ function stationVec(layout: KitchenLayout, i: number): Vec2 {
 }
 
 export function createSimState(config: SimConfig): SimState {
+  const rng = createRng(config.seed)
+  const flow = createCustomerFlow(config.flow, config.orders, rng)
   const st: InternalState = {
     t: 0,
     done: false,
     cfg: config,
-    rng: createRng(config.seed),
+    rng,
     distance: new Array<number>(16).fill(0),
-    customers: [],
+    flow,
+    customers: flow.customers,
     grill: [],
-    nextArrivalAt: 0,
-    nextId: 1,
-    activeCount: 0,
     at: ASSEMBLY,
     phase: 'idle',
     phaseLeft: 0,
@@ -232,7 +210,6 @@ export function createSimState(config: SimConfig): SimState {
     actionCustomer: -1,
     actionIng: 'bun',
     actionGrill: -1,
-    pool: OPTIONAL.slice(),
     result: {
       arrived: 0,
       served: 0,
@@ -266,18 +243,10 @@ function resetState(st: InternalState, cfg: SimConfig): void {
     }
   }
 
-  // 顾客槽位与烤炉槽位按上限预分配一次，之后只复用
-  while (st.customers.length < cfg.flow.maxConcurrent) {
-    st.customers.push({
-      active: false,
-      id: 0,
-      patienceLeft: 0,
-      spec: { required: [], banned: [], doneness: 'medium', patience: 0 },
-      burger: { ingredients: [], cook: null },
-    })
-  }
-  for (const c of st.customers) c.active = false
+  resetCustomerFlow(st.flow, cfg.flow, cfg.orders)
+  st.customers = st.flow.customers
 
+  // 烤炉槽位按上限预分配一次，之后只复用
   while (st.grill.length < cfg.grillSlots) st.grill.push({ busy: false, elapsed: 0, reservedFor: -1 })
   for (const g of st.grill) {
     g.busy = false
@@ -285,9 +254,6 @@ function resetState(st: InternalState, cfg: SimConfig): void {
     g.reservedFor = -1
   }
 
-  st.nextArrivalAt = 0
-  st.nextId = 1
-  st.activeCount = 0
   st.at = ASSEMBLY
   st.phase = 'idle'
   st.phaseLeft = 0
@@ -316,36 +282,9 @@ function trace(st: InternalState, msg: string): void {
 
 // ─────────────────────────── 订单生成 ───────────────────────────
 
-function rollOrder(st: InternalState, spec: OrderSpec): void {
-  const d = st.cfg.orders
-  spec.required.length = 0
-  spec.required.push('bun', 'patty')
-
-  // 部分 Fisher-Yates：洗前 n 个就够，池子复用不分配
-  const extras = d.extraMin + nextInt(st.rng, d.extraMax - d.extraMin + 1)
-  const pool = st.pool
-  for (let i = 0; i < extras && i < pool.length; i++) {
-    const j = i + nextInt(st.rng, pool.length - i)
-    const tmp = pool[i]!
-    pool[i] = pool[j]!
-    pool[j] = tmp
-    spec.required.push(pool[i]!)
-  }
-
-  spec.banned.length = 0
-  if (chance(st.rng, d.bannedChance) && extras < pool.length) {
-    // 从没被选进 required 的那部分里挑，保证不相交
-    const idx = extras + nextInt(st.rng, pool.length - extras)
-    spec.banned.push(pool[idx]!)
-  }
-
-  spec.doneness = DONENESS[nextInt(st.rng, DONENESS.length)] as Doneness
-  spec.patience = st.cfg.flow.patienceSec
-}
-
 // ─────────────────────────── 查询 ───────────────────────────
 
-function firstMissingIngredient(c: CustomerSlot): Ingredient | null {
+function firstMissingIngredient(c: Customer): Ingredient | null {
   for (let i = 0; i < c.spec.required.length; i++) {
     const ing = c.spec.required[i]!
     if (ing === 'patty') continue
@@ -354,13 +293,13 @@ function firstMissingIngredient(c: CustomerSlot): Ingredient | null {
   return null
 }
 
-function isComplete(c: CustomerSlot): boolean {
+function isComplete(c: Customer): boolean {
   if (c.burger.cook !== c.spec.doneness) return false
   return firstMissingIngredient(c) === null
 }
 
 /** 最紧急（耐心剩得最少）且满足条件的 active 顾客索引，没有则 -1 */
-function mostUrgent(st: InternalState, test: (c: CustomerSlot) => boolean): number {
+function mostUrgent(st: InternalState, test: (c: Customer) => boolean): number {
   let best = -1
   let bestLeft = Infinity
   for (let i = 0; i < st.customers.length; i++) {
@@ -475,7 +414,7 @@ function decide(st: InternalState): void {
  * 顺序有讲究：**先把肉放上烤炉，再去拿配料** —— 烤肉那 3–9 秒是这个游戏里
  * 唯一的并行窗口，不先占上就白白串行了。
  */
-function nextActionFor(st: InternalState, c: CustomerSlot, idx: number): Action {
+function nextActionFor(st: InternalState, c: Customer, idx: number): Action {
   if (isComplete(c)) return 'take_plate'
   if (c.burger.cook === null && !hasPattyCooking(st, idx) && freeGrillSlot(st) >= 0) {
     return 'pick_patty'
@@ -567,13 +506,15 @@ function finishAction(st: InternalState): void {
   st.phase = 'idle'
 }
 
-function releaseCustomer(st: InternalState, c: CustomerSlot): void {
+/** 顾客离场时 sim 自己要清的东西。真正的释放由 customer.ts 做 */
+function detachCustomer(st: InternalState, c: Customer): void {
   const idx = st.customers.indexOf(c)
   for (const g of st.grill) if (g.reservedFor === idx) g.reservedFor = -1
-  c.active = false
-  c.burger.ingredients.length = 0
-  c.burger.cook = null
-  st.activeCount--
+}
+
+function releaseCustomer(st: InternalState, c: Customer): void {
+  detachCustomer(st, c)
+  releaseFlowCustomer(st.flow, c)
 }
 
 // ─────────────────────────── 主循环 ───────────────────────────
@@ -585,44 +526,21 @@ export function stepSim(state: SimState, dt: number): void {
   st.t += dt
   if (st.t >= st.cfg.durationSec) {
     // 强制打烊：在场没做完的一律记超时
-    for (const c of st.customers) {
-      if (!c.active) continue
-      st.result.timedOut++
+    closeShop(st.flow, (c) => {
       trace(st, `closing, #${c.id} left`)
-      releaseCustomer(st, c)
-    }
+      detachCustomer(st, c)
+    })
+    syncCounts(st)
     st.done = true
     finalize(st)
     return
   }
 
-  // 顾客到达
-  while (st.t >= st.nextArrivalAt && st.activeCount < st.cfg.flow.maxConcurrent) {
-    for (const c of st.customers) {
-      if (c.active) continue
-      c.active = true
-      c.id = st.nextId++
-      c.patienceLeft = st.cfg.flow.patienceSec
-      c.burger.ingredients.length = 0
-      c.burger.cook = null
-      rollOrder(st, c.spec)
-      st.activeCount++
-      st.result.arrived++
-      trace(st, `arrive #${c.id} req=${c.spec.required.join('+')} ${c.spec.doneness}`)
-      break
-    }
-    const jitter = st.cfg.flow.intervalJitter
-    const factor = jitter > 0 ? 1 - jitter + nextInt(st.rng, 2001) * (jitter / 1000) : 1
-    st.nextArrivalAt += st.cfg.flow.intervalSec * factor
-  }
-  if (st.activeCount > st.result.peakConcurrent) st.result.peakConcurrent = st.activeCount
-
-  // 耐心
-  for (const c of st.customers) {
-    if (!c.active) continue
-    c.patienceLeft -= dt
-    if (c.patienceLeft <= 0) {
-      st.result.timedOut++
+  stepCustomerFlow(
+    st.flow,
+    st.t,
+    dt,
+    (c) => {
       trace(st, `timeout #${c.id}`)
       // 端在手上的那一份也一起作废
       if (st.carry === 'plate' && st.customers[st.carryCustomer] === c) {
@@ -631,9 +549,11 @@ export function stepSim(state: SimState, dt: number): void {
         st.phase = 'idle'
         st.action = 'none'
       }
-      releaseCustomer(st, c)
-    }
-  }
+      detachCustomer(st, c)
+    },
+    (c) => trace(st, `arrive #${c.id} req=${c.spec.required.join('+')} ${c.spec.doneness}`),
+  )
+  syncCounts(st)
 
   // 烤炉
   for (let g = 0; g < st.grill.length; g++) {
@@ -664,6 +584,13 @@ export function stepSim(state: SimState, dt: number): void {
       }
     }
   }
+}
+
+/** arrived / timedOut / peakConcurrent 由 customer.ts 记，DayResult 每帧同步一次 */
+function syncCounts(st: InternalState): void {
+  st.result.arrived = st.flow.arrived
+  st.result.timedOut = st.flow.timedOut
+  st.result.peakConcurrent = st.flow.peakConcurrent
 }
 
 function finalize(st: InternalState): void {

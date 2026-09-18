@@ -31,6 +31,13 @@ import type { FlowParams, OrderDifficulty } from './sim'
 
 export const LAST_DAY = 20
 
+/**
+ * IDEAL_SERVED 那张表是在多长的一局上测出来的，秒。= `defaultSimConfig().durationSec`。
+ * 星级线按它标定，所以**局长换了必须按比例缩**，否则 60 秒的短局用 210 秒的门槛，
+ * 玩家永远拿不到一颗星，而判据只会看到「完成率偏低」。
+ */
+export const CALIBRATION_SEC = 210
+
 export interface DayDifficulty {
   day: number
   flow: FlowParams
@@ -98,11 +105,16 @@ export function difficultyForDay(day: number): DayDifficulty {
   }
 }
 
-/** 当天完成 served 单该给几颗星。0 = 不及格 */
-export function starsFor(served: number, day: number): 0 | 1 | 2 | 3 {
+/**
+ * 当天完成 served 单该给几颗星。0 = 不及格。
+ * `durationSec` 不是标定局长时按比例缩门槛 —— 至少 1 单，短局也不能白送。
+ */
+export function starsFor(served: number, day: number, durationSec = CALIBRATION_SEC): 0 | 1 | 2 | 3 {
   const { stars } = difficultyForDay(day)
-  if (served >= stars.three) return 3
-  if (served >= stars.two) return 2
-  if (served >= stars.one) return 1
+  const k = durationSec / CALIBRATION_SEC
+  const line = (v: number): number => Math.max(1, Math.round(v * k))
+  if (served >= line(stars.three)) return 3
+  if (served >= line(stars.two)) return 2
+  if (served >= line(stars.one)) return 1
   return 0
 }
