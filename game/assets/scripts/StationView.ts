@@ -1,5 +1,6 @@
 import {
   _decorator,
+  Camera,
   Component,
   EventKeyboard,
   EventMouse,
@@ -10,6 +11,7 @@ import {
   Node,
   UITransform,
   Vec2 as CCVec2,
+  Vec3,
   Widget,
   find,
   game,
@@ -26,6 +28,8 @@ import {
   uiRectToCaptureZone,
 } from '../logic/input'
 import type { CaptureZone } from '../logic/input'
+import { ORTHO_HEIGHT, effectiveOrthoHeight, focusBounds, focusForPlayer } from '../logic/camera'
+import type { FocusBounds } from '../logic/camera'
 import { createKitchen, discard, interact, stationInReach, stepKitchen } from '../logic/kitchen'
 import type { BlockReason, KitchenState } from '../logic/kitchen'
 import { createMovement, stepMovement } from '../logic/movement'
@@ -97,6 +101,12 @@ export class StationView extends Component {
   private fridge: Station | null = null
 
   private playerNode!: Node
+  private cameraNode!: Node
+  private cameraComp!: Camera
+  /** Camera position when focus sits at the origin — i.e. whatever the scene was saved with. */
+  private camOffset = new Vec3()
+  private camBounds: FocusBounds = focusBounds(ORTHO_HEIGHT, 16 / 9)
+  private camFocus = { x: 0, z: 0 }
   private joystickNode!: Node
   private discardNode!: Node
   private panelNode!: Node
@@ -104,6 +114,9 @@ export class StationView extends Component {
 
   private screenW = 0
   private screenH = 0
+  /** Visible design-unit height. Fit Width shrinks it below 720, and the capture-zone
+   *  scale is screenH / designH — hardcoding 720 misses on every non-16:9 device. */
+  private designH = 720
   private resizeIn = 0
   private panelOpen = false
   /** Which zone set is currently published. setCaptureZones voids in-flight fingers, so
@@ -130,6 +143,17 @@ export class StationView extends Component {
       return
     }
     this.cameraYaw = (camera.eulerAngles.y * Math.PI) / 180
+    const camComp = camera.getComponent(Camera)
+    if (!camComp) {
+      console.error(`[StationView] ${NODES.camera} 上没有 cc.Camera`)
+      this.enabled = false
+      return
+    }
+    this.cameraNode = camera
+    this.cameraComp = camComp
+    // Read off the node, not from the constant: moving the camera in the editor keeps
+    // working, and `pnpm cam` is what stops logic/camera.ts drifting from the scene.
+    this.camOffset.set(camera.position)
     this.playerNode = player
     this.joystickNode = joystick
     this.discardNode = discardBtn
@@ -173,7 +197,8 @@ export class StationView extends Component {
 
     console.log(
       `[StationView] ready — stations=${stations.length} slots=${this.slotNodes.length}` +
-        ` screen=${this.screenW}x${this.screenH} cameraYaw=${camera.eulerAngles.y}°`,
+        ` screen=${this.screenW}x${this.screenH} cameraYaw=${camera.eulerAngles.y}°` +
+        ` orthoHeight=${this.cameraComp.orthoHeight.toFixed(2)}`,
     )
   }
 
@@ -383,12 +408,22 @@ export class StationView extends Component {
   }
 
   private syncScreen(): void {
-    const s = view.getVisibleSize()
-    if (s.width === this.screenW && s.height === this.screenH) return
-    this.screenW = s.width
-    this.screenH = s.height
-    this.router.setSplitX(s.width / 2)
+    // Touch coords are physical pixels, getVisibleSize() is design units. Under Fit Width
+    // the two differ by the view scale, so zones built from design units miss on device.
+    const px = view.getVisibleSizeInPixel()
+    if (px.width === this.screenW && px.height === this.screenH) return
+    this.screenW = px.width
+    this.screenH = px.height
+    this.designH = view.getVisibleSize().height
+    this.router.setSplitX(px.width / 2)
     this.zonesKey = ''
+
+    // Ortho height comes from the real aspect, not from the editor value: a near-square
+    // screen needs a wider frame, otherwise following throws the grill off-screen (`pnpm cam`).
+    const aspect = px.width / px.height
+    const h = effectiveOrthoHeight(aspect)
+    this.cameraComp.orthoHeight = h
+    this.camBounds = focusBounds(h, aspect)
   }
 
   private tickPlay(): void {
@@ -472,6 +507,7 @@ export class StationView extends Component {
             t.height,
             this.screenW,
             this.screenH,
+            this.designH,
           ),
         )
       }
@@ -483,7 +519,7 @@ export class StationView extends Component {
       const d = this.discardNode.position
       if (t) {
         zones.push(
-          uiRectToCaptureZone('discard', d.x, d.y, t.width, t.height, this.screenW, this.screenH),
+          uiRectToCaptureZone('discard', d.x, d.y, t.width, t.height, this.screenW, this.screenH, this.designH),
         )
       }
     }
@@ -494,12 +530,19 @@ export class StationView extends Component {
     const m = this.movement.pos
     this.playerNode.setPosition(m.x, this.playerNode.position.y, m.z)
 
+    focusForPlayer(this.camFocus, m, this.camBounds)
+    this.cameraNode.setPosition(
+      this.camFocus.x + this.camOffset.x,
+      this.camOffset.y,
+      this.camFocus.z + this.camOffset.z,
+    )
+
     const stick = this.router.stick
     if (this.joystickNode.active !== stick.active) this.joystickNode.active = stick.active
     if (stick.active) {
       this.joystickNode.setPosition(
-        screenToCanvasX(this.router.stickOriginX, this.screenW, this.screenH),
-        screenToCanvasY(this.router.stickOriginY, this.screenH),
+        screenToCanvasX(this.router.stickOriginX, this.screenW, this.screenH, this.designH),
+        screenToCanvasY(this.router.stickOriginY, this.screenH, this.designH),
         0,
       )
     }

@@ -223,7 +223,7 @@
     "_priority": 0,
     "_fov": 45,
     "_fovAxis": 0,
-    "_orthoHeight": 5,
+    "_orthoHeight": 3,
     "_near": 1,
     "_far": 100,
     "_color": {
@@ -3207,7 +3207,7 @@
       "z": 1
     },
     "_mobility": 0,
-    "_layer": 1073741824,
+    "_layer": 33554432,
     "_euler": {
       "__type__": "cc.Vec3",
       "x": 0,
@@ -3347,7 +3347,6 @@
     "_enabled": true,
     "__prefab": null,
     "reach": 0.7,
-    "cameraYaw": 0.7853981633974483,
     "_id": "b2BX/w4oFE7ZuRvpUNflCW"
   },
   {

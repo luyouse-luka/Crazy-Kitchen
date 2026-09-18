@@ -421,11 +421,12 @@ export function stickToVelocity(
  *
  * - origin differs by half a screen: Canvas x is -640..640, Touch.getLocation() is
  *   bottom-left. Feeding node positions straight in parks every zone in the lower left.
- * - units are real touch pixels, not design resolution. Fit Height on a 2400x1080 phone
- *   scales by 1080/720 = 1.5; zones computed against 1280 are wrong on device and
- *   perfect in the 1280x720 editor preview.
+ * - units are real touch pixels, not design resolution. This project is Fit Width:
+ *   getVisibleSize() pins width to 1280 and shrinks height (591 on a 2532x1170 phone),
+ *   while touches arrive in the 2532x1170 system — the two are 1.978x apart.
  *
- * So screenW/screenH are required: read view.getVisibleSize() at runtime, never constants.
+ * So screenW/screenH come from view.getVisibleSizeInPixel() and designH from
+ * view.getVisibleSize().height, both read at runtime: 720 is wrong on every non-16:9 phone.
  */
 export function uiRectToCaptureZone(
   id: string,
@@ -437,7 +438,7 @@ export function uiRectToCaptureZone(
   screenH: number,
   designH = 720,
 ): CaptureZone {
-  const k = screenH / designH // Fit Height: scale comes from height, width just stretches
+  const k = screenH / designH // physical pixels per visible design unit
   const sw = w * k
   const sh = h * k
   return {
