@@ -27,3 +27,8 @@ Thumbs.db
 desktop.ini
 *.swp
 *~
+
+# ─── Cocos 扩展（本地 clone 的独立 git 仓库，不进外层仓库）───
+# game/extensions/cocos-creator-mcp 是根目录 cocos-creator-mcp 的 junction
+game/extensions/
+/cocos-creator-mcp/
