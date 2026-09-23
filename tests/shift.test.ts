@@ -8,7 +8,7 @@ import {
   stepShift,
 } from '../game/assets/logic/shift'
 import type { ShiftConfig, ShiftResult, ShiftState } from '../game/assets/logic/shift'
-import { matchCustomer, queueIndex, takeNextOrder } from '../game/assets/logic/customer'
+import { matchCustomer, queueIndex, takeNextOrder, takeReadyOrders } from '../game/assets/logic/customer'
 import type { OrderVerdict } from '../game/assets/logic/order'
 
 const CFG: ShiftConfig = {
@@ -198,6 +198,21 @@ describe('要去点单台接单', () => {
     expect(queueIndex(st.flow, st.flow.customers.find((x) => x.id === 2)!)).toBe(0)
     run(st, 1)
     expect(c.patienceLeft).toBeLessThan(c.patienceMax)
+  })
+
+  it('点单台按一下，柜台前等着的全接了', () => {
+    const st = mkT()
+    run(st, 12) // 1 号、2 号都已走到柜台
+    expect(takeReadyOrders(st.flow)).toBe(2)
+    expect(st.flow.customers.filter((c) => c.active).every((c) => c.ordered)).toBe(true)
+    expect(takeReadyOrders(st.flow)).toBe(0)
+  })
+
+  it('还在路上的不算：刚进门那位接不到', () => {
+    const st = mkT()
+    run(st, 21) // 3 号 t=20 进门，还没走到柜台
+    expect(takeReadyOrders(st.flow)).toBe(1) // 1 号早已走人，只剩 2 号
+    expect(st.flow.customers.find((x) => x.id === 3)!.ordered).toBe(false)
   })
 
   it('没开 takeOrder 的老路径不变：一到店就下单', () => {

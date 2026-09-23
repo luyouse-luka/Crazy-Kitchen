@@ -50,7 +50,7 @@ import {
 import type { BlockReason, KitchenState } from '../logic/kitchen'
 import { createShift, resetShift, settleServe, shiftResult, starsForShift, stepShift } from '../logic/shift'
 import type { ShiftState } from '../logic/shift'
-import { matchCustomer, orderPatienceLeft, queueIndex, takeNextOrder } from '../logic/customer'
+import { matchCustomer, orderPatienceLeft, queueIndex, takeReadyOrders } from '../logic/customer'
 import type { Customer } from '../logic/customer'
 import { difficultyForDay } from '../logic/difficulty'
 import { COOK_LABEL, COOK_LEVELS, INGREDIENT_LABEL } from '../logic/types'
@@ -122,15 +122,22 @@ const FIGURES = ORDER_CARDS * 2
 /** 顾客走路速度，米/秒。比厨师（4）慢得多，看得出是在溜达 */
 const CUSTOMER_SPEED = 1.6
 
+/**
+ * 坐下时把人抬多高，米。Kenney 的 sit 是坐在地上（髋部离地 0.05m），长凳座面实测 0.50m，
+ * 不抬的话人整个陷进凳子里。
+ */
+const SEAT_Y = 0.48
+
 /** 排队时前后间距，米，沿柜台往东排 */
 const QUEUE_GAP = 0.9
 
 /**
  * 接了单之后去哪儿等，顾客区坐标（相对 Floor_Customer 中心）。前四个是长凳（坐），
  * 后两个站着 —— 长凳在 scene 里的 Prop_Waiting，挪了长凳要跟着改这里。
+ * 坐的 z 比长凳中线靠前 0.06：sit 动作的髋部在脚底后方 0.06m，这样髋部才落在座面中间。
  */
 const WAIT_SPOTS: ReadonlyArray<readonly [number, number, boolean]> = [
-  [-2.4, 1.0, true], [-0.8, 1.0, true], [0.8, 1.0, true], [2.4, 1.0, true],
+  [-2.4, 0.94, true], [-0.8, 0.94, true], [0.8, 0.94, true], [2.4, 0.94, true],
   [3.3, -0.2, false], [2.5, -0.2, false],
 ]
 
@@ -792,8 +799,8 @@ export class StationView extends Component {
       return
     }
     if (station.kind === 'register') {
-      const c = takeNextOrder(this.shift.flow)
-      return this.report(c ? 'none' : 'no-order')
+      // 一下接完柜台前所有人：排队的人多时逐个按太磨，接单本身也不该是难点
+      return this.report(takeReadyOrders(this.shift.flow) > 0 ? 'none' : 'no-order')
     }
     if (station.kind === 'storeroom') {
       if (held !== 'none') return this.report('hands-full')
@@ -1081,9 +1088,10 @@ export class StationView extends Component {
           f.node.active = false
           continue
         }
-        f.node.setPosition(f.tx, 0, f.tz)
+        const sit = f.seat >= 0 && WAIT_SPOTS[f.seat]![2]
+        f.node.setPosition(f.tx, sit ? SEAT_Y : 0, f.tz)
         f.body.setRotationFromEuler(0, 180, 0) // 面朝柜台（北）
-        clip = f.seat >= 0 && WAIT_SPOTS[f.seat]![2] ? 'sit' : 'idle'
+        clip = sit ? 'sit' : 'idle'
       }
       if (clip !== f.clip) {
         f.clip = clip

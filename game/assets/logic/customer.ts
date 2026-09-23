@@ -294,3 +294,10 @@ export function takeNextOrder(st: CustomerFlow): Customer | null {
   front.patienceLeft = front.patienceMax
   return front
 }
+
+/** 点单台按一下，把已经走到柜台的全接了（按到店先后）。返回接了几位 */
+export function takeReadyOrders(st: CustomerFlow): number {
+  let n = 0
+  while (takeNextOrder(st)) n++
+  return n
+}
