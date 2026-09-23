@@ -20,20 +20,59 @@ export const RENAMES: Record<string, string> = {
 export const SPEC: Record<string, NodeSpec> = {
   // Cube，scale 即米数
   Floor: { pos: [0, -0.05, 0], scale: [8, 0.1, 6] },
-  Wall_N: { pos: [0, 1.25, -3.1], scale: [8.2, 2.5, 0.2] },
-  Wall_E: { pos: [4.1, 1.25, 0], scale: [0.2, 2.5, 6] },
-  Station_Fridge: { pos: [2, 0.45, -2.5], scale: [1, 0.9, 1] },
-  Station_Grill: { pos: [-2, 0.45, -2.5], scale: [1, 0.9, 1] },
-  Station_Assembly: { pos: [-3.5, 0.45, 0], scale: [1, 0.9, 1] },
-  Station_Serve: { pos: [-1, 0.45, 2.5], scale: [2, 0.9, 1] },
+  /**
+   * 东翼：洗区、备餐打包台、库房。另起一块而不是把 Floor 拉宽 ——
+   * 四个核心工位的间距一动难度就崩（`pnpm layout`），所以主厨房原样不动，新东西只往这边放。
+   */
+  Floor_East: { pos: [7, -0.05, 0], scale: [6, 0.1, 6] },
+  /** 冷库：独立一间，接在东翼北半边外面 x ∈ [10, 13.5]、z ∈ [-3, 0]，门在西墙 */
+  Floor_Store: { pos: [11.75, -0.05, -1.5], scale: [3.5, 0.1, 3] },
+  Wall_N: { pos: [4.8, 1.25, -3.1], scale: [17.8, 2.5, 0.2] },
+  Wall_StoreBack: { pos: [13.6, 1.25, -1.5], scale: [0.2, 2.5, 3] },
+  /**
+   * 北墙一排台面，自西向东：打包台 → 制作台 → 放盘子 → 烤炉 ×2 → 薯条，中间不留缝；
+   * 冰箱在薯条东边隔 0.5m。烤炉两台对应两个烤位，所以工位是 2×1。
+   *
+   * 南边一整条前台，只在东头留 1m 出口：西头是点单台（顾客从西边进来先到这儿），
+   * 正对制作台那 2m 是取餐口，其余是 Block_Counter*。
+   */
+  Station_Fridge: { pos: [5, 0.45, -2.5], scale: [1, 0.9, 1] },
+  Station_Grill: { pos: [2, 0.45, -2.5], scale: [2, 0.9, 1] },
+  Station_Assembly: { pos: [-0.5, 0.45, -2.5], scale: [1, 0.9, 1] },
+  Station_Serve: { pos: [-0.5, 0.45, 2.5], scale: [2, 0.9, 1] },
+  Station_Order: { pos: [-3.5, 0.45, 2.5], scale: [1, 0.9, 1] },
+  /**
+   * 库房货架，贴东墙从北墙排到南墙边。南端留下的空角会把玩家顶到画面边缘（`pnpm cam`），所以堵上。
+   * triggerRange 隔着南墙也够得着，但南墙外那块是封死的，走不进去。
+   */
+  Station_Storeroom: { pos: [13, 0.45, -1.6], scale: [1, 0.9, 2.8] },
 
   /**
-   * 柜台外的顾客区。独立一块，**不并进 Floor** —— 玩家可走边界仍是 Floor 的 ±4/±3
-   * （movement.ts 的 FLOOR_BOUNDS），把两者合成一块会让「地板」同时指两个东西。
-   * z ∈ [3, 5]，与店内地板在 z=3 精确接边，不重叠所以不会共面闪烁。
+   * `Kitchen/Blockers` 底下：只挡路、不能交互。Cube，scale 即米数。
+   * Wall_E 也在这里：地板边界延到库房东墙，东翼南半边那段墙得自己挡人。
+   * 库房的西墙（隔断）和南墙朝镜头，做成 1m 的剖切墙 —— 2.5m 的整墙会把库房里面整个挡住。
+   * 门洞在隔断 z ∈ (-1.9, -0.5)。Block_* 的渲染器关掉，外形由 `Kitchen/Props` 里的模型给。
+   */
+  Wall_E: { pos: [10.1, 1.25, 1.5], scale: [0.2, 2.5, 3] },
+  Wall_Store_W1: { pos: [10.1, 0.5, -2.45], scale: [0.2, 1, 1.1] },
+  Wall_Store_W2: { pos: [10.1, 0.5, -0.25], scale: [0.2, 1, 0.5] },
+  Wall_Store_S: { pos: [11.85, 0.5, 0], scale: [3.3, 1, 0.2] },
+  Block_Pack: { pos: [-1.5, 0.45, -2.5], scale: [1, 0.9, 1] },
+  Block_Plate: { pos: [0.5, 0.45, -2.5], scale: [1, 0.9, 1] },
+  Block_Fryer: { pos: [3.5, 0.45, -2.5], scale: [1, 0.9, 1] },
+  Block_CounterW: { pos: [-2.25, 0.45, 2.5], scale: [1.5, 0.9, 1] },
+  Block_CounterE: { pos: [1.75, 0.45, 2.5], scale: [2.5, 0.9, 1] },
+  Block_Sink: { pos: [8, 0.45, 2.5], scale: [2, 0.9, 1] },
+  Block_DishRack: { pos: [9.5, 0.45, 2.5], scale: [1, 0.9, 1] },
+  Block_Crates: { pos: [10.9, 0.45, -2.6], scale: [0.8, 0.9, 0.8] },
+
+  /**
+   * 柜台外的顾客区。独立一块，**不并进 Floor** —— 玩家走不到这里（movement.ts 的 FLOOR_BOUNDS），
+   * 把两者合成一块会让「地板」同时指两个东西。
+   * z ∈ [3, 6]，与店内地板在 z=3 精确接边，不重叠所以不会共面闪烁。顾客站前 1m，后排放等候长凳。
    * 顶面同样在 y=0（pos.y = -scale.y / 2）。
    */
-  Floor_Customer: { pos: [0, -0.05, 4], scale: [8, 0.1, 2] },
+  Floor_Customer: { pos: [0, -0.05, 4.5], scale: [8, 0.1, 3] },
 
   /**
    * 厨房外面的地面。**纯装饰** —— 不参与碰撞、不进 movement 的 FLOOR_BOUNDS、
@@ -46,7 +85,7 @@ export const SPEC: Record<string, NodeSpec> = {
    *
    * 顶面 y=-0.05 压在 Floor 底面（-0.1）之下，不共面所以不闪；侧面看店内地板高出一档。
    */
-  Floor_Outer: { pos: [1, -0.1, 0], scale: [24, 0.1, 24] },
+  Floor_Outer: { pos: [3, -0.1, 0], scale: [30, 0.1, 26] },
 
   // 玩家：位置是定的，scale 取决于内置 Capsule/Sphere/Plane 的默认尺寸 —— 编辑器里量（§2.2 的 _Ruler）
   Player: { pos: [0, 0, 0] },
@@ -84,6 +123,13 @@ export const MAT_SPEC: Record<string, MatSpec> = {
   Floor_Outer: { mat: 'M_FloorOuter', rgba: [85, 92, 105, 255], tech: 0 },
   Wall_N: { mat: 'M_Wall', rgba: [230, 230, 230, 255], tech: 0 },
   Wall_E: { mat: 'M_Wall', rgba: [230, 230, 230, 255], tech: 0 },
+  Floor_East: { mat: 'M_Floor', rgba: [200, 200, 200, 255], tech: 0 },
+  // ⏳ 冷库一眼要看出是冷的：地面冰蓝、墙浅冷灰蓝，色值待定
+  Floor_Store: { mat: 'M_FloorStore', rgba: [200, 228, 245, 255], tech: 0 },
+  Wall_StoreBack: { mat: 'M_ColdWall', rgba: [178, 205, 225, 255], tech: 0 },
+  Wall_Store_W1: { mat: 'M_ColdWall', rgba: [178, 205, 225, 255], tech: 0 },
+  Wall_Store_W2: { mat: 'M_ColdWall', rgba: [178, 205, 225, 255], tech: 0 },
+  Wall_Store_S: { mat: 'M_ColdWall', rgba: [178, 205, 225, 255], tech: 0 },
   Station_Fridge: { mat: 'M_Fridge', rgba: [58, 123, 213, 255], tech: 0 },
   Station_Grill: { mat: 'M_Grill', rgba: [192, 57, 43, 255], tech: 0 },
   Station_Assembly: { mat: 'M_Assembly', rgba: [200, 155, 90, 255], tech: 0 },
@@ -119,6 +165,8 @@ export interface UiSpec {
    * 两者只在没有 parent 时才相等，所以读写场景一律走 `localPos()`，别直接用 `pos`。
    */
   parent?: string
+  /** 必须是四边贴 0 的 Widget。Fit Height 下宽屏比 1280 宽，写死尺寸的遮罩两侧会透底 */
+  fullscreen?: boolean
 }
 
 // ─────────────────────────── 冰箱面板的 8 格 ───────────────────────────
@@ -173,7 +221,7 @@ export const UI_SPEC: Record<string, UiSpec> = {
   // 浮动摇杆：按下才出现，运行时由组件移到手指位置并开 active
   UI_Joystick: { size: [180, 180], sizeMode: 0, active: false },
   UI_ActionButton: { size: [160, 160], sizeMode: 0 },
-  UI_HUD: { size: [1280, 720], pos: [0, 0, 0] },
+  UI_HUD: { size: [1280, 720], pos: [0, 0, 0], fullscreen: true },
 
   /**
    * 丢弃键。动作键正上方、中心 x 对齐（两者宽度不同，所以 Widget 的 right 也不同：
@@ -195,7 +243,8 @@ export const UI_SPEC: Record<string, UiSpec> = {
    * 这三个尺寸必须进判据 —— `Btn_Again` 的捕获区是按它们算出来的，
    * 在编辑器里随手拖一下位置，真机上按钮就点不中，而画面看起来完全正常。
    */
-  UI_Result: { size: [1280, 720], pos: [0, 0, 0], active: false },
+  UI_Result: { size: [1280, 720], pos: [0, 0, 0], active: false, fullscreen: true },
+  Mask: { fullscreen: true },
   Panel: { size: [540, 380], sizeMode: 0, pos: [0, 0, 0], parent: 'UI_Result' },
   Btn_Again: { size: [260, 76], sizeMode: 0, pos: [0, -132, 0], parent: 'Panel' },
 

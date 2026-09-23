@@ -359,6 +359,7 @@ function main(): void {
     seen.add(n.name)
     let size: [number, number] | null = null
     let mode = -1
+    let widget = false
     for (const c of n.comps) {
       const t = str(c['__type__'])
       if (t === 'cc.UITransform') {
@@ -366,7 +367,11 @@ function main(): void {
         size = [num(cs['width']), num(cs['height'])]
       }
       if (t === 'cc.Sprite') mode = num(c['_sizeMode'])
+      if (t === 'cc.Widget') {
+        widget = num(c['_alignFlags']) === 45 && ['_top', '_bottom', '_left', '_right'].every((k) => num(c[k]) === 0)
+      }
     }
+    if (ui.fullscreen && !widget) diffs.push(`  ${n.name} 不是四边贴 0 的全屏 Widget —— 宽屏两侧会露底`)
     if (ui.size && size && (size[0] !== ui.size[0] || size[1] !== ui.size[1])) {
       diffs.push(`  ${n.name} 尺寸 ${size[0]}×${size[1]} ≠ 定稿 ${ui.size[0]}×${ui.size[1]}`)
     }

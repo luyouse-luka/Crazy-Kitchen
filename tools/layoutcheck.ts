@@ -12,14 +12,15 @@
 import { runDay, defaultSimConfig } from '../game/assets/logic/sim'
 import type { DayResult, KitchenLayout, SimConfig } from '../game/assets/logic/sim'
 import { difficultyForDay, LAST_DAY } from '../game/assets/logic/difficulty'
+import { SPEC } from './scene-spec'
 
 declare const process: { exit(code?: number): void }
 declare const console: { log(...args: unknown[]): void }
 
 // ─────────────────────────── 待验摆位 ───────────────────────────
 
-/** 地板内沿。工位 AABB 必须落在里面 */
-const FLOOR = { xmin: -4, xmax: 4, zmin: -3, zmax: 3 }
+/** 地板外接矩形（Floor + Floor_East + Floor_Store）。工位 AABB 必须落在里面 */
+const FLOOR = { xmin: -4, xmax: 13.5, zmin: -3, zmax: 3 }
 /** 通道下限（m2-scene-guide §7）。玩家直径 0.7，1.5 是约两倍 */
 const AISLE = 1.5
 
@@ -27,11 +28,19 @@ interface Placed { name: string; x: number; z: number; w: number; d: number }
 
 /** docs/m2-scene-guide.md §2.3 的定稿。场景里挪了工位就同步改这里 */
 const PLACED: Placed[] = [
-  { name: 'Station_Fridge', x: 2, z: -2.5, w: 1, d: 1 },
-  { name: 'Station_Grill', x: -2, z: -2.5, w: 1, d: 1 },
-  { name: 'Station_Assembly', x: -3.5, z: 0, w: 1, d: 1 },
-  { name: 'Station_Serve', x: -1, z: 2.5, w: 2, d: 1 },
+  { name: 'Station_Fridge', x: 5, z: -2.5, w: 1, d: 1 },
+  { name: 'Station_Grill', x: 2, z: -2.5, w: 2, d: 1 },
+  { name: 'Station_Assembly', x: -0.5, z: -2.5, w: 1, d: 1 },
+  { name: 'Station_Serve', x: -0.5, z: 2.5, w: 2, d: 1 },
 ]
+
+/**
+ * 不进 sim 的：库房、挡路的家具与矮墙。只查出界和「核心动线别被它们挡住」，
+ * 不查通道宽 —— 一排柜子本来就是贴着摆的。
+ */
+const EXTRA: Placed[] = Object.entries(SPEC)
+  .filter(([k]) => k === 'Station_Storeroom' || k === 'Station_Order' || k.startsWith('Block_') || k.startsWith('Wall_Store_'))
+  .map(([name, v]) => ({ name, x: v.pos![0], z: v.pos![2], w: v.scale![0], d: v.scale![2] }))
 
 /** M1 标定曲线时用的那套坐标 —— 难度基线的来源，不要改 */
 const BASELINE: KitchenLayout = defaultSimConfig().layout
@@ -96,10 +105,17 @@ function checkGeometry(): Failure[] {
     }
   })
 
+  const extras = EXTRA.map(toBox)
+  const touches = (a: Box, b: Box): boolean => gapBetween(a, b) < 1e-9
+  // Stations joined by counter pieces are one worktop, not an aisle; the player walks along its front
+  const sameRun = (i: number, j: number): boolean => extras.some((e) => touches(e, boxes[i]!) && touches(e, boxes[j]!))
+  // Everything on one wall row: the straight centre line runs through the counters, the real walk runs along their front
+  const sameRow = (...bs: Box[]): boolean => bs.every((b) => Math.abs(b.z0 - bs[0]!.z0) < 1e-9 && Math.abs(b.z1 - bs[0]!.z1) < 1e-9)
+
   for (let i = 0; i < PLACED.length; i++) {
     for (let j = i + 1; j < PLACED.length; j++) {
       const g = gapBetween(boxes[i]!, boxes[j]!)
-      if (g < AISLE - 1e-9) {
+      if (g < AISLE - 1e-9 && !sameRun(i, j)) {
         bad.push({ rule: '通道窄', detail: `${PLACED[i]!.name} ↔ ${PLACED[j]!.name} 只有 ${g.toFixed(2)}m` })
       }
     }
@@ -111,10 +127,33 @@ function checkGeometry(): Failure[] {
         if (k === i || k === j) continue
         const a = PLACED[i]!
         const b = PLACED[j]!
+        if (sameRow(boxes[i]!, boxes[j]!, boxes[k]!)) continue
         if (segmentHitsBox(a.x, a.z, b.x, b.z, boxes[k]!)) {
           bad.push({ rule: '动线穿模', detail: `${a.name} → ${b.name} 的直线穿过 ${PLACED[k]!.name}` })
         }
       }
+      for (let k = 0; k < EXTRA.length; k++) {
+        const e = EXTRA[k]!
+        const a = PLACED[i]!
+        const b = PLACED[j]!
+        if (touches(extras[k]!, boxes[i]!) || touches(extras[k]!, boxes[j]!)) continue
+        if (sameRow(boxes[i]!, boxes[j]!, extras[k]!)) continue
+        if (segmentHitsBox(a.x, a.z, b.x, b.z, extras[k]!)) {
+          bad.push({ rule: '动线穿模', detail: `${a.name} → ${b.name} 的直线穿过 ${e.name}` })
+        }
+      }
+    }
+  }
+  for (const e of EXTRA) {
+    const b = toBox(e)
+    if (b.x0 < FLOOR.xmin - 1e-9 || b.x1 > FLOOR.xmax + 1e-9 || b.z0 < FLOOR.zmin - 1e-9 || b.z1 > FLOOR.zmax + 1e-9) {
+      bad.push({ rule: '出界', detail: `${e.name} 越出地板` })
+    }
+    for (let i = 0; i < PLACED.length; i++) {
+      const o = boxes[i]!
+      const ox = Math.min(b.x1, o.x1) - Math.max(b.x0, o.x0)
+      const oz = Math.min(b.z1, o.z1) - Math.max(b.z0, o.z0)
+      if (ox > 1e-9 && oz > 1e-9) bad.push({ rule: '压工位', detail: `${e.name} 压住 ${PLACED[i]!.name}` })
     }
   }
   return bad

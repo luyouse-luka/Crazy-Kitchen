@@ -1,0 +1,180 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "2b09ed0c-be26-4557-9b52-0b71a27f5384",
+  "files": [],
+  "subMetas": {
+    "8e6e3": {
+      "importer": "gltf-mesh",
+      "uuid": "2b09ed0c-be26-4557-9b52-0b71a27f5384@8e6e3",
+      "displayName": "",
+      "id": "8e6e3",
+      "name": "Mesh kitchenStove.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 774
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "2e267": {
+      "importer": "gltf-mesh",
+      "uuid": "2b09ed0c-be26-4557-9b52-0b71a27f5384@2e267",
+      "displayName": "",
+      "id": "2e267",
+      "name": "Mesh door.mesh",
+      "userData": {
+        "gltfIndex": 1,
+        "triangleCount": 56
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "16ef1": {
+      "importer": "gltf-material",
+      "uuid": "2b09ed0c-be26-4557-9b52-0b71a27f5384@16ef1",
+      "displayName": "",
+      "id": "16ef1",
+      "name": "metal.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "e4014": {
+      "importer": "gltf-material",
+      "uuid": "2b09ed0c-be26-4557-9b52-0b71a27f5384@e4014",
+      "displayName": "",
+      "id": "e4014",
+      "name": "wood.material",
+      "userData": {
+        "gltfIndex": 1
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "da88d": {
+      "importer": "gltf-material",
+      "uuid": "2b09ed0c-be26-4557-9b52-0b71a27f5384@da88d",
+      "displayName": "",
+      "id": "da88d",
+      "name": "metalDark.material",
+      "userData": {
+        "gltfIndex": 2
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "ce949": {
+      "importer": "gltf-material",
+      "uuid": "2b09ed0c-be26-4557-9b52-0b71a27f5384@ce949",
+      "displayName": "",
+      "id": "ce949",
+      "name": "carpetWhite.material",
+      "userData": {
+        "gltfIndex": 3
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "56ce1": {
+      "importer": "gltf-material",
+      "uuid": "2b09ed0c-be26-4557-9b52-0b71a27f5384@56ce1",
+      "displayName": "",
+      "id": "56ce1",
+      "name": "glass.material",
+      "userData": {
+        "gltfIndex": 4
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "9b7f3": {
+      "importer": "gltf-scene",
+      "uuid": "2b09ed0c-be26-4557-9b52-0b71a27f5384@9b7f3",
+      "displayName": "",
+      "id": "9b7f3",
+      "name": "kitchenStove.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "2b09ed0c-be26-4557-9b52-0b71a27f5384@8e6e3",
+        "2b09ed0c-be26-4557-9b52-0b71a27f5384@2e267"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "2b09ed0c-be26-4557-9b52-0b71a27f5384@16ef1",
+        "2b09ed0c-be26-4557-9b52-0b71a27f5384@e4014",
+        "2b09ed0c-be26-4557-9b52-0b71a27f5384@da88d",
+        "2b09ed0c-be26-4557-9b52-0b71a27f5384@ce949",
+        "2b09ed0c-be26-4557-9b52-0b71a27f5384@56ce1"
+      ],
+      "scenes": [
+        "2b09ed0c-be26-4557-9b52-0b71a27f5384@9b7f3"
+      ]
+    }
+  }
+}

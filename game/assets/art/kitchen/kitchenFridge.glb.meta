@@ -1,0 +1,182 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "cfc2c122-5173-495b-8a9a-1fa2945322d7",
+  "files": [],
+  "subMetas": {
+    "f7e89": {
+      "importer": "gltf-mesh",
+      "uuid": "cfc2c122-5173-495b-8a9a-1fa2945322d7@f7e89",
+      "displayName": "",
+      "id": "f7e89",
+      "name": "Mesh kitchenFridge.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 66
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "41d9a": {
+      "importer": "gltf-mesh",
+      "uuid": "cfc2c122-5173-495b-8a9a-1fa2945322d7@41d9a",
+      "displayName": "",
+      "id": "41d9a",
+      "name": "Mesh doorFreezer.mesh",
+      "userData": {
+        "gltfIndex": 1,
+        "triangleCount": 44
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "ca7a3": {
+      "importer": "gltf-mesh",
+      "uuid": "cfc2c122-5173-495b-8a9a-1fa2945322d7@ca7a3",
+      "displayName": "",
+      "id": "ca7a3",
+      "name": "Mesh doorFridge.mesh",
+      "userData": {
+        "gltfIndex": 2,
+        "triangleCount": 140
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "140e5": {
+      "importer": "gltf-material",
+      "uuid": "cfc2c122-5173-495b-8a9a-1fa2945322d7@140e5",
+      "displayName": "",
+      "id": "140e5",
+      "name": "metalLight.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "da88d": {
+      "importer": "gltf-material",
+      "uuid": "cfc2c122-5173-495b-8a9a-1fa2945322d7@da88d",
+      "displayName": "",
+      "id": "da88d",
+      "name": "metalDark.material",
+      "userData": {
+        "gltfIndex": 1
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "16ef1": {
+      "importer": "gltf-material",
+      "uuid": "cfc2c122-5173-495b-8a9a-1fa2945322d7@16ef1",
+      "displayName": "",
+      "id": "16ef1",
+      "name": "metal.material",
+      "userData": {
+        "gltfIndex": 2
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "56ce1": {
+      "importer": "gltf-material",
+      "uuid": "cfc2c122-5173-495b-8a9a-1fa2945322d7@56ce1",
+      "displayName": "",
+      "id": "56ce1",
+      "name": "glass.material",
+      "userData": {
+        "gltfIndex": 3
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "3e911": {
+      "importer": "gltf-scene",
+      "uuid": "cfc2c122-5173-495b-8a9a-1fa2945322d7@3e911",
+      "displayName": "",
+      "id": "3e911",
+      "name": "kitchenFridge.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "cfc2c122-5173-495b-8a9a-1fa2945322d7@f7e89",
+        "cfc2c122-5173-495b-8a9a-1fa2945322d7@41d9a",
+        "cfc2c122-5173-495b-8a9a-1fa2945322d7@ca7a3"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "cfc2c122-5173-495b-8a9a-1fa2945322d7@140e5",
+        "cfc2c122-5173-495b-8a9a-1fa2945322d7@da88d",
+        "cfc2c122-5173-495b-8a9a-1fa2945322d7@16ef1",
+        "cfc2c122-5173-495b-8a9a-1fa2945322d7@56ce1"
+      ],
+      "scenes": [
+        "cfc2c122-5173-495b-8a9a-1fa2945322d7@3e911"
+      ]
+    }
+  }
+}

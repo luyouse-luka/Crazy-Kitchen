@@ -1,0 +1,142 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "bc57036a-047d-417e-bb7c-44c754b771df",
+  "files": [],
+  "subMetas": {
+    "dacae": {
+      "importer": "gltf-mesh",
+      "uuid": "bc57036a-047d-417e-bb7c-44c754b771df@dacae",
+      "displayName": "",
+      "id": "dacae",
+      "name": "fries-0.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 84
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "9aa00": {
+      "importer": "gltf-mesh",
+      "uuid": "bc57036a-047d-417e-bb7c-44c754b771df@9aa00",
+      "displayName": "",
+      "id": "9aa00",
+      "name": "fries-1.mesh",
+      "userData": {
+        "gltfIndex": 1,
+        "triangleCount": 480
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "96c50": {
+      "importer": "texture",
+      "uuid": "bc57036a-047d-417e-bb7c-44c754b771df@96c50",
+      "displayName": "",
+      "id": "96c50",
+      "name": "colormap.texture",
+      "userData": {
+        "wrapModeS": "repeat",
+        "wrapModeT": "repeat",
+        "minfilter": "nearest",
+        "magfilter": "nearest",
+        "mipfilter": "nearest",
+        "anisotropy": 0,
+        "isUuid": false,
+        "imageUuidOrDatabaseUri": "db://assets/art/food/Textures/colormap.png"
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "9991c": {
+      "importer": "gltf-material",
+      "uuid": "bc57036a-047d-417e-bb7c-44c754b771df@9991c",
+      "displayName": "",
+      "id": "9991c",
+      "name": "colormap.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "9f0b4": {
+      "importer": "gltf-scene",
+      "uuid": "bc57036a-047d-417e-bb7c-44c754b771df@9f0b4",
+      "displayName": "",
+      "id": "9f0b4",
+      "name": "fries.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [
+      {
+        "name": "colormap",
+        "uri": "db://assets/art/food/Textures/colormap.png"
+      }
+    ],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "bc57036a-047d-417e-bb7c-44c754b771df@dacae",
+        "bc57036a-047d-417e-bb7c-44c754b771df@9aa00"
+      ],
+      "skeletons": [],
+      "textures": [
+        "bc57036a-047d-417e-bb7c-44c754b771df@96c50"
+      ],
+      "materials": [
+        "bc57036a-047d-417e-bb7c-44c754b771df@9991c"
+      ],
+      "scenes": [
+        "bc57036a-047d-417e-bb7c-44c754b771df@9f0b4"
+      ]
+    }
+  }
+}

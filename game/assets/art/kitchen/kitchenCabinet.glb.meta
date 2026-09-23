@@ -1,0 +1,146 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "13caf1f6-de1d-49f2-9b50-c1a9e0d77d06",
+  "files": [],
+  "subMetas": {
+    "9a73c": {
+      "importer": "gltf-mesh",
+      "uuid": "13caf1f6-de1d-49f2-9b50-c1a9e0d77d06@9a73c",
+      "displayName": "",
+      "id": "9a73c",
+      "name": "Mesh kitchenCabinet.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 74
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "2e267": {
+      "importer": "gltf-mesh",
+      "uuid": "13caf1f6-de1d-49f2-9b50-c1a9e0d77d06@2e267",
+      "displayName": "",
+      "id": "2e267",
+      "name": "Mesh door.mesh",
+      "userData": {
+        "gltfIndex": 1,
+        "triangleCount": 40
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "16ef1": {
+      "importer": "gltf-material",
+      "uuid": "13caf1f6-de1d-49f2-9b50-c1a9e0d77d06@16ef1",
+      "displayName": "",
+      "id": "16ef1",
+      "name": "metal.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "e4014": {
+      "importer": "gltf-material",
+      "uuid": "13caf1f6-de1d-49f2-9b50-c1a9e0d77d06@e4014",
+      "displayName": "",
+      "id": "e4014",
+      "name": "wood.material",
+      "userData": {
+        "gltfIndex": 1
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "938e8": {
+      "importer": "gltf-material",
+      "uuid": "13caf1f6-de1d-49f2-9b50-c1a9e0d77d06@938e8",
+      "displayName": "",
+      "id": "938e8",
+      "name": "woodDark.material",
+      "userData": {
+        "gltfIndex": 2
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "19a19": {
+      "importer": "gltf-scene",
+      "uuid": "13caf1f6-de1d-49f2-9b50-c1a9e0d77d06@19a19",
+      "displayName": "",
+      "id": "19a19",
+      "name": "kitchenCabinet.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "13caf1f6-de1d-49f2-9b50-c1a9e0d77d06@9a73c",
+        "13caf1f6-de1d-49f2-9b50-c1a9e0d77d06@2e267"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "13caf1f6-de1d-49f2-9b50-c1a9e0d77d06@16ef1",
+        "13caf1f6-de1d-49f2-9b50-c1a9e0d77d06@e4014",
+        "13caf1f6-de1d-49f2-9b50-c1a9e0d77d06@938e8"
+      ],
+      "scenes": [
+        "13caf1f6-de1d-49f2-9b50-c1a9e0d77d06@19a19"
+      ]
+    }
+  }
+}

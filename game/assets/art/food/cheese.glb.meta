@@ -1,0 +1,332 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "92db550e-57de-42f8-b605-168184c91372",
+  "files": [],
+  "subMetas": {
+    "b85d0": {
+      "importer": "gltf-mesh",
+      "uuid": "92db550e-57de-42f8-b605-168184c91372@b85d0",
+      "displayName": "",
+      "id": "b85d0",
+      "name": "wedge-0.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 48
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "dd81a": {
+      "importer": "gltf-mesh",
+      "uuid": "92db550e-57de-42f8-b605-168184c91372@dd81a",
+      "displayName": "",
+      "id": "dd81a",
+      "name": "wedge-1.mesh",
+      "userData": {
+        "gltfIndex": 1,
+        "triangleCount": 48
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "4adb2": {
+      "importer": "gltf-mesh",
+      "uuid": "92db550e-57de-42f8-b605-168184c91372@4adb2",
+      "displayName": "",
+      "id": "4adb2",
+      "name": "wedge-2.mesh",
+      "userData": {
+        "gltfIndex": 2,
+        "triangleCount": 48
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "09809": {
+      "importer": "gltf-mesh",
+      "uuid": "92db550e-57de-42f8-b605-168184c91372@09809",
+      "displayName": "",
+      "id": "09809",
+      "name": "wedge-3.mesh",
+      "userData": {
+        "gltfIndex": 3,
+        "triangleCount": 48
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "5de1f": {
+      "importer": "gltf-mesh",
+      "uuid": "92db550e-57de-42f8-b605-168184c91372@5de1f",
+      "displayName": "",
+      "id": "5de1f",
+      "name": "wedge-4.mesh",
+      "userData": {
+        "gltfIndex": 4,
+        "triangleCount": 48
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "41e1e": {
+      "importer": "gltf-mesh",
+      "uuid": "92db550e-57de-42f8-b605-168184c91372@41e1e",
+      "displayName": "",
+      "id": "41e1e",
+      "name": "wedge-5.mesh",
+      "userData": {
+        "gltfIndex": 5,
+        "triangleCount": 48
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "dba06": {
+      "importer": "gltf-mesh",
+      "uuid": "92db550e-57de-42f8-b605-168184c91372@dba06",
+      "displayName": "",
+      "id": "dba06",
+      "name": "wedge-6.mesh",
+      "userData": {
+        "gltfIndex": 6,
+        "triangleCount": 48
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "fca7c": {
+      "importer": "gltf-mesh",
+      "uuid": "92db550e-57de-42f8-b605-168184c91372@fca7c",
+      "displayName": "",
+      "id": "fca7c",
+      "name": "wedge-7.mesh",
+      "userData": {
+        "gltfIndex": 7,
+        "triangleCount": 48
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "fb9ae": {
+      "importer": "gltf-mesh",
+      "uuid": "92db550e-57de-42f8-b605-168184c91372@fb9ae",
+      "displayName": "",
+      "id": "fb9ae",
+      "name": "wedge-8.mesh",
+      "userData": {
+        "gltfIndex": 8,
+        "triangleCount": 48
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "5e5e1": {
+      "importer": "gltf-mesh",
+      "uuid": "92db550e-57de-42f8-b605-168184c91372@5e5e1",
+      "displayName": "",
+      "id": "5e5e1",
+      "name": "wedge-9.mesh",
+      "userData": {
+        "gltfIndex": 9,
+        "triangleCount": 48
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "1a812": {
+      "importer": "gltf-mesh",
+      "uuid": "92db550e-57de-42f8-b605-168184c91372@1a812",
+      "displayName": "",
+      "id": "1a812",
+      "name": "wedge-10.mesh",
+      "userData": {
+        "gltfIndex": 10,
+        "triangleCount": 48
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "87c38": {
+      "importer": "gltf-mesh",
+      "uuid": "92db550e-57de-42f8-b605-168184c91372@87c38",
+      "displayName": "",
+      "id": "87c38",
+      "name": "wedge-11.mesh",
+      "userData": {
+        "gltfIndex": 11,
+        "triangleCount": 48
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "96c50": {
+      "importer": "texture",
+      "uuid": "92db550e-57de-42f8-b605-168184c91372@96c50",
+      "displayName": "",
+      "id": "96c50",
+      "name": "colormap.texture",
+      "userData": {
+        "wrapModeS": "repeat",
+        "wrapModeT": "repeat",
+        "minfilter": "nearest",
+        "magfilter": "nearest",
+        "mipfilter": "nearest",
+        "anisotropy": 0,
+        "isUuid": false,
+        "imageUuidOrDatabaseUri": "db://assets/art/food/Textures/colormap.png"
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "9991c": {
+      "importer": "gltf-material",
+      "uuid": "92db550e-57de-42f8-b605-168184c91372@9991c",
+      "displayName": "",
+      "id": "9991c",
+      "name": "colormap.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "188e3": {
+      "importer": "gltf-scene",
+      "uuid": "92db550e-57de-42f8-b605-168184c91372@188e3",
+      "displayName": "",
+      "id": "188e3",
+      "name": "cheese.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [
+      {
+        "name": "colormap",
+        "uri": "db://assets/art/food/Textures/colormap.png"
+      }
+    ],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "92db550e-57de-42f8-b605-168184c91372@b85d0",
+        "92db550e-57de-42f8-b605-168184c91372@dd81a",
+        "92db550e-57de-42f8-b605-168184c91372@4adb2",
+        "92db550e-57de-42f8-b605-168184c91372@09809",
+        "92db550e-57de-42f8-b605-168184c91372@5de1f",
+        "92db550e-57de-42f8-b605-168184c91372@41e1e",
+        "92db550e-57de-42f8-b605-168184c91372@dba06",
+        "92db550e-57de-42f8-b605-168184c91372@fca7c",
+        "92db550e-57de-42f8-b605-168184c91372@fb9ae",
+        "92db550e-57de-42f8-b605-168184c91372@5e5e1",
+        "92db550e-57de-42f8-b605-168184c91372@1a812",
+        "92db550e-57de-42f8-b605-168184c91372@87c38"
+      ],
+      "skeletons": [],
+      "textures": [
+        "92db550e-57de-42f8-b605-168184c91372@96c50"
+      ],
+      "materials": [
+        "92db550e-57de-42f8-b605-168184c91372@9991c"
+      ],
+      "scenes": [
+        "92db550e-57de-42f8-b605-168184c91372@188e3"
+      ]
+    }
+  }
+}

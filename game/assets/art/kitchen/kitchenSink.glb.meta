@@ -1,0 +1,197 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "d9efe5a4-9148-4a76-ba42-a3202d914745",
+  "files": [],
+  "subMetas": {
+    "6276c": {
+      "importer": "gltf-mesh",
+      "uuid": "d9efe5a4-9148-4a76-ba42-a3202d914745@6276c",
+      "displayName": "",
+      "id": "6276c",
+      "name": "Mesh kitchenSink.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 278
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "2e267": {
+      "importer": "gltf-mesh",
+      "uuid": "d9efe5a4-9148-4a76-ba42-a3202d914745@2e267",
+      "displayName": "",
+      "id": "2e267",
+      "name": "Mesh door.mesh",
+      "userData": {
+        "gltfIndex": 1,
+        "triangleCount": 40
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "e4014": {
+      "importer": "gltf-material",
+      "uuid": "d9efe5a4-9148-4a76-ba42-a3202d914745@e4014",
+      "displayName": "",
+      "id": "e4014",
+      "name": "wood.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "16ef1": {
+      "importer": "gltf-material",
+      "uuid": "d9efe5a4-9148-4a76-ba42-a3202d914745@16ef1",
+      "displayName": "",
+      "id": "16ef1",
+      "name": "metal.material",
+      "userData": {
+        "gltfIndex": 1
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "da88d": {
+      "importer": "gltf-material",
+      "uuid": "d9efe5a4-9148-4a76-ba42-a3202d914745@da88d",
+      "displayName": "",
+      "id": "da88d",
+      "name": "metalDark.material",
+      "userData": {
+        "gltfIndex": 2
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "140e5": {
+      "importer": "gltf-material",
+      "uuid": "d9efe5a4-9148-4a76-ba42-a3202d914745@140e5",
+      "displayName": "",
+      "id": "140e5",
+      "name": "metalLight.material",
+      "userData": {
+        "gltfIndex": 3
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "0ee4f": {
+      "importer": "gltf-material",
+      "uuid": "d9efe5a4-9148-4a76-ba42-a3202d914745@0ee4f",
+      "displayName": "",
+      "id": "0ee4f",
+      "name": "_defaultMat.material",
+      "userData": {
+        "gltfIndex": 4
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "938e8": {
+      "importer": "gltf-material",
+      "uuid": "d9efe5a4-9148-4a76-ba42-a3202d914745@938e8",
+      "displayName": "",
+      "id": "938e8",
+      "name": "woodDark.material",
+      "userData": {
+        "gltfIndex": 5
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "60d36": {
+      "importer": "gltf-scene",
+      "uuid": "d9efe5a4-9148-4a76-ba42-a3202d914745@60d36",
+      "displayName": "",
+      "id": "60d36",
+      "name": "kitchenSink.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "d9efe5a4-9148-4a76-ba42-a3202d914745@6276c",
+        "d9efe5a4-9148-4a76-ba42-a3202d914745@2e267"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "d9efe5a4-9148-4a76-ba42-a3202d914745@e4014",
+        "d9efe5a4-9148-4a76-ba42-a3202d914745@16ef1",
+        "d9efe5a4-9148-4a76-ba42-a3202d914745@da88d",
+        "d9efe5a4-9148-4a76-ba42-a3202d914745@140e5",
+        "d9efe5a4-9148-4a76-ba42-a3202d914745@0ee4f",
+        "d9efe5a4-9148-4a76-ba42-a3202d914745@938e8"
+      ],
+      "scenes": [
+        "d9efe5a4-9148-4a76-ba42-a3202d914745@60d36"
+      ]
+    }
+  }
+}

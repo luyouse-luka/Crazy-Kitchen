@@ -1,0 +1,146 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "7f4e7166-a3a2-4b8e-ab1a-6195c78929a9",
+  "files": [],
+  "subMetas": {
+    "fd19e": {
+      "importer": "gltf-mesh",
+      "uuid": "7f4e7166-a3a2-4b8e-ab1a-6195c78929a9@fd19e",
+      "displayName": "",
+      "id": "fd19e",
+      "name": "Mesh pottedPlant.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 44
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f92be": {
+      "importer": "gltf-mesh",
+      "uuid": "7f4e7166-a3a2-4b8e-ab1a-6195c78929a9@f92be",
+      "displayName": "",
+      "id": "f92be",
+      "name": "Mesh plant.mesh",
+      "userData": {
+        "gltfIndex": 1,
+        "triangleCount": 16
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "e4014": {
+      "importer": "gltf-material",
+      "uuid": "7f4e7166-a3a2-4b8e-ab1a-6195c78929a9@e4014",
+      "displayName": "",
+      "id": "e4014",
+      "name": "wood.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "938e8": {
+      "importer": "gltf-material",
+      "uuid": "7f4e7166-a3a2-4b8e-ab1a-6195c78929a9@938e8",
+      "displayName": "",
+      "id": "938e8",
+      "name": "woodDark.material",
+      "userData": {
+        "gltfIndex": 1
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "e0ff9": {
+      "importer": "gltf-material",
+      "uuid": "7f4e7166-a3a2-4b8e-ab1a-6195c78929a9@e0ff9",
+      "displayName": "",
+      "id": "e0ff9",
+      "name": "plant.material",
+      "userData": {
+        "gltfIndex": 2
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "a4db4": {
+      "importer": "gltf-scene",
+      "uuid": "7f4e7166-a3a2-4b8e-ab1a-6195c78929a9@a4db4",
+      "displayName": "",
+      "id": "a4db4",
+      "name": "pottedPlant.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "7f4e7166-a3a2-4b8e-ab1a-6195c78929a9@fd19e",
+        "7f4e7166-a3a2-4b8e-ab1a-6195c78929a9@f92be"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "7f4e7166-a3a2-4b8e-ab1a-6195c78929a9@e4014",
+        "7f4e7166-a3a2-4b8e-ab1a-6195c78929a9@938e8",
+        "7f4e7166-a3a2-4b8e-ab1a-6195c78929a9@e0ff9"
+      ],
+      "scenes": [
+        "7f4e7166-a3a2-4b8e-ab1a-6195c78929a9@a4db4"
+      ]
+    }
+  }
+}

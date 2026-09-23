@@ -1,0 +1,110 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "0ee81e32-abb0-44ba-b48f-3e8e2e825193",
+  "files": [],
+  "subMetas": {
+    "e68fe": {
+      "importer": "gltf-mesh",
+      "uuid": "0ee81e32-abb0-44ba-b48f-3e8e2e825193@e68fe",
+      "displayName": "",
+      "id": "e68fe",
+      "name": "Mesh computerKeyboard.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 32
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "da88d": {
+      "importer": "gltf-material",
+      "uuid": "0ee81e32-abb0-44ba-b48f-3e8e2e825193@da88d",
+      "displayName": "",
+      "id": "da88d",
+      "name": "metalDark.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "ea502": {
+      "importer": "gltf-material",
+      "uuid": "0ee81e32-abb0-44ba-b48f-3e8e2e825193@ea502",
+      "displayName": "",
+      "id": "ea502",
+      "name": "metalMedium.material",
+      "userData": {
+        "gltfIndex": 1
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "1d5f6": {
+      "importer": "gltf-scene",
+      "uuid": "0ee81e32-abb0-44ba-b48f-3e8e2e825193@1d5f6",
+      "displayName": "",
+      "id": "1d5f6",
+      "name": "computerKeyboard.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "0ee81e32-abb0-44ba-b48f-3e8e2e825193@e68fe"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "0ee81e32-abb0-44ba-b48f-3e8e2e825193@da88d",
+        "0ee81e32-abb0-44ba-b48f-3e8e2e825193@ea502"
+      ],
+      "scenes": [
+        "0ee81e32-abb0-44ba-b48f-3e8e2e825193@1d5f6"
+      ]
+    }
+  }
+}

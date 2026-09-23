@@ -26,6 +26,7 @@ import {
   CAMERA_RIGHT,
   CAMERA_UP,
   CONTENT_SPAN,
+  CORE_SPAN,
   ORTHO_HEIGHT,
   EDGE_MARGIN,
   UK,
@@ -103,11 +104,15 @@ const specBox = (name: string): Box3 => {
 }
 
 const STATIONS = ['Station_Fridge', 'Station_Grill', 'Station_Assembly', 'Station_Serve']
-/** 画面里「应该有东西」的部分。地板与顾客区在 z=3 接边，合起来正好一块 8×8 */
-const CONTENT = ['Floor', 'Floor_Customer', 'Wall_N', 'Wall_E']
+/** 画面里「应该有东西」的部分 —— 跟随的边界 */
+const CONTENT = ['Floor', 'Floor_East', 'Floor_Store', 'Floor_Customer', 'Wall_N', 'Wall_E', 'Wall_StoreBack']
+/** 主厨房 + 顾客区 —— 只决定窄屏拉不拉远（CORE_SPAN） */
+const CORE = ['Floor', 'Floor_Customer']
+/** 挡路但不能交互的，只用来排除不可达位置 */
+const BLOCKERS = Object.keys(SPEC).filter((k) => k === 'Wall_E' || k.startsWith('Block_') || k.startsWith('Wall_Store_'))
 /**
- * 唯一有计时压力的工位 —— 烤炉会糊。看不见它就等于逼玩家背时间，
- * 这条和「面板不能全屏遮挡」（ROADMAP §6）是同一个约束。
+ * 唯一有计时压力的工位 —— 烤炉会糊。厨房加了东翼以后，人在库房时它必然出画面，
+ * 所以这一项只报数不判红；火候靠贴边的烤炉气泡补（Bubble.follow 的 clamp）。
  */
 const CRITICAL = 'Station_Grill'
 
@@ -124,19 +129,32 @@ const playerBox = (x: number, z: number): Box3 => ({
 const STEP = 0.1
 
 function reachable(): Array<[number, number]> {
-  const boxes = STATIONS.map(specBox)
-  const out: Array<[number, number]> = []
+  const boxes = [...STATIONS, 'Station_Storeroom', 'Station_Order', ...BLOCKERS].map(specBox)
   const r = CHEF_RADIUS
-  for (let x = FLOOR_BOUNDS.xmin + r; x <= FLOOR_BOUNDS.xmax - r + 1e-9; x += STEP) {
-    for (let z = FLOOR_BOUNDS.zmin + r; z <= FLOOR_BOUNDS.zmax - r + 1e-9; z += STEP) {
-      let blocked = false
-      for (const b of boxes) {
-        const dx = Math.max(b.x0 - x, 0, x - b.x1)
-        const dz = Math.max(b.z0 - z, 0, z - b.z1)
-        if (dx * dx + dz * dz < r * r - 1e-9) { blocked = true; break }
-      }
-      if (!blocked) out.push([x, z])
+  const nx = Math.floor((FLOOR_BOUNDS.xmax - FLOOR_BOUNDS.xmin - 2 * r) / STEP + 1e-9) + 1
+  const nz = Math.floor((FLOOR_BOUNDS.zmax - FLOOR_BOUNDS.zmin - 2 * r) / STEP + 1e-9) + 1
+  const at = (i: number, j: number): [number, number] => [FLOOR_BOUNDS.xmin + r + i * STEP, FLOOR_BOUNDS.zmin + r + j * STEP]
+  const free = (i: number, j: number): boolean => {
+    const [x, z] = at(i, j)
+    for (const b of boxes) {
+      const dx = Math.max(b.x0 - x, 0, x - b.x1)
+      const dz = Math.max(b.z0 - z, 0, z - b.z1)
+      if (dx * dx + dz * dz < r * r - 1e-9) return false
     }
+    return true
+  }
+  // Flood from the spawn: the floor's bounding box has a walled-off corner south of the storeroom
+  const seen = new Set<number>()
+  const i0 = Math.round((0 - FLOOR_BOUNDS.xmin - r) / STEP)
+  const j0 = Math.round((0 - FLOOR_BOUNDS.zmin - r) / STEP)
+  const stack = [[i0, j0]]
+  const out: Array<[number, number]> = []
+  while (stack.length > 0) {
+    const [i, j] = stack.pop()!
+    if (i! < 0 || j! < 0 || i! >= nx || j! >= nz || seen.has(i! * nz + j!) || !free(i!, j!)) continue
+    seen.add(i! * nz + j!)
+    out.push(at(i!, j!))
+    stack.push([i! + 1, j!], [i! - 1, j!], [i!, j! + 1], [i!, j! - 1])
   }
   return out
 }
@@ -146,6 +164,7 @@ function reachable(): Array<[number, number]> {
 interface Scan {
   /** 玩家包围盒离画面边缘最近的距离，米。负数 = 被裁掉 */
   worstMargin: number
+  worstAt: [number, number]
   /** 看不全烤炉的可达位置占比 */
   grillLost: number
   /** 四个工位同时看得全的位置占比 */
@@ -160,6 +179,7 @@ function scan(cam: CamRead, H: number, aspect: number, cells: Array<[number, num
   const inside = (s: FocusBounds): boolean =>
     s.umin >= -halfU && s.umax <= halfU && s.vmin >= -H && s.vmax <= H
   let worstMargin = Infinity
+  let worstAt: [number, number] = [0, 0]
   let grillLost = 0
   let allFour = 0
   const focus = { x: 0, z: 0 }
@@ -176,10 +196,13 @@ function scan(cam: CamRead, H: number, aspect: number, cells: Array<[number, num
     if (seen === boxes.length) allFour++
     const p = spanOf(playerBox(px, pz), focus.x, focus.z, cam)
     const m = Math.min(p.umin + halfU, halfU - p.umax, p.vmin + H, H - p.vmax)
-    if (m < worstMargin) worstMargin = m
+    if (m < worstMargin) {
+      worstMargin = m
+      worstAt = [px, pz]
+    }
   }
   const n = cells.length
-  return { worstMargin, grillLost: grillLost / n, allFour: allFour / n }
+  return { worstMargin, worstAt, grillLost: grillLost / n, allFour: allFour / n }
 }
 
 // ─────────────────────────── 主流程 ───────────────────────────
@@ -307,22 +330,26 @@ function main(): void {
   if (!near(cam.right.y, 0, 1e-6)) fails.push('相机有 roll，u = (x+z)·UK 这条简化不成立')
   if (!near(UK, CAMERA_RIGHT.x) || !near(VK, CAMERA_UP.x)) fails.push('UK/VK 与三轴对不上')
 
-  let got: FocusBounds = { umin: Infinity, umax: -Infinity, vmin: Infinity, vmax: -Infinity }
-  for (const n of CONTENT) {
-    const s = spanOf(specBox(n), 0, 0, cam)
-    got = {
-      umin: Math.min(got.umin, s.umin), umax: Math.max(got.umax, s.umax),
-      vmin: Math.min(got.vmin, s.vmin), vmax: Math.max(got.vmax, s.vmax),
+  const spanOfAll = (names: string[]): FocusBounds => {
+    let out: FocusBounds = { umin: Infinity, umax: -Infinity, vmin: Infinity, vmax: -Infinity }
+    for (const n of names) {
+      const s = spanOf(specBox(n), 0, 0, cam)
+      out = {
+        umin: Math.min(out.umin, s.umin), umax: Math.max(out.umax, s.umax),
+        vmin: Math.min(out.vmin, s.vmin), vmax: Math.max(out.vmax, s.vmax),
+      }
     }
+    return out
   }
   const keys: Array<keyof FocusBounds> = ['umin', 'umax', 'vmin', 'vmax']
-  const drift = keys.filter((k) => !near(got[k], CONTENT_SPAN[k], 1e-3))
-  console.log(
-    `\n── CONTENT_SPAN  场景算出 { ${keys.map((k) => `${k}: ${got[k].toFixed(4)}`).join(', ')} }` +
-      `  水平跨度 ${(got.umax - got.umin).toFixed(2)}m  垂直 ${(got.vmax - got.vmin).toFixed(2)}m`,
-  )
-  if (drift.length > 0) {
-    fails.push(`CONTENT_SPAN 与场景不符（${drift.join(', ')}）—— 把上面那行抄进 logic/camera.ts`)
+  const got = spanOfAll(CONTENT)
+  for (const [name, span, want] of [['CONTENT_SPAN', got, CONTENT_SPAN], ['CORE_SPAN', spanOfAll(CORE), CORE_SPAN]] as const) {
+    const drift = keys.filter((k) => !near(span[k], want[k], 1e-3))
+    console.log(
+      `\n── ${name}  场景算出 { ${keys.map((k) => `${k}: ${span[k].toFixed(4)}`).join(', ')} }` +
+        `  水平跨度 ${(span.umax - span.umin).toFixed(2)}m  垂直 ${(span.vmax - span.vmin).toFixed(2)}m`,
+    )
+    if (drift.length > 0) fails.push(`${name} 与场景不符（${drift.join(', ')}）—— 把上面那行抄进 logic/camera.ts`)
   }
 
   sweepYaw(Math.hypot(cam.pos.x, cam.pos.y, cam.pos.z))
@@ -357,13 +384,13 @@ function main(): void {
         `  丢烤炉 ${pct(r.grillLost)}  四工位全见 ${pct(r.allFour)}  不跟随 ${frozen}`,
     )
     if (r.worstMargin < EDGE_MARGIN) {
-      fails.push(`${name}：玩家离画面边缘只剩 ${r.worstMargin.toFixed(2)}m（下限 ${EDGE_MARGIN}m）`)
+      const [wx, wz] = r.worstAt
+      fails.push(`${name}：玩家在 (${wx.toFixed(1)}, ${wz.toFixed(1)}) 离画面边缘只剩 ${r.worstMargin.toFixed(2)}m（下限 ${EDGE_MARGIN}m）`)
     }
-    if (r.grillLost > 0) fails.push(`${name}：${pct(r.grillLost)} 的可达位置看不全烤炉`)
   }
 
   if (fails.length === 0) {
-    console.log('\n✅ 相机通过：三轴与场景一致，玩家与烤炉在任何可达位置都完整可见')
+    console.log('\n✅ 相机通过：三轴与场景一致，玩家在任何可达位置都完整可见')
     return
   }
   console.log('\n❌ 不通过：')

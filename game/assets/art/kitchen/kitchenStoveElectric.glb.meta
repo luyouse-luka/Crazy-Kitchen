@@ -1,0 +1,178 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "1ff19f52-4536-4f2f-a271-5047080962c5",
+  "files": [],
+  "subMetas": {
+    "a0e3f": {
+      "importer": "gltf-mesh",
+      "uuid": "1ff19f52-4536-4f2f-a271-5047080962c5@a0e3f",
+      "displayName": "",
+      "id": "a0e3f",
+      "name": "Mesh kitchenStoveElectric.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 338
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "16ef1": {
+      "importer": "gltf-material",
+      "uuid": "1ff19f52-4536-4f2f-a271-5047080962c5@16ef1",
+      "displayName": "",
+      "id": "16ef1",
+      "name": "metal.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "e4014": {
+      "importer": "gltf-material",
+      "uuid": "1ff19f52-4536-4f2f-a271-5047080962c5@e4014",
+      "displayName": "",
+      "id": "e4014",
+      "name": "wood.material",
+      "userData": {
+        "gltfIndex": 1
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "da88d": {
+      "importer": "gltf-material",
+      "uuid": "1ff19f52-4536-4f2f-a271-5047080962c5@da88d",
+      "displayName": "",
+      "id": "da88d",
+      "name": "metalDark.material",
+      "userData": {
+        "gltfIndex": 2
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "ce949": {
+      "importer": "gltf-material",
+      "uuid": "1ff19f52-4536-4f2f-a271-5047080962c5@ce949",
+      "displayName": "",
+      "id": "ce949",
+      "name": "carpetWhite.material",
+      "userData": {
+        "gltfIndex": 3
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "56ce1": {
+      "importer": "gltf-material",
+      "uuid": "1ff19f52-4536-4f2f-a271-5047080962c5@56ce1",
+      "displayName": "",
+      "id": "56ce1",
+      "name": "glass.material",
+      "userData": {
+        "gltfIndex": 4
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "ea502": {
+      "importer": "gltf-material",
+      "uuid": "1ff19f52-4536-4f2f-a271-5047080962c5@ea502",
+      "displayName": "",
+      "id": "ea502",
+      "name": "metalMedium.material",
+      "userData": {
+        "gltfIndex": 5
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "a6578": {
+      "importer": "gltf-scene",
+      "uuid": "1ff19f52-4536-4f2f-a271-5047080962c5@a6578",
+      "displayName": "",
+      "id": "a6578",
+      "name": "kitchenStoveElectric.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "1ff19f52-4536-4f2f-a271-5047080962c5@a0e3f"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "1ff19f52-4536-4f2f-a271-5047080962c5@16ef1",
+        "1ff19f52-4536-4f2f-a271-5047080962c5@e4014",
+        "1ff19f52-4536-4f2f-a271-5047080962c5@da88d",
+        "1ff19f52-4536-4f2f-a271-5047080962c5@ce949",
+        "1ff19f52-4536-4f2f-a271-5047080962c5@56ce1",
+        "1ff19f52-4536-4f2f-a271-5047080962c5@ea502"
+      ],
+      "scenes": [
+        "1ff19f52-4536-4f2f-a271-5047080962c5@a6578"
+      ]
+    }
+  }
+}
