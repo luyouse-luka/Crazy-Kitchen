@@ -130,6 +130,7 @@ describe('matchCustomer', () => {
     a.patienceLeft = 1 // 最急，但吃不下
     const b = st.customers[1]!
     b.active = true
+    b.ordered = true
     b.id = 99
     b.spec = { required: ['bun', 'patty'], banned: [], doneness: 'medium', patience: 99 }
     b.patienceLeft = 50
@@ -171,5 +172,22 @@ describe('离场', () => {
     closeShop(st)
     expect(st.timedOut).toBe(n)
     expect(st.activeCount).toBe(0)
+  })
+})
+
+describe('真人局的两个开关（不传时模拟器行为不变）', () => {
+  it('stayWhenLate：超时留下、标 late，只记一次超时', () => {
+    const st = mk({ intervalSec: 999, patienceSec: 5, stayWhenLate: true })
+    stepCustomerFlow(st, 0, 0)
+    run(st, 20)
+    expect(st.activeCount).toBe(1)
+    expect(st.customers.find((c) => c.active)!.late).toBe(true)
+    expect(st.timedOut).toBe(1)
+  })
+
+  it('maxArrivals：来满就停', () => {
+    const st = mk({ intervalSec: 1, maxConcurrent: 6, patienceSec: 999, maxArrivals: 2 })
+    run(st, 30)
+    expect(st.arrived).toBe(2)
   })
 })

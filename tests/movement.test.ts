@@ -197,11 +197,17 @@ describe('movement · 与其它模块的数值一致', () => {
     expect(DEFAULT_CHEF_SPEED).toBe(defaultSimConfig().chef.speed)
   })
 
-  it('地板边界与 scene-spec 的 Floor scale 对得上', () => {
-    const floor = SPEC['Floor']!
-    const [w, , d] = floor.scale!
-    expect(FLOOR_BOUNDS.xmax - FLOOR_BOUNDS.xmin).toBeCloseTo(w, 9)
-    expect(FLOOR_BOUNDS.zmax - FLOOR_BOUNDS.zmin).toBeCloseTo(d, 9)
+  it('地板边界与 scene-spec 三块地板的外接矩形对得上', () => {
+    const edges = ['Floor', 'Floor_East', 'Floor_Store'].map((n) => {
+      const { pos, scale } = SPEC[n]!
+      return [pos![0] - scale![0] / 2, pos![0] + scale![0] / 2, pos![2] - scale![2] / 2, pos![2] + scale![2] / 2]
+    })
+    expect(FLOOR_BOUNDS.xmin).toBeCloseTo(Math.min(...edges.map((e) => e[0]!)), 9)
+    expect(FLOOR_BOUNDS.xmax).toBeCloseTo(Math.max(...edges.map((e) => e[1]!)), 9)
+    expect(FLOOR_BOUNDS.zmin).toBeCloseTo(Math.min(...edges.map((e) => e[2]!)), 9)
+    expect(FLOOR_BOUNDS.zmax).toBeCloseTo(Math.max(...edges.map((e) => e[3]!)), 9)
+    // 两块接边、不留缝 —— 否则中间那条是一道走得过去的「空气」
+    expect(edges[0]![1]).toBeCloseTo(edges[1]![0]!, 9)
   })
 
   it('玩家半径容得下最窄的工位通道（layoutcheck 的 1.5 m 判据）', () => {

@@ -32,14 +32,25 @@ export interface FocusBounds {
 }
 
 /**
- * 场景内容（地板 + 顾客区 + 两面墙，含墙高）在视图坐标里的跨度。
- * 常量而非现算：logic/ 读不到场景。`pnpm cam` 从 main.scene 复算并比对，改了场景这里会红。
+ * 场景内容（地板 + 东翼 + 库房 + 顾客区 + 外墙，含墙高）在视图坐标里的跨度 —— 跟随的边界。
+ * 常量而非现算：logic/ 读不到场景。`pnpm cam` 从 scene-spec 复算并比对，改了场景这里会红。
  */
 export const CONTENT_SPAN: FocusBounds = {
   umin: -5.1619,
-  umax: 6.364,
-  vmin: -3.7321,
-  vmax: 5.0086,
+  umax: 9.6874,
+  vmin: -4.1377,
+  vmax: 8.9022,
+}
+
+/**
+ * 主厨房（Floor + 顾客区）的跨度 —— 只决定窄屏要不要拉远。
+ * 按整个场景算的话，东翼一加宽，普通手机也会被拉远。
+ */
+export const CORE_SPAN: FocusBounds = {
+  umin: -4.9497,
+  umax: 7.0711,
+  vmin: -4.1377,
+  vmax: 2.8391,
 }
 
 const clamp = (x: number, lo: number, hi: number): number => (x < lo ? lo : x > hi ? hi : x)
@@ -56,7 +67,7 @@ export const EDGE_MARGIN = 0.3
  * 水平跟随的幅度会把烤炉甩出画面（4:3 实测 41% 的位置看不见它）。
  * 那种比例下退回全景：半高抬到画面宽 ≥ 场景宽 + 两边余量，水平方向就此不动。
  */
-export function effectiveOrthoHeight(aspect: number, content = CONTENT_SPAN): number {
+export function effectiveOrthoHeight(aspect: number, content = CORE_SPAN): number {
   const need = (content.umax - content.umin + 2 * EDGE_MARGIN) / (2 * aspect)
   return need > ORTHO_HEIGHT ? need : ORTHO_HEIGHT
 }
@@ -67,10 +78,12 @@ export function effectiveOrthoHeight(aspect: number, content = CONTENT_SPAN): nu
  */
 export function focusBounds(orthoHeight: number, aspect: number, content = CONTENT_SPAN): FocusBounds {
   const halfU = aspect * orthoHeight
-  const ulo = content.umin + halfU
-  const uhi = content.umax - halfU
-  const vlo = content.vmin + orthoHeight
-  const vhi = content.vmax - orthoHeight
+  // Overshoot by the margin: a player hugging the outermost corner still gets breathing room,
+  // and what shows past the content is Floor_Outer, not background.
+  const ulo = content.umin - EDGE_MARGIN + halfU
+  const uhi = content.umax + EDGE_MARGIN - halfU
+  const vlo = content.vmin - EDGE_MARGIN + orthoHeight
+  const vhi = content.vmax + EDGE_MARGIN - orthoHeight
   const um = (ulo + uhi) / 2
   const vm = (vlo + vhi) / 2
   return {

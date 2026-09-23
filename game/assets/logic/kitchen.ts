@@ -12,6 +12,7 @@ import { inTriggerRange } from './collision'
 import { judge } from './order'
 import type { OrderVerdict } from './order'
 import { addCookedPatty, addIngredient, cookLevelAt, createBurger, hasCore } from './recipe'
+import { INGREDIENTS } from './types'
 import type { Burger, CookLevel, Ingredient, OrderSpec, Station } from './types'
 import type { Vec2 } from './vec2'
 import type { CookWindows } from './types'
@@ -22,11 +23,11 @@ import type { CookWindows } from './types'
  * Raw patties from the fridge carry kind 'patty' too, with cook 'raw' —
  * one kind for meat everywhere, so the grill never has to special-case it.
  */
-export type CarryKind = 'none' | 'ingredient' | 'patty' | 'plate'
+export type CarryKind = 'none' | 'ingredient' | 'patty' | 'plate' | 'crate'
 
 export interface Carry {
   kind: CarryKind
-  /** valid when kind === 'ingredient'; never 'patty' */
+  /** valid when kind === 'ingredient' (never 'patty') or 'crate' (any) */
   ingredient: Ingredient
   /** valid when kind === 'patty' */
   cook: CookLevel
@@ -47,6 +48,8 @@ export interface KitchenConfig {
   stations: Station[]
   cook: CookWindows
   grillSlots: number
+  /** Fridge units per ingredient; a crate from the storeroom refills one slot to this. Omitted = bottomless */
+  fridgeCap?: number
 }
 
 export interface KitchenState {
@@ -60,6 +63,8 @@ export interface KitchenState {
    */
   burger: Burger
   assemblyOccupied: boolean
+  /** Fridge units left, indexed like INGREDIENTS */
+  stock: number[]
   cfg: KitchenConfig
 }
 
@@ -72,6 +77,7 @@ export function createKitchen(cfg: KitchenConfig): KitchenState {
     grill,
     burger: createBurger(),
     assemblyOccupied: false,
+    stock: INGREDIENTS.map(() => cfg.fridgeCap ?? Infinity),
     cfg,
   }
 }
@@ -130,6 +136,8 @@ export type InteractKind =
   | 'put-plate'
   | 'serve'
   | 'discard'
+  | 'take-crate'
+  | 'restock'
   | 'blocked'
 
 export type BlockReason =
@@ -144,10 +152,12 @@ export type BlockReason =
   | 'no-burger'
   | 'incomplete-burger'
   | 'no-order'
+  | 'out-of-stock'
+  | 'stock-full'
   | 'unsupported'
 
 export interface InteractRequest {
-  /** fridge: which ingredient to take */
+  /** fridge / storeroom: which ingredient to take */
   ingredient?: Ingredient
   /** grill: which slot; omit or -1 picks the one that has been on longest */
   slot?: number
@@ -196,6 +206,8 @@ export function interact(
       return useAssembly(st)
     case 'serve':
       return serveTo(st, req.spec)
+    case 'storeroom':
+      return takeCrate(st, req.ingredient)
     case 'sink':
       return blocked('unsupported')
     default:
@@ -211,8 +223,15 @@ export function interact(
  * 代价和「拿错一片生菜」完全不是一回事，要丢得走 discard，让玩家自己按那一下。
  */
 function takeFromFridge(st: KitchenState, ing: Ingredient | undefined): InteractResult {
+  if (st.carry.kind === 'crate') return restock(st)
   if (ing === undefined) return blocked('unsupported')
   if (st.carry.kind === 'plate') return blocked('hands-full')
+  const i = INGREDIENTS.indexOf(ing)
+  if (st.stock[i]! <= 0) return blocked('out-of-stock')
+  // Swapping hands the old pick back — a mis-tap must not cost stock either
+  const back = heldRaw(st)
+  if (back >= 0) st.stock[back] = Math.min(st.stock[back]! + 1, st.cfg.fridgeCap ?? Infinity)
+  st.stock[i]!--
   if (ing === 'patty') {
     st.carry.kind = 'patty'
     st.carry.cook = 'raw'
@@ -221,6 +240,31 @@ function takeFromFridge(st: KitchenState, ing: Ingredient | undefined): Interact
     st.carry.ingredient = ing
   }
   return done('take-ingredient')
+}
+
+/** INGREDIENTS index of a still-fridge-fresh item in hand, else -1 */
+function heldRaw(st: KitchenState): number {
+  if (st.carry.kind === 'ingredient') return INGREDIENTS.indexOf(st.carry.ingredient)
+  if (st.carry.kind === 'patty' && st.carry.cook === 'raw') return INGREDIENTS.indexOf('patty')
+  return -1
+}
+
+function takeCrate(st: KitchenState, ing: Ingredient | undefined): InteractResult {
+  if (ing === undefined) return blocked('unsupported')
+  if (st.carry.kind !== 'none') return blocked('hands-full')
+  st.carry.kind = 'crate'
+  st.carry.ingredient = ing
+  return done('take-crate')
+}
+
+/** Refused when already full, so the crate stays in hand instead of vanishing */
+function restock(st: KitchenState): InteractResult {
+  const i = INGREDIENTS.indexOf(st.carry.ingredient)
+  const cap = st.cfg.fridgeCap ?? Infinity
+  if (st.stock[i]! >= cap) return blocked('stock-full')
+  st.stock[i] = cap
+  st.carry.kind = 'none'
+  return done('restock')
 }
 
 function useGrill(st: KitchenState, want: number): InteractResult {
@@ -340,6 +384,7 @@ export function resetKitchen(st: KitchenState): void {
   }
   resetBurger(st.burger)
   st.assemblyOccupied = false
+  st.stock.fill(st.cfg.fridgeCap ?? Infinity)
 }
 
 export function discard(st: KitchenState): InteractResult {

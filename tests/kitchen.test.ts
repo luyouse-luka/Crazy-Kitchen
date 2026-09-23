@@ -6,8 +6,10 @@ import {
   discard,
   stationInReach,
   grillCookLevel,
+  resetKitchen,
 } from '../game/assets/logic/kitchen'
 import type { KitchenConfig, KitchenState } from '../game/assets/logic/kitchen'
+import { INGREDIENTS } from '../game/assets/logic/types'
 import type { OrderSpec, Station, StationKind } from '../game/assets/logic/types'
 import type { Vec2 } from '../game/assets/logic/vec2'
 
@@ -381,5 +383,74 @@ describe('一整条链路', () => {
     const r = interact(st, at(SERVE), SERVE, { spec: SPEC })
     expect(r.verdict!.ok).toBe(true)
     expect(st.t).toBeLessThan(30)
+  })
+})
+
+describe('冰柜库存与库房', () => {
+  const STORE = station('Station_Storeroom', 'storeroom', 6, 0)
+  const mkCap = (fridgeCap: number) => createKitchen({ ...config(), stations: [FRIDGE, STORE], fridgeCap })
+  const bun = INGREDIENTS.indexOf('bun')
+  const crate = (st: KitchenState, ing: OrderSpec['required'][number]) =>
+    interact(st, at(STORE), STORE, { ingredient: ing })
+
+  it('不设上限就是无底冰柜 —— 旧用法不受影响', () => {
+    const st = mk()
+    for (let i = 0; i < 50; i++) {
+      expect(take(st, 'bun').kind).toBe('take-ingredient')
+      discard(st)
+    }
+  })
+
+  it('拿一个少一个，拿空了拒绝', () => {
+    const st = mkCap(2)
+    take(st, 'bun')
+    discard(st)
+    take(st, 'bun')
+    discard(st)
+    expect(st.stock[bun]).toBe(0)
+    expect(take(st, 'bun').reason).toBe('out-of-stock')
+    expect(st.carry.kind).toBe('none')
+  })
+
+  it('点错换一样：手上那份退回冰柜', () => {
+    const st = mkCap(2)
+    take(st, 'bun')
+    take(st, 'cheese')
+    expect(st.stock[bun]).toBe(2)
+    expect(st.carry.ingredient).toBe('cheese')
+  })
+
+  it('库房抱一箱，回冰柜补满那一格', () => {
+    const st = mkCap(3)
+    take(st, 'bun')
+    discard(st)
+    expect(crate(st, 'bun').kind).toBe('take-crate')
+    expect(st.carry.kind).toBe('crate')
+    expect(take(st, 'cheese').kind).toBe('restock') // 抱着箱子点冰柜 = 补货，不看选了什么
+    expect(st.stock[bun]).toBe(3)
+    expect(st.carry.kind).toBe('none')
+  })
+
+  it('那一格本来就满：拒绝，箱子留在手上', () => {
+    const st = mkCap(3)
+    crate(st, 'bun')
+    expect(take(st, 'bun').reason).toBe('stock-full')
+    expect(st.carry.kind).toBe('crate')
+  })
+
+  it('抱着箱子别的都干不了；手上有东西也抱不了箱子', () => {
+    const st = mkCap(3)
+    crate(st, 'patty')
+    expect(interact(st, at(GRILL), GRILL).reason).toBe('hands-full')
+    discard(st)
+    take(st, 'bun')
+    expect(crate(st, 'patty').reason).toBe('hands-full')
+  })
+
+  it('重开一局冰柜补满', () => {
+    const st = mkCap(2)
+    take(st, 'bun')
+    resetKitchen(st)
+    expect(st.stock.every((n) => n === 2)).toBe(true)
   })
 })

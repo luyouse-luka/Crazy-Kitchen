@@ -524,13 +524,16 @@ describe('捕获区对 scene-spec 的跨模块漂移', () => {
 })
 
 describe('真机分辨率下的捕获区（编辑器 1280×720 预览永远看不出问题的那一类）', () => {
-  // 2532×1170，实测那台。工程是 **Fit Width**（1280×720, fitWidth=true）：
-  // 设计宽锁死 1280，getVisibleSize() 给出 1280×591.47，而触摸走 2532×1170。
-  // 缩放因子是 1170/591.47 = 1.978，不是 1170/720 = 1.625 —— 差的这一截就是下面那条反例。
+  // 2532×1170，实测那台。比 16:9 宽，走 Fit Height：设计高锁 720，宽延展到 1558，
+  // 触摸走 2532×1170，缩放因子 1170/720 = 1.625。
   const SW = 2532
   const SH = 1170
-  const DESIGN_H = (SH * 1280) / SW
+  const DESIGN_H = 720
   const K = SH / DESIGN_H
+  // 比 16:9 窄的 4:3 平板退回 Fit Width：设计宽锁 1280，高延展到 960 —— designH 不再是 720
+  const TW = 2048
+  const TH = 1536
+  const TDESIGN_H = (TH * 1280) / TW
 
   it('区随屏幕缩放，不是钉在设计分辨率上', () => {
     const z = zoneOf('UI_DiscardButton', 'discard', SW, SH, DESIGN_H)
@@ -545,9 +548,9 @@ describe('真机分辨率下的捕获区（编辑器 1280×720 预览永远看�
     expect(wrong.x).toBeLessThan(SW / 2) // 反例：错法把它扔到了左半边
   })
 
-  it('designH 漏传就整片错位 —— 上一轮真机上「点了没反应」的那个 bug', () => {
-    const right = zoneOf('UI_DiscardButton', 'discard', SW, SH, DESIGN_H)
-    const missing = zoneOf('UI_DiscardButton', 'discard', SW, SH) // designH 退回 720
+  it('designH 漏传就整片错位 —— 第十一轮真机上「点了没反应」的那个 bug', () => {
+    const right = zoneOf('UI_DiscardButton', 'discard', TW, TH, TDESIGN_H)
+    const missing = zoneOf('UI_DiscardButton', 'discard', TW, TH) // designH 退回 720
     // 手指落在正确区的中心，漏传 designH 的那份接不住 —— 差了几百像素，不是几像素
     const [fx, fy] = mid(right)
     const inside = fx >= missing.x && fx <= missing.x + missing.w &&

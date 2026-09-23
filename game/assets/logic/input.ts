@@ -421,9 +421,9 @@ export function stickToVelocity(
  *
  * - origin differs by half a screen: Canvas x is -640..640, Touch.getLocation() is
  *   bottom-left. Feeding node positions straight in parks every zone in the lower left.
- * - units are real touch pixels, not design resolution. This project is Fit Width:
- *   getVisibleSize() pins width to 1280 and shrinks height (591 on a 2532x1170 phone),
- *   while touches arrive in the 2532x1170 system — the two are 1.978x apart.
+ * - units are real touch pixels, not design resolution. Wide screens run Fit Height
+ *   (720 tall, 1.625x on a 2532x1170 phone); narrower than 16:9 runs Fit Width, where
+ *   getVisibleSize() grows past 720 (960 on 4:3). Touches arrive in physical pixels.
  *
  * So screenW/screenH come from view.getVisibleSizeInPixel() and designH from
  * view.getVisibleSize().height, both read at runtime: 720 is wrong on every non-16:9 phone.

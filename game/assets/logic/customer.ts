@@ -24,6 +24,18 @@ export interface FlowParams {
   maxConcurrent: number
   /** 顾客耐心（秒） */
   patienceSec: number
+  /**
+   * 耐心耗尽后留下等餐（真人局），而不是离场（模拟器）。留下的照样记一笔 timedOut 并标 late。
+   * 不写 = 离场 —— M1 的难度曲线是按离场标定的，模拟器必须保持这个默认。
+   */
+  stayWhenLate?: boolean
+  /** 这一局总共来几位，到数就不再来。不写 = 不限（模拟器按局长截断） */
+  maxArrivals?: number
+  /**
+   * 要玩家去点单台接单（真人局）。到店先走 walkInSec 到柜台，之后 patienceSec 没人理就走人、记差评；
+   * 接了单才开始倒等餐的耐心。不写 = 一到店就下单（模拟器，M1 按这个标定）。
+   */
+  takeOrder?: { walkInSec: number; patienceSec: number }
 }
 
 export interface OrderDifficulty {
@@ -40,6 +52,12 @@ export interface Customer {
   patienceLeft: number
   /** 这一单的耐心上限。UI 画进度条要拿它当分母，别去读 FlowParams —— 难度是逐天变的 */
   patienceMax: number
+  /** 耐心已耗尽还在等（只在 stayWhenLate 下出现）。上菜也不付钱、给差评 */
+  late: boolean
+  /** 单已经接了。没有 takeOrder 时一到店就是 true */
+  ordered: boolean
+  /** 到店后等接单等了多久，秒（含走到柜台那段） */
+  orderWait: number
   spec: OrderSpec
   /**
    * 模拟器拿它记「AI 厨师为这一单做到哪一步」。
@@ -56,6 +74,8 @@ export interface CustomerFlow {
   nextId: number
   arrived: number
   timedOut: number
+  /** 等接单等到走人的 */
+  walkedOut: number
   peakConcurrent: number
   flow: FlowParams
   orders: OrderDifficulty
@@ -75,6 +95,7 @@ export function createCustomerFlow(flow: FlowParams, orders: OrderDifficulty, rn
     nextId: 1,
     arrived: 0,
     timedOut: 0,
+    walkedOut: 0,
     peakConcurrent: 0,
     flow,
     orders,
@@ -95,6 +116,9 @@ export function resetCustomerFlow(st: CustomerFlow, flow: FlowParams, orders: Or
       id: 0,
       patienceLeft: 0,
       patienceMax: 0,
+      late: false,
+      ordered: false,
+      orderWait: 0,
       spec: { required: [], banned: [], doneness: 'medium', patience: 0 },
       burger: { ingredients: [], cook: null },
     })
@@ -108,6 +132,7 @@ export function resetCustomerFlow(st: CustomerFlow, flow: FlowParams, orders: Or
   st.nextId = 1
   st.arrived = 0
   st.timedOut = 0
+  st.walkedOut = 0
   st.peakConcurrent = 0
 }
 
@@ -159,14 +184,23 @@ export function stepCustomerFlow(
   dt: number,
   onTimeout?: (c: Customer) => void,
   onArrive?: (c: Customer) => void,
+  onWalkOut?: (c: Customer) => void,
 ): void {
-  while (t >= st.nextArrivalAt && st.activeCount < st.flow.maxConcurrent) {
+  const cap = st.flow.maxArrivals
+  while (
+    t >= st.nextArrivalAt &&
+    st.activeCount < st.flow.maxConcurrent &&
+    (cap === undefined || st.arrived < cap)
+  ) {
     for (const c of st.customers) {
       if (c.active) continue
       c.active = true
       c.id = st.nextId++
       c.patienceLeft = st.flow.patienceSec
       c.patienceMax = st.flow.patienceSec
+      c.late = false
+      c.ordered = st.flow.takeOrder === undefined
+      c.orderWait = 0
       c.burger.ingredients.length = 0
       c.burger.cook = null
       rollOrder(st, c.spec)
@@ -181,13 +215,24 @@ export function stepCustomerFlow(
   }
   if (st.activeCount > st.peakConcurrent) st.peakConcurrent = st.activeCount
 
+  const take = st.flow.takeOrder
   for (const c of st.customers) {
     if (!c.active) continue
+    if (!c.ordered) {
+      c.orderWait += dt
+      if (take && c.orderWait >= take.walkInSec + take.patienceSec) {
+        st.walkedOut++
+        onWalkOut?.(c)
+        releaseCustomer(st, c)
+      }
+      continue
+    }
     c.patienceLeft -= dt
-    if (c.patienceLeft > 0) continue
+    if (c.patienceLeft > 0 || c.late) continue
     st.timedOut++
     onTimeout?.(c)
-    releaseCustomer(st, c)
+    if (st.flow.stayWhenLate) c.late = true
+    else releaseCustomer(st, c)
   }
 }
 
@@ -212,10 +257,40 @@ export function matchCustomer(st: CustomerFlow, burger: Burger): Customer | null
   let fit: Customer | null = null
   let urgent: Customer | null = null
   for (const c of st.customers) {
-    if (!c.active) continue
+    if (!c.active || !c.ordered) continue
     if (!urgent || c.patienceLeft < urgent.patienceLeft) urgent = c
     if (!judge(burger, c.spec).ok) continue
     if (!fit || c.patienceLeft < fit.patienceLeft) fit = c
   }
   return fit ?? urgent
+}
+
+/** 排队的顺序：没接单的按到店先后。0 = 站在点单台前那位。已接单或不在场返回 -1 */
+export function queueIndex(st: CustomerFlow, c: Customer): number {
+  if (!c.active || c.ordered) return -1
+  let ahead = 0
+  for (const o of st.customers) if (o.active && !o.ordered && o.id < c.id) ahead++
+  return ahead
+}
+
+/** 等接单还剩几秒；还在走向柜台时返回满值。没开 takeOrder 返回 0 */
+export function orderPatienceLeft(st: CustomerFlow, c: Customer): number {
+  const take = st.flow.takeOrder
+  if (!take) return 0
+  return Math.min(take.patienceSec, take.walkInSec + take.patienceSec - c.orderWait)
+}
+
+/**
+ * 在点单台按一下：接排在最前、已经走到柜台的那位的单。接了才开始倒等餐耐心。
+ * 没人可接返回 null。
+ */
+export function takeNextOrder(st: CustomerFlow): Customer | null {
+  const take = st.flow.takeOrder
+  if (!take) return null
+  let front: Customer | null = null
+  for (const c of st.customers) if (c.active && !c.ordered && (!front || c.id < front.id)) front = c
+  if (!front || front.orderWait < take.walkInSec) return null
+  front.ordered = true
+  front.patienceLeft = front.patienceMax
+  return front
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   CONTENT_SPAN,
+  CORE_SPAN,
   EDGE_MARGIN,
   ORTHO_HEIGHT,
   UK,
@@ -36,15 +37,14 @@ describe('focusForPlayer', () => {
     }
   })
 
-  it('画面比场景宽时水平不跟随 —— 所有玩家位置给出同一个 u', () => {
+  it('东翼装不下，水平要跟过去 —— 去库房时画面得跟着走', () => {
     const b = focusBounds(ORTHO_HEIGHT, WIDE)
-    expect(b.umin).toBe(b.umax)
-    const out = { x: 0, z: 0 }
-    const us = corners().map((p) => {
-      focusForPlayer(out, p, b)
-      return toView(out).u
-    })
-    for (const u of us) expect(u).toBeCloseTo(us[0]!, 9)
+    expect(b.umin).toBeLessThan(b.umax)
+    const a = { x: 0, z: 0 }
+    const c = { x: 0, z: 0 }
+    focusForPlayer(a, { x: FLOOR_BOUNDS.xmin + CHEF_RADIUS, z: 0 }, b)
+    focusForPlayer(c, { x: FLOOR_BOUNDS.xmax - CHEF_RADIUS, z: 0 }, b)
+    expect(toView(c).u).toBeGreaterThan(toView(a).u)
   })
 
   it('垂直方向真的在跟随 —— 南北两端给出不同的 v', () => {
@@ -81,8 +81,8 @@ describe('effectiveOrthoHeight', () => {
     expect(effectiveOrthoHeight(4 / 3)).toBeGreaterThan(ORTHO_HEIGHT)
   })
 
-  it('抬高后画面宽 ≥ 场景宽 + 两边余量 —— 这正是抬它的理由', () => {
-    const want = CONTENT_SPAN.umax - CONTENT_SPAN.umin + 2 * EDGE_MARGIN
+  it('抬高后画面宽 ≥ 主厨房宽 + 两边余量 —— 这正是抬它的理由', () => {
+    const want = CORE_SPAN.umax - CORE_SPAN.umin + 2 * EDGE_MARGIN
     for (const aspect of [4 / 3, 16 / 9, WIDE, 20 / 9]) {
       const h = effectiveOrthoHeight(aspect)
       expect(2 * aspect * h).toBeGreaterThanOrEqual(want - 1e-9)
