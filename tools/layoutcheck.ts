@@ -39,7 +39,7 @@ const PLACED: Placed[] = [
  * 不查通道宽 —— 一排柜子本来就是贴着摆的。
  */
 const EXTRA: Placed[] = Object.entries(SPEC)
-  .filter(([k]) => k === 'Station_Storeroom' || k === 'Station_Order' || k.startsWith('Block_') || k.startsWith('Wall_Store_'))
+  .filter(([k]) => k === 'Station_Storeroom' || k === 'Station_Order' || k === 'Station_Delivery' || k === 'Station_Sink' || k.startsWith('Block_') || k.startsWith('Wall_Store_'))
   .map(([name, v]) => ({ name, x: v.pos![0], z: v.pos![2], w: v.scale![0], d: v.scale![2] }))
 
 /** M1 标定曲线时用的那套坐标 —— 难度基线的来源，不要改 */

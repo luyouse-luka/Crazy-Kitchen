@@ -29,8 +29,12 @@ export interface Carry {
   kind: CarryKind
   /** valid when kind === 'ingredient' (never 'patty') or 'crate' (any) */
   ingredient: Ingredient
+  /** kind === 'ingredient' only: a second, different topping carried in the same trip */
+  second: Ingredient | null
   /** valid when kind === 'patty' */
   cook: CookLevel
+  /** A patty taken off the grill sits on a clean plate */
+  plated: boolean
 }
 
 // ─────────────────────────── 烤炉 ───────────────────────────
@@ -50,6 +54,32 @@ export interface KitchenConfig {
   grillSlots: number
   /** Fridge units per ingredient; a crate from the storeroom refills one slot to this. Omitted = bottomless */
   fridgeCap?: number
+  /** Clean plates at the start. Omitted = bottomless (the simulator never washes up) */
+  plates?: number
+  wash?: WashConfig
+}
+
+/** 洗碗三段（GDD §12.5）：泡是被动的、刷要按住、晾是被动的 */
+export interface WashConfig {
+  soakSec: number
+  scrubSec: number
+  drySec: number
+  /** 堂食吃完多久把脏盘送回洗碗池 */
+  returnSec: number
+}
+
+export const DEFAULT_WASH: WashConfig = { soakSec: 4, scrubSec: 2, drySec: 6, returnSec: 8 }
+
+/**
+ * 洗碗池只收一批、架子只晾一批 —— 两批同时洗会让「先洗还是先攒」这个取舍消失。
+ * stage: 'empty' → 'soaking'（倒计时）→ 'soaked'（等人来刷）→ 刷完进架子
+ */
+export interface Sink {
+  stage: 'empty' | 'soaking' | 'soaked'
+  count: number
+  left: number
+  /** 刷洗进度 0–1；松手保留，回来接着刷 */
+  scrub: number
 }
 
 export interface KitchenState {
@@ -63,8 +93,21 @@ export interface KitchenState {
    */
   burger: Burger
   assemblyOccupied: boolean
+  /** The bench burger's patty came with a plate (a raw fridge patty dropped straight on does not) */
+  burgerPlated: boolean
   /** Fridge units left, indexed like INGREDIENTS */
   stock: number[]
+  /** 累计烤糊了几块（跨过 burntAt 那一刻记一次）。目击系统拿它当事件源 */
+  burnt: number
+  /** 放盘处的干净盘子 */
+  plates: number
+  /** 堆在洗碗池边的脏盘 */
+  dirty: number
+  /** 还在顾客桌上、送回洗碗池的倒计时，秒。预分配复用，<=0 为空位 */
+  returning: number[]
+  sink: Sink
+  /** 架子上晾着的一批 */
+  rack: { count: number; left: number }
   cfg: KitchenConfig
 }
 
@@ -73,11 +116,18 @@ export function createKitchen(cfg: KitchenConfig): KitchenState {
   for (let i = 0; i < cfg.grillSlots; i++) grill.push({ busy: false, elapsed: 0 })
   return {
     t: 0,
-    carry: { kind: 'none', ingredient: 'bun', cook: 'raw' },
+    carry: { kind: 'none', ingredient: 'bun', second: null, cook: 'raw', plated: false },
     grill,
     burger: createBurger(),
     assemblyOccupied: false,
+    burgerPlated: false,
     stock: INGREDIENTS.map(() => cfg.fridgeCap ?? Infinity),
+    burnt: 0,
+    plates: cfg.plates ?? Infinity,
+    dirty: 0,
+    returning: [],
+    sink: { stage: 'empty', count: 0, left: 0, scrub: 0 },
+    rack: { count: 0, left: 0 },
     cfg,
   }
 }
@@ -93,7 +143,27 @@ export function stepKitchen(st: KitchenState, dt: number): void {
   st.t += dt
   for (let i = 0; i < st.grill.length; i++) {
     const slot = st.grill[i]!
-    if (slot.busy) slot.elapsed += dt
+    if (!slot.busy) continue
+    const before = slot.elapsed
+    slot.elapsed += dt
+    if (before < st.cfg.cook.burntAt && slot.elapsed >= st.cfg.cook.burntAt) st.burnt++
+  }
+  for (let i = 0; i < st.returning.length; i++) {
+    if (st.returning[i]! <= 0) continue
+    st.returning[i]! -= dt
+    if (st.returning[i]! <= 0) st.dirty++
+  }
+  const sink = st.sink
+  if (sink.stage === 'soaking') {
+    sink.left -= dt
+    if (sink.left <= 0) sink.stage = 'soaked'
+  }
+  if (st.rack.count > 0) {
+    st.rack.left -= dt
+    if (st.rack.left <= 0) {
+      st.plates += st.rack.count
+      st.rack.count = 0
+    }
   }
 }
 
@@ -138,6 +208,7 @@ export type InteractKind =
   | 'discard'
   | 'take-crate'
   | 'restock'
+  | 'soak'
   | 'blocked'
 
 export type BlockReason =
@@ -154,6 +225,10 @@ export type BlockReason =
   | 'no-order'
   | 'out-of-stock'
   | 'stock-full'
+  | 'no-plate'
+  | 'nothing-to-wash'
+  | 'sink-busy'
+  | 'still-soaking'
   | 'unsupported'
 
 export interface InteractRequest {
@@ -205,19 +280,22 @@ export function interact(
     case 'assembly':
       return useAssembly(st)
     case 'serve':
-      return serveTo(st, req.spec)
+    case 'delivery':
+      // Same hand-off; who it's for (diner or rider) is decided by the caller's spec
+      return serveTo(st, req.spec, station.kind === 'serve')
     case 'storeroom':
       return takeCrate(st, req.ingredient)
     case 'sink':
-      return blocked('unsupported')
+      return loadSink(st)
     default:
       return blocked('unsupported')
   }
 }
 
 /**
- * 从冰箱取料。**手上已经拿着生料时直接换掉** —— 点错一样食材不该逼玩家先跑一趟垃圾桶，
- * 那趟路在 30 秒一局里是实打实的惩罚，而错因只是眼花。
+ * 从冰箱取料。手上最多两样**不同**的配料；肉饼只能单独拿（它得先下锅）。
+ * 拿满两样再点第三样 = 换掉后拿的那样；点肉饼 = 手上的全退回。
+ * 点错不该逼玩家先跑一趟垃圾桶 —— 那趟路在 30 秒一局里是实打实的惩罚，而错因只是眼花。
  *
  * 盘子是唯一的例外：那是组装好的汉堡，换食材等于整个扔掉，
  * 代价和「拿错一片生菜」完全不是一回事，要丢得走 discard，让玩家自己按那一下。
@@ -225,28 +303,36 @@ export function interact(
 function takeFromFridge(st: KitchenState, ing: Ingredient | undefined): InteractResult {
   if (st.carry.kind === 'crate') return restock(st)
   if (ing === undefined) return blocked('unsupported')
-  if (st.carry.kind === 'plate') return blocked('hands-full')
+  const c = st.carry
+  if (c.kind === 'plate' || c.plated) return blocked('hands-full')
+  if (c.kind === 'ingredient' && (ing === c.ingredient || ing === c.second)) return blocked('duplicate-ingredient')
   const i = INGREDIENTS.indexOf(ing)
   if (st.stock[i]! <= 0) return blocked('out-of-stock')
-  // Swapping hands the old pick back — a mis-tap must not cost stock either
-  const back = heldRaw(st)
-  if (back >= 0) st.stock[back] = Math.min(st.stock[back]! + 1, st.cfg.fridgeCap ?? Infinity)
   st.stock[i]!--
+  if (ing !== 'patty' && c.kind === 'ingredient') {
+    if (c.second !== null) giveBack(st, c.second)
+    c.second = ing
+    return done('take-ingredient')
+  }
+  // Swapping hands the old pick back — a mis-tap must not cost stock either
+  if (c.kind === 'ingredient') {
+    giveBack(st, c.ingredient)
+    if (c.second !== null) giveBack(st, c.second)
+  } else if (c.kind === 'patty' && c.cook === 'raw') giveBack(st, 'patty')
+  c.second = null
   if (ing === 'patty') {
-    st.carry.kind = 'patty'
-    st.carry.cook = 'raw'
+    c.kind = 'patty'
+    c.cook = 'raw'
   } else {
-    st.carry.kind = 'ingredient'
-    st.carry.ingredient = ing
+    c.kind = 'ingredient'
+    c.ingredient = ing
   }
   return done('take-ingredient')
 }
 
-/** INGREDIENTS index of a still-fridge-fresh item in hand, else -1 */
-function heldRaw(st: KitchenState): number {
-  if (st.carry.kind === 'ingredient') return INGREDIENTS.indexOf(st.carry.ingredient)
-  if (st.carry.kind === 'patty' && st.carry.cook === 'raw') return INGREDIENTS.indexOf('patty')
-  return -1
+function giveBack(st: KitchenState, ing: Ingredient): void {
+  const i = INGREDIENTS.indexOf(ing)
+  st.stock[i] = Math.min(st.stock[i]! + 1, st.cfg.fridgeCap ?? Infinity)
 }
 
 function takeCrate(st: KitchenState, ing: Ingredient | undefined): InteractResult {
@@ -276,6 +362,8 @@ function useGrill(st: KitchenState, want: number): InteractResult {
     st.grill[free]!.busy = true
     st.grill[free]!.elapsed = 0
     st.carry.kind = 'none'
+    if (st.carry.plated) st.plates++
+    st.carry.plated = false
     return done('place-patty', free)
   }
 
@@ -284,6 +372,9 @@ function useGrill(st: KitchenState, want: number): InteractResult {
   const slot = want >= 0 ? want : longestSlot(st)
   const g = st.grill[slot]
   if (!g || !g.busy) return blocked('grill-empty')
+  if (st.plates <= 0) return blocked('no-plate')
+  st.plates--
+  st.carry.plated = true
   st.carry.kind = 'patty'
   st.carry.cook = cookLevelAt(g.elapsed, st.cfg.cook)
   g.busy = false
@@ -325,10 +416,14 @@ function useAssembly(st: KitchenState): InteractResult {
 
     case 'ingredient': {
       startBurgerIfEmpty(st)
-      if (!addIngredient(st.burger, st.carry.ingredient)) {
-        return blocked('duplicate-ingredient')
-      }
-      st.carry.kind = 'none'
+      const c = st.carry
+      const a = addIngredient(st.burger, c.ingredient)
+      const b = c.second !== null && addIngredient(st.burger, c.second)
+      if (!a && !b) return blocked('duplicate-ingredient')
+      // Whatever the burger already had stays in hand
+      if (c.second === null || (a && b)) c.kind = 'none'
+      else if (a) c.ingredient = c.second
+      c.second = null
       return done('add-to-burger')
     }
 
@@ -338,6 +433,8 @@ function useAssembly(st: KitchenState): InteractResult {
       if (!addCookedPatty(st.burger, st.carry.cook)) {
         return blocked('duplicate-ingredient')
       }
+      st.burgerPlated = st.carry.plated
+      st.carry.plated = false
       st.carry.kind = 'none'
       return done('add-to-burger')
     }
@@ -350,10 +447,60 @@ function useAssembly(st: KitchenState): InteractResult {
 function startBurgerIfEmpty(st: KitchenState): void {
   if (st.assemblyOccupied) return
   resetBurger(st.burger)
+  st.burgerPlated = false
   st.assemblyOccupied = true
 }
 
-function serveTo(st: KitchenState, spec: OrderSpec | undefined): InteractResult {
+/** 空手点洗碗池：把池边的脏盘全部泡进去 */
+function loadSink(st: KitchenState): InteractResult {
+  if (st.carry.kind !== 'none') return blocked('hands-full')
+  const sink = st.sink
+  if (sink.stage === 'soaking') return blocked('still-soaking')
+  if (sink.stage === 'soaked') return blocked('sink-busy')
+  if (st.dirty <= 0) return blocked('nothing-to-wash')
+  sink.stage = 'soaking'
+  sink.count = st.dirty
+  sink.left = st.cfg.wash?.soakSec ?? DEFAULT_WASH.soakSec
+  sink.scrub = 0
+  st.dirty = 0
+  return done('soak')
+}
+
+/**
+ * 按住动作键刷一帧。泡好了才能刷，刷满进架子晾（架子上那批没晾完就刷不完 —— 放不下）。
+ * 返回这一帧有没有在刷，组件拿它播动画。
+ */
+export function scrubSink(st: KitchenState, dt: number): boolean {
+  const sink = st.sink
+  if (sink.stage !== 'soaked' || st.carry.kind !== 'none') return false
+  const w = st.cfg.wash ?? DEFAULT_WASH
+  sink.scrub = Math.min(1, sink.scrub + dt / w.scrubSec)
+  if (sink.scrub < 1 || st.rack.count > 0) return true
+  st.rack.count = sink.count
+  st.rack.left = w.drySec
+  sink.stage = 'empty'
+  sink.count = 0
+  sink.scrub = 0
+  return true
+}
+
+/**
+ * 堂食上完菜：盘子在顾客手上，过一会儿脏着送回池边。外卖装袋带走，盘子当场回到放盘处。
+ * 盘子无上限（模拟器）时什么都不做。
+ */
+export function plateOut(st: KitchenState, dineIn: boolean): void {
+  if (st.plates === Infinity) return
+  if (!dineIn) {
+    st.plates++
+    return
+  }
+  const sec = st.cfg.wash?.returnSec ?? DEFAULT_WASH.returnSec
+  const i = st.returning.findIndex((x) => x <= 0)
+  if (i >= 0) st.returning[i] = sec
+  else st.returning.push(sec)
+}
+
+function serveTo(st: KitchenState, spec: OrderSpec | undefined, dineIn: boolean): InteractResult {
   if (st.carry.kind !== 'plate') return blocked('hands-empty')
   if (spec === undefined) return blocked('no-order')
   if (!hasCore(st.burger)) return blocked('incomplete-burger')
@@ -361,6 +508,8 @@ function serveTo(st: KitchenState, spec: OrderSpec | undefined): InteractResult 
   const verdict = judge(st.burger, spec)
   st.carry.kind = 'none'
   resetBurger(st.burger)
+  if (st.burgerPlated) plateOut(st, dineIn)
+  st.burgerPlated = false
   return done('serve', -1, verdict)
 }
 
@@ -377,19 +526,40 @@ export function resetKitchen(st: KitchenState): void {
   st.t = 0
   st.carry.kind = 'none'
   st.carry.ingredient = 'bun'
+  st.carry.second = null
   st.carry.cook = 'raw'
+  st.carry.plated = false
   for (const g of st.grill) {
     g.busy = false
     g.elapsed = 0
   }
   resetBurger(st.burger)
   st.assemblyOccupied = false
+  st.burgerPlated = false
   st.stock.fill(st.cfg.fridgeCap ?? Infinity)
+  st.burnt = 0
+  st.plates = st.cfg.plates ?? Infinity
+  st.dirty = 0
+  st.returning.fill(0)
+  st.sink.stage = 'empty'
+  st.sink.count = 0
+  st.sink.left = 0
+  st.sink.scrub = 0
+  st.rack.count = 0
+  st.rack.left = 0
 }
 
 export function discard(st: KitchenState): InteractResult {
   if (st.carry.kind === 'none') return blocked('hands-empty')
-  if (st.carry.kind === 'plate') resetBurger(st.burger)
+  // The food goes in the bin, the plate goes to the sink
+  const plated = st.carry.kind === 'plate' ? st.burgerPlated : st.carry.plated
+  if (plated && st.plates !== Infinity) st.dirty++
+  if (st.carry.kind === 'plate') {
+    resetBurger(st.burger)
+    st.burgerPlated = false
+  }
+  st.carry.plated = false
+  st.carry.second = null
   st.carry.kind = 'none'
   return done('discard')
 }

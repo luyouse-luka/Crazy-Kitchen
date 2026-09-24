@@ -169,6 +169,8 @@ interface InternalState extends SimState {
   phaseLeft: number
   carry: Carry
   carryIng: Ingredient
+  /** 同一趟冰箱顺手拿的第二样配料（同 kitchen.ts 的 carry.second） */
+  carryIng2: Ingredient | null
   carryCook: Doneness
   carryCustomer: number
   action: Action
@@ -204,6 +206,7 @@ export function createSimState(config: SimConfig): SimState {
     phaseLeft: 0,
     carry: 'none',
     carryIng: 'bun',
+    carryIng2: null,
     carryCook: 'medium',
     carryCustomer: -1,
     action: 'none',
@@ -258,6 +261,7 @@ function resetState(st: InternalState, cfg: SimConfig): void {
   st.phase = 'idle'
   st.phaseLeft = 0
   st.carry = 'none'
+  st.carryIng2 = null
   st.carryCustomer = -1
   st.action = 'none'
   st.actionCustomer = -1
@@ -284,10 +288,10 @@ function trace(st: InternalState, msg: string): void {
 
 // ─────────────────────────── 查询 ───────────────────────────
 
-function firstMissingIngredient(c: Customer): Ingredient | null {
+function firstMissingIngredient(c: Customer, skip: Ingredient | null = null): Ingredient | null {
   for (let i = 0; i < c.spec.required.length; i++) {
     const ing = c.spec.required[i]!
-    if (ing === 'patty') continue
+    if (ing === 'patty' || ing === skip) continue
     if (!c.burger.ingredients.includes(ing)) return ing
   }
   return null
@@ -425,11 +429,24 @@ function nextActionFor(st: InternalState, c: Customer, idx: number): Action {
 
 function finishAction(st: InternalState): void {
   switch (st.action) {
-    case 'pick_ingredient':
+    case 'pick_ingredient': {
+      if (st.carry === 'ingredient') {
+        st.carryIng2 = st.actionIng
+        break
+      }
       st.carry = 'ingredient'
       st.carryIng = st.actionIng
+      st.carryIng2 = null
       st.carryCustomer = st.actionCustomer
+      // Same fridge visit, one more tap: grab the order's next missing topping too
+      const next = firstMissingIngredient(st.customers[st.actionCustomer]!, st.actionIng)
+      if (next !== null) {
+        st.actionIng = next
+        st.phaseLeft = st.cfg.chef.interactSec
+        return
+      }
       break
+    }
 
     case 'pick_patty':
       st.carry = 'raw_patty'
@@ -472,9 +489,13 @@ function finishAction(st: InternalState): void {
       // 顾客可能在路上就走了，手上这份直接作废
       if (c && c.active) {
         if (st.carry === 'cooked_patty') addCookedPatty(c.burger, st.carryCook)
-        else addIngredient(c.burger, st.carryIng)
+        else {
+          addIngredient(c.burger, st.carryIng)
+          if (st.carryIng2 !== null) addIngredient(c.burger, st.carryIng2)
+        }
       }
       st.carry = 'none'
+      st.carryIng2 = null
       st.carryCustomer = -1
       break
     }

@@ -147,7 +147,7 @@ export interface Burger {
 
 // ─────────────────────────── 场地 ───────────────────────────
 
-export const STATION_KINDS = ['fridge', 'grill', 'assembly', 'serve', 'sink', 'storeroom', 'register'] as const
+export const STATION_KINDS = ['fridge', 'grill', 'assembly', 'serve', 'sink', 'storeroom', 'register', 'delivery'] as const
 
 export type StationKind = (typeof STATION_KINDS)[number]
 

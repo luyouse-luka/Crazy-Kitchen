@@ -85,7 +85,7 @@ export interface CustomerFlow {
 }
 
 /** bun/patty 之外可点的。顺序是洗牌池的初始顺序，改它会改变同 seed 下的出题 */
-const OPTIONAL: readonly Ingredient[] = ['cheese', 'lettuce', 'tomato', 'onion', 'pickle', 'bacon']
+export const OPTIONAL: readonly Ingredient[] = ['cheese', 'lettuce', 'tomato', 'onion', 'pickle', 'bacon']
 
 export function createCustomerFlow(flow: FlowParams, orders: OrderDifficulty, rng: Rng): CustomerFlow {
   const st: CustomerFlow = {
@@ -137,15 +137,21 @@ export function resetCustomerFlow(st: CustomerFlow, flow: FlowParams, orders: Or
 }
 
 function rollOrder(st: CustomerFlow, spec: OrderSpec): void {
-  const d = st.orders
+  rollSpec(st.rng, st.orders, st.pool, st.flow.patienceSec, spec)
+}
+
+/**
+ * 出一张单，写进 spec。`pool` 是 OPTIONAL 的一份拷贝，原地洗、复用不分配。
+ * 外卖用它自己的 rng 和 pool 调这里 —— 不能借顾客流的 rng，否则堂食每一单都错位。
+ */
+export function rollSpec(rng: Rng, d: OrderDifficulty, pool: Ingredient[], patienceSec: number, spec: OrderSpec): void {
   spec.required.length = 0
   spec.required.push('bun', 'patty')
 
   // 部分 Fisher-Yates：洗前 n 个就够，池子复用不分配
-  const extras = d.extraMin + nextInt(st.rng, d.extraMax - d.extraMin + 1)
-  const pool = st.pool
+  const extras = d.extraMin + nextInt(rng, d.extraMax - d.extraMin + 1)
   for (let i = 0; i < extras && i < pool.length; i++) {
-    const j = i + nextInt(st.rng, pool.length - i)
+    const j = i + nextInt(rng, pool.length - i)
     const tmp = pool[i]!
     pool[i] = pool[j]!
     pool[j] = tmp
@@ -153,14 +159,14 @@ function rollOrder(st: CustomerFlow, spec: OrderSpec): void {
   }
 
   spec.banned.length = 0
-  if (chance(st.rng, d.bannedChance) && extras < pool.length) {
+  if (chance(rng, d.bannedChance) && extras < pool.length) {
     // 从没被选进 required 的那部分里挑，保证不相交
-    const idx = extras + nextInt(st.rng, pool.length - extras)
+    const idx = extras + nextInt(rng, pool.length - extras)
     spec.banned.push(pool[idx]!)
   }
 
-  spec.doneness = DONENESS[nextInt(st.rng, DONENESS.length)] as Doneness
-  spec.patience = st.flow.patienceSec
+  spec.doneness = DONENESS[nextInt(rng, DONENESS.length)] as Doneness
+  spec.patience = patienceSec
 }
 
 /** 顾客离店。槽位回到空闲，手上的进度作废 */
@@ -278,6 +284,30 @@ export function orderPatienceLeft(st: CustomerFlow, c: Customer): number {
   const take = st.flow.takeOrder
   if (!take) return 0
   return Math.min(take.patienceSec, take.walkInSec + take.patienceSec - c.orderWait)
+}
+
+/**
+ * 当前那段耐心还剩几成，0–1。没接单时是等接单那段，接了是等餐那段；
+ * 走到柜台之前那段不倒计时，算满格。late 为 0。
+ */
+export function patienceRatio(st: CustomerFlow, c: Customer): number {
+  if (c.late) return 0
+  if (c.ordered) return c.patienceMax > 0 ? Math.max(0, c.patienceLeft / c.patienceMax) : 0
+  const take = st.flow.takeOrder
+  return take ? Math.max(0, Math.min(1, orderPatienceLeft(st, c) / take.patienceSec)) : 1
+}
+
+export type MoodTier = 0 | 1 | 2 | 3 | 4
+
+/** 头顶情绪五档：0 开心 … 4 暴怒（GDD §12.5）。与卡片的 `mood`（人设情绪）无关 */
+export function moodTier(st: CustomerFlow, c: Customer): MoodTier {
+  if (c.late) return 4
+  const k = patienceRatio(st, c)
+  if (k > 0.75) return 0
+  if (k > 0.5) return 1
+  if (k > 0.25) return 2
+  if (k > 0) return 3
+  return 4
 }
 
 /**

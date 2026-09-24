@@ -129,7 +129,7 @@ const playerBox = (x: number, z: number): Box3 => ({
 const STEP = 0.1
 
 function reachable(): Array<[number, number]> {
-  const boxes = [...STATIONS, 'Station_Storeroom', 'Station_Order', ...BLOCKERS].map(specBox)
+  const boxes = [...STATIONS, 'Station_Storeroom', 'Station_Order', 'Station_Delivery', 'Station_Sink', ...BLOCKERS].map(specBox)
   const r = CHEF_RADIUS
   const nx = Math.floor((FLOOR_BOUNDS.xmax - FLOOR_BOUNDS.xmin - 2 * r) / STEP + 1e-9) + 1
   const nz = Math.floor((FLOOR_BOUNDS.zmax - FLOOR_BOUNDS.zmin - 2 * r) / STEP + 1e-9) + 1

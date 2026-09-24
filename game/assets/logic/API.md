@@ -1,4 +1,4 @@
-# `logic/` 公开接口清单 · v0.7（2026-09-18）
+# `logic/` 公开接口清单 · v0.8（2026-09-24）
 
 `logic/` 是**服务器侧的代码**与**你的 Cocos 组件**之间唯一的接缝，接缝要有文档。
 
@@ -30,6 +30,9 @@
 | `camera.ts` | **M2 相机跟随**：玩家位置 → 注视点，视图坐标钳制 + 窄屏兜底 |
 | `customer.ts` | **M2 顾客流**：到达、点单、耐心、离店。**与 `sim.ts` 共用同一份** |
 | `shift.ts` | **M2 一局**：计时、上菜记账、结算 |
+| `witness.ts` | **M4 顾客目击**：厨房出事 → 在场顾客掉一档情绪，挑一位开口 |
+| `reviews.ts` | **评价**：离店星级 + 营业中吐槽的记录，给顶部弹窗和电脑评价列表 |
+| `delivery.ts` | **外卖**：电脑上接单 / 拒单、送达期限、外卖取餐口交货。自带 rng，不碰顾客流 |
 
 **尚未建**（按里程碑排）：`chaos.ts`（M4 混乱事件调度）· `economy.ts`（M4 金币/升级/解锁）。
 
@@ -325,6 +328,8 @@ interface KitchenState {
   grill: GrillSlot[]
   burger: Burger            // 唯一一个在制汉堡，预分配
   assemblyOccupied: boolean // 与 carry.kind === 'plate' 互斥
+  burnt: number             // 累计烤糊块数，跨过 burntAt 那一帧 +1。组件比对它来发目击事件
+  plates / dirty / sink / rack   // 盘子与洗碗，见下
   cfg: KitchenConfig
 }
 
@@ -367,6 +372,18 @@ interface InteractResult {
 送完手和台子都清空。
 
 ---
+
+### 盘子与洗碗（2026-09-24）
+
+`KitchenConfig.plates` 不传 = 盘子无限（模拟器走这条，难度基线不受影响）。
+
+```ts
+plateOut(st, dineIn)          // 上菜后调：堂食过 returnSec 脏盘回池边；外卖盘子当场回架
+interact(station=sink)        // 空手点：池边脏盘全泡进去（'soak'）
+scrubSink(st, dt) -> boolean  // 按住动作键每帧调；泡好才刷得动，刷满进架子晾，晾完回放盘处
+```
+
+开新汉堡没盘 → `blocked('no-plate')`；端着汉堡丢弃，盘子变脏回池边。
 
 ## `movement.ts`
 
@@ -435,6 +452,9 @@ stepCustomerFlow(st, t, dt, onTimeout?, onArrive?)   // 先到达再倒耐心
 releaseCustomer(st, c)                               // 幂等
 closeShop(st, onLeave?)                              // 在场的一律记超时
 matchCustomer(st, burger) -> Customer | null         // 上菜给谁
+rollSpec(rng, orders, pool, patienceSec, spec)       // 出一张单；外卖用自己的 rng/pool 调
+patienceRatio(st, c) -> number                       // 当前那段耐心剩几成 0–1，耐心圈的填充量
+moodTier(st, c) -> 0|1|2|3|4                         // 头顶五档情绪，由 patienceRatio 映射
 ```
 
 ⚠ `onTimeout` / `onLeave` 在顾客被释放**之前**调用，回调里还看得见是谁。
@@ -459,7 +479,7 @@ interface ShiftResult { arrived, served, wrong, timedOut, completionRate }
 
 createShift(cfg) -> ShiftState
 resetShift(st, cfg?)                       // 重开一局，不分配
-stepShift(st, dt, onLeave?)
+stepShift(st, dt, onWalkOut?)             // onWalkOut：没人接单走掉的那位，离场前回调
 timeLeft(st) -> number                     // 倒计时用，打烊后恒 0
 settleServe(st, customer, verdict)         // 上菜记账，顾客离场
 shiftResult(st) -> ShiftResult
@@ -478,6 +498,56 @@ if (r.kind === 'serve' && c && r.verdict) settleServe(shift, c, r.verdict)
 
 星级走 `difficulty.ts` 的 `starsFor(served, day, durationSec)` —— 第三个参数不传
 就是标定局长（210s）。**短局必须传**，否则用 210 秒的门槛，玩家永远拿不到星。
+
+---
+
+## `witness.ts`
+
+```ts
+type Mishap = 'burnt'                       // 以后加脏盘 / 摔盘 / 发泄
+canWitness(st, c) -> boolean                // 还在门口走的看不见厨房
+witnessMishap(st, kind) -> Customer | null  // 看得见的每位扣 1/4 当前耐心，返回开口的那位
+```
+
+开口的是**扣之前最满意**的那位。不碰 `flow.rng`（理由同 `customer.ts` 那条 ⚠）。
+事件源各报各的，惩罚只在这一处：组件发现 `kitchen.burnt` 涨了就调一次。
+
+---
+
+## `reviews.ts`
+
+```ts
+type ReviewKind = 'witness' | 'praise' | 'complain' | 'walkout'
+interface Review { customerId, kind, stars /* 0 = 吐槽不算分 */, t }
+createReviewLog(cap = 30) -> ReviewLog
+addReview(log, r)                                   // 超出 cap 丢最旧
+serveReview(ok, late, ratioLeft) -> { kind, stars } // ratioLeft 在 settleServe 之前读
+WALKOUT_STARS = 1
+REJECT_STARS = 3                                    // 外卖拒单 / 挂着没理
+averageStars(log) -> number                         // 店铺评分，吐槽不算，空表 0
+```
+
+台词不在这里：组件按 `customerId % CARD_LINES.length` 取顾客卡（`scripts/cardLines.ts`，
+由 `pnpm cards:export` 从手写卡生成）。
+
+---
+
+## `delivery.ts`
+
+```ts
+interface DeliveryParams { intervalSec, offerSec, deadlineSec, maxOffers, maxActive }
+interface Delivery { status: 'idle' | 'offer' | 'accepted', id, left, max, spec }
+createDesk(params, orders, seed) / resetDesk(desk, seed)
+stepDesk(desk, dt, { onExpire?, onLate? })   // offer 过期 = 拒单；接了超时 = 骑手走人
+acceptDelivery(desk, d) -> boolean           // 已接满返回 false
+rejectDelivery(desk, d)
+matchDelivery(desk, burger) -> Delivery | null  // 同 matchCustomer：对得上的优先，否则最急的
+settleDelivery(desk, d, ok)
+deskBusy(desk) -> boolean                    // 还有已接没送完的，打烊结算要等
+```
+
+交货走 `kitchen.interact(station=delivery, { spec: d?.spec })`，和出餐口是同一个交接。
+`desk.open` 由组件每帧设：最后一位堂食顾客到店后不再来新单。
 
 ---
 

@@ -95,11 +95,15 @@ describe('runDay · 压力的三个旋钮都要真的有效', () => {
   // **跑腿才是**。多给槽位不但不提升，还因为要多盯一个计时器而略微变差。
   // 这直接是 M4「升级项·设备」的设计输入：做成「多一个烤炉」= 无效升级。
 
+  // Two toppings per fridge trip (2026-09-24) cut the legwork, so an extra slot now buys ~2pt — still no real upgrade
   it('基准火候下烤炉不是瓶颈 —— 多给槽位换不来完成率', () => {
     const flow = { intervalSec: 12, intervalJitter: 0, maxConcurrent: 8, patienceSec: 45 }
-    const one = runDay(cfg({ ...base, grillSlots: 1, flow }))
-    const four = runDay(cfg({ ...base, grillSlots: 4, flow }))
-    expect(four.completionRate).toBeLessThanOrEqual(one.completionRate)
+    const avg = (grillSlots: number) => {
+      let sum = 0
+      for (let k = 0; k < 8; k++) sum += runDay(cfg({ ...base, grillSlots, flow, seed: 1000 + k * 7919 })).completionRate
+      return sum / 8
+    }
+    expect(avg(4) - avg(1)).toBeLessThan(0.05)
   })
 
   it('但烤肉一旦成为瓶颈，多槽立刻显效 —— 证明这不是调度写坏了', () => {

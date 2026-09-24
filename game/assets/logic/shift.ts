@@ -83,10 +83,10 @@ export function resetShift(st: ShiftState, cfg: ShiftConfig = st.cfg): void {
 }
 
 /** 一帧。最后一位顾客离开的那一帧置 over */
-export function stepShift(st: ShiftState, dt: number): void {
+export function stepShift(st: ShiftState, dt: number, onWalkOut?: (c: Customer) => void): void {
   if (st.over) return
   st.t += dt
-  stepCustomerFlow(st.flow, st.t, dt)
+  stepCustomerFlow(st.flow, st.t, dt, undefined, undefined, onWalkOut)
   if (st.flow.arrived >= st.cfg.customers && st.flow.activeCount === 0) st.over = true
 }
 

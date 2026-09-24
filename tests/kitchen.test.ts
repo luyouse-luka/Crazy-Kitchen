@@ -77,13 +77,39 @@ describe('触发范围', () => {
   })
 })
 
-describe('手持：同时只能拿一样', () => {
-  it('手上拿着生料时再点一样 = 换掉，不是被挡', () => {
+describe('手持：最多两样不同的配料，肉饼单独拿', () => {
+  it('拿着一样再点另一样 = 两样都拿着', () => {
     const st = mk()
     expect(take(st, 'bun').kind).toBe('take-ingredient')
-    const r = take(st, 'cheese')
-    expect(r.kind).toBe('take-ingredient')
+    expect(take(st, 'cheese').kind).toBe('take-ingredient')
+    expect(st.carry.ingredient).toBe('bun')
+    expect(st.carry.second).toBe('cheese')
+  })
+
+  it('两样一起放上组装台；汉堡上已有的那样留在手上', () => {
+    const st = mk()
+    take(st, 'bun')
+    take(st, 'cheese')
+    expect(put(st).kind).toBe('add-to-burger')
+    expect(st.burger.ingredients).toEqual(['bun', 'cheese'])
+    expect(st.carry.kind).toBe('none')
+    take(st, 'cheese')
+    take(st, 'tomato')
+    put(st)
+    expect(st.burger.ingredients).toEqual(['bun', 'cheese', 'tomato'])
+    expect(st.carry.kind).toBe('ingredient')
     expect(st.carry.ingredient).toBe('cheese')
+    expect(st.carry.second).toBeNull()
+    expect(put(st).reason).toBe('duplicate-ingredient')
+  })
+
+  it('拿满两样再点第三样 = 换掉后拿的那样；同一样点两次被挡', () => {
+    const st = mk()
+    take(st, 'bun')
+    take(st, 'cheese')
+    expect(take(st, 'bun').reason).toBe('duplicate-ingredient')
+    take(st, 'tomato')
+    expect([st.carry.ingredient, st.carry.second]).toEqual(['bun', 'tomato'])
   })
 
   it('换成生肉也行 —— 面板里 patty 和配料是同一排格子', () => {
@@ -416,8 +442,11 @@ describe('冰柜库存与库房', () => {
     const st = mkCap(2)
     take(st, 'bun')
     take(st, 'cheese')
+    expect(st.stock[bun]).toBe(1)
+    take(st, 'patty')
     expect(st.stock[bun]).toBe(2)
-    expect(st.carry.ingredient).toBe('cheese')
+    expect(st.stock[INGREDIENTS.indexOf('cheese')]).toBe(2)
+    expect(st.carry.kind).toBe('patty')
   })
 
   it('库房抱一箱，回冰柜补满那一格', () => {

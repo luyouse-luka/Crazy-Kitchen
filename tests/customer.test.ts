@@ -3,6 +3,8 @@ import {
   closeShop,
   createCustomerFlow,
   matchCustomer,
+  moodTier,
+  patienceRatio,
   releaseCustomer,
   stepCustomerFlow,
 } from '../game/assets/logic/customer'
@@ -189,5 +191,47 @@ describe('真人局的两个开关（不传时模拟器行为不变）', () => {
     const st = mk({ intervalSec: 1, maxConcurrent: 6, patienceSec: 999, maxArrivals: 2 })
     run(st, 30)
     expect(st.arrived).toBe(2)
+  })
+})
+
+describe('moodTier', () => {
+  it('已接单：按等餐耐心比例分五档，边界归低一档', () => {
+    const st = mk({ intervalSec: 999, patienceSec: 20 })
+    stepCustomerFlow(st, 0, 0)
+    const c = st.customers.find((x) => x.active)!
+    const at = (left: number) => ((c.patienceLeft = left), moodTier(st, c))
+    expect([20, 15.1, 15, 10, 5, 0.1, 0].map(at)).toEqual([0, 0, 1, 2, 3, 3, 4])
+  })
+
+  it('late 恒为暴怒，哪怕耐心字段还没归零', () => {
+    const st = mk({ intervalSec: 999, patienceSec: 20 })
+    stepCustomerFlow(st, 0, 0)
+    const c = st.customers.find((x) => x.active)!
+    c.late = true
+    expect(moodTier(st, c)).toBe(4)
+  })
+
+  it('未接单：走到柜台前满格，之后按等接单耐心掉档', () => {
+    const st = mk({ intervalSec: 999, takeOrder: { walkInSec: 4, patienceSec: 8 } })
+    stepCustomerFlow(st, 0, 0)
+    const c = st.customers.find((x) => x.active)!
+    expect(c.ordered).toBe(false)
+    const at = (wait: number) => ((c.orderWait = wait), moodTier(st, c))
+    expect([0, 4, 6, 8, 10, 11.9, 12].map(at)).toEqual([0, 0, 1, 2, 3, 3, 4])
+  })
+
+  it('patienceRatio 夹在 0–1：走到柜台前是 1，late 是 0', () => {
+    const st = mk({ intervalSec: 999, takeOrder: { walkInSec: 4, patienceSec: 8 } })
+    stepCustomerFlow(st, 0, 0)
+    const c = st.customers.find((x) => x.active)!
+    c.orderWait = 0
+    expect(patienceRatio(st, c)).toBe(1)
+    c.orderWait = 8
+    expect(patienceRatio(st, c)).toBe(0.5)
+    c.orderWait = 99
+    expect(patienceRatio(st, c)).toBe(0)
+    c.late = true
+    c.orderWait = 0
+    expect(patienceRatio(st, c)).toBe(0)
   })
 })

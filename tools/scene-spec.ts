@@ -33,7 +33,7 @@ export const SPEC: Record<string, NodeSpec> = {
    * 北墙一排台面，自西向东：打包台 → 制作台 → 放盘子 → 烤炉 ×2 → 薯条，中间不留缝；
    * 冰箱在薯条东边隔 0.5m。烤炉两台对应两个烤位，所以工位是 2×1。
    *
-   * 南边一整条前台，只在东头留 1m 出口：西头是点单台（顾客从西边进来先到这儿），
+   * 南边一整条前台，只在东头留 1m 出口：西头是点单台（电脑），顾客在它东边那段柜台点单、取餐；从东头进、西头出，
    * 正对制作台那 2m 是取餐口，其余是 Block_Counter*。
    */
   Station_Fridge: { pos: [5, 0.45, -2.5], scale: [1, 0.9, 1] },
@@ -41,6 +41,8 @@ export const SPEC: Record<string, NodeSpec> = {
   Station_Assembly: { pos: [-0.5, 0.45, -2.5], scale: [1, 0.9, 1] },
   Station_Serve: { pos: [-0.5, 0.45, 2.5], scale: [2, 0.9, 1] },
   Station_Order: { pos: [-3.5, 0.45, 2.5], scale: [1, 0.9, 1] },
+  /** 外卖取餐口：前台东段，出口西边紧挨着（2026-09-24）。骑手从东头出口进出 */
+  Station_Delivery: { pos: [2.5, 0.45, 2.5], scale: [1, 0.9, 1] },
   /**
    * 库房货架，贴东墙从北墙排到南墙边。南端留下的空角会把玩家顶到画面边缘（`pnpm cam`），所以堵上。
    * triggerRange 隔着南墙也够得着，但南墙外那块是封死的，走不进去。
@@ -61,8 +63,9 @@ export const SPEC: Record<string, NodeSpec> = {
   Block_Plate: { pos: [0.5, 0.45, -2.5], scale: [1, 0.9, 1] },
   Block_Fryer: { pos: [3.5, 0.45, -2.5], scale: [1, 0.9, 1] },
   Block_CounterW: { pos: [-2.25, 0.45, 2.5], scale: [1.5, 0.9, 1] },
-  Block_CounterE: { pos: [1.75, 0.45, 2.5], scale: [2.5, 0.9, 1] },
-  Block_Sink: { pos: [8, 0.45, 2.5], scale: [2, 0.9, 1] },
+  Block_CounterE: { pos: [1.25, 0.45, 2.5], scale: [1.5, 0.9, 1] },
+  /** 洗碗池：一个大池子，泡 → 按住刷 → 旁边架子晾（2026-09-24 由 Block_Sink 改成工位） */
+  Station_Sink: { pos: [8, 0.45, 2.5], scale: [2, 0.9, 1] },
   Block_DishRack: { pos: [9.5, 0.45, 2.5], scale: [1, 0.9, 1] },
   Block_Crates: { pos: [10.9, 0.45, -2.6], scale: [0.8, 0.9, 0.8] },
 

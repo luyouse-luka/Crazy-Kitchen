@@ -46,15 +46,38 @@ import {
   resetKitchen,
   stationInReach,
   stepKitchen,
+  scrubSink,
+  DEFAULT_WASH,
 } from '../logic/kitchen'
 import type { BlockReason, KitchenState } from '../logic/kitchen'
 import { createShift, resetShift, settleServe, shiftResult, starsForShift, stepShift } from '../logic/shift'
 import type { ShiftState } from '../logic/shift'
-import { matchCustomer, orderPatienceLeft, queueIndex, takeReadyOrders } from '../logic/customer'
+import { matchCustomer, moodTier, orderPatienceLeft, patienceRatio, queueIndex, takeReadyOrders } from '../logic/customer'
 import type { Customer } from '../logic/customer'
+import type { OrderSpec } from '../logic/types'
 import { difficultyForDay } from '../logic/difficulty'
 import { COOK_LABEL, COOK_LEVELS, INGREDIENT_LABEL } from '../logic/types'
 import { Bubble } from './Bubble'
+import { Ring } from './Ring'
+import { witnessMishap } from '../logic/witness'
+import { addReview, averageStars, createReviewLog, REJECT_STARS, serveReview, WALKOUT_STARS } from '../logic/reviews'
+import type { Review, ReviewKind, ReviewLog } from '../logic/reviews'
+import { CARD_LINES } from './cardLines'
+import { ComputerPanel, Toast, TOAST_H } from './ReviewUi'
+import { Controls } from './Controls'
+import { BurgerStack } from './BurgerStack'
+import type { OfferRow, ReviewLine } from './ReviewUi'
+import {
+  acceptDelivery,
+  createDesk,
+  deskBusy,
+  matchDelivery,
+  rejectDelivery,
+  resetDesk,
+  settleDelivery,
+  stepDesk,
+} from '../logic/delivery'
+import type { Delivery, DeliveryDesk, DeskEvents } from '../logic/delivery'
 import { createMovement, stepMovement } from '../logic/movement'
 import type { MovementState } from '../logic/movement'
 import { DEFAULT_COOK } from '../logic/recipe'
@@ -72,6 +95,8 @@ const STATION_KINDS: Record<string, StationKind> = {
   Station_Serve: 'serve',
   Station_Storeroom: 'storeroom',
   Station_Order: 'register',
+  Station_Delivery: 'delivery',
+  Station_Sink: 'sink',
 }
 
 /** Scene paths resolved at start. `pnpm scene` checks every one of them against the
@@ -85,6 +110,7 @@ const NODES = {
   camera: 'Main Camera',
   joystick: 'Canvas/UI_Joystick',
   discard: 'Canvas/UI_DiscardButton',
+  action: 'Canvas/UI_ActionButton',
   panel: 'Canvas/UI_FridgePanel',
   time: 'Canvas/UI_HUD/Label_Time',
   score: 'Canvas/UI_HUD/Label_Score',
@@ -109,6 +135,21 @@ const COOK_COLOR: Record<CookLevel, Color> = {
 
 /** 气泡离地多高，米。玩家模型约 1.45m 高 */
 const BUBBLE_Y = { carry: 1.9, grill: 1.5, bench: 1.45 }
+/** Where the carried burger rides: metres in front of the player, and height */
+const HAND = { reach: 0.45, y: 1.0 }
+const MOOD_FACE = ['😀', '🙂', '😐', '😡', '🤬'] as const
+/** Ring colour by how much patience is left: plenty / hurry / about to go */
+const RING_OK = new Color(110, 210, 110, 255)
+const RING_WARN = new Color(245, 200, 70, 255)
+const ASK_COLOR = new Color(255, 215, 80, 255)
+/** Placeholder until cards carry lines.witness (ROADMAP M4); copy from the V0.2 design brief */
+const WITNESS_LINES = ['这东西是煤炭吗？', '我突然没那么饿了。', '这家店卫生评级多少来着？'] as const
+/** 电脑上最多挂几张外卖单 / 同时最多做几张 */
+const DELIVERY_OFFERS = 2
+const DELIVERY_ACTIVE = 2
+/** 外卖顾客的编号从这里起，和堂食错开（评价按编号取顾客卡） */
+const DELIVERY_ID_BASE = 1000
+const PLATFORM_AVATAR = 5
 
 /** 第几天的难度。M2 固定第 1 天，接上存档后改成读进度 */
 const SHIFT_DAY = 1
@@ -152,6 +193,8 @@ interface Figure {
   /** WAIT_SPOTS 下标；-1 = 没占座 */
   seat: number
   leaving: boolean
+  /** 上菜后先走到出餐口取餐，再出门 */
+  pickup: boolean
   clip: string
 }
 
@@ -191,11 +234,29 @@ export class StationView extends Component {
   @property({ tooltip: '冰柜每样食材最多放几份。空了要去库房抱一箱回来补满' })
   fridgeCap = 4
 
+  @property({ tooltip: '站着时头顶离脚底多少米（耐心圈贴在这里）。手感旋钮，预览里对着看' })
+  headStandY = 1.45
+
+  @property({ tooltip: '坐在长凳上时头顶离人物节点多少米（节点已抬了 SEAT_Y）' })
+  headSitY = 0.76
+
   @property({ tooltip: '顾客走到点单台后等多少秒没人接单就走人（差评）' })
   orderPatienceSec = 25
 
   @property({ tooltip: '一局来几位顾客，接待完就结算' })
   customersPerShift = 10
+
+  @property({ tooltip: '一开局有几个干净盘子。每做一个汉堡占一个，堂食吃完脏着送回洗碗池' })
+  plateCount = 4
+
+  @property({ tooltip: '外卖单隔多少秒来一张（挂在点单台电脑上）' })
+  deliveryIntervalSec = 40
+
+  @property({ tooltip: '外卖单挂在电脑上多少秒没人理就算拒单' })
+  deliveryOfferSec = 15
+
+  @property({ tooltip: '接了外卖后多少秒内要放上外卖取餐口' })
+  deliveryDeadlineSec = 75
 
   @property({ tooltip: '顾客平均隔多少秒来一位。真人局专用，模拟器仍按难度表' })
   arrivalSec = 30
@@ -258,28 +319,61 @@ export class StationView extends Component {
   /** 排队第一位站的位置 */
   private queueX = 0
   private queueZ = 0
-  /** 每位在场顾客头顶的「等点单」气泡，下标同 flow.customers */
-  private orderBubbles: Bubble[] = []
+  /** 每位在场顾客头顶的耐心圈，下标同 flow.customers */
+  private customerRings: Ring[] = []
+  private seenBurnt = 0
+  private witnessLine = 0
+  /** 各圈上的顾客已经催过单了（id），同一位只催一次 */
+  private nudged: number[] = []
+  private reviews: ReviewLog = createReviewLog()
+  /** 与 reviews.items 同序的台词，评价列表直接读 */
+  private reviewLines: ReviewLine[] = []
+  private toast!: Toast
+  private board!: ComputerPanel
+  private reviewsOpen = false
+  private desk!: DeliveryDesk
+  private deliverySeed = 1
+  /** 电脑面板上第 i 行对应的外卖单（null = 这行空着） */
+  private offerRows: (Delivery | null)[] = []
+  private offerView: (OfferRow | null)[] = []
+  private offerMask = ''
+  private seenOffer = 1
+  private registerRing!: Ring
+  private deliveryRing!: Ring
+  private registerStation: Station | null = null
+  private deliveryStation: Station | null = null
+  private deliveryCards: Node[] = []
+  private deliveryTexts: Label[] = []
+  private deliveryBars: Node[] = []
+  private deliveryShown: number[] = []
+  private controls!: Controls
+  private plateRing!: Ring
+  private sinkRing!: Ring
+  private rackRing!: Ring
+  private platePos = { x: 0, z: 0 }
+  private rackPos = { x: 0, z: 0 }
+  private sinkStation: Station | null = null
+  /** 顾客从西边进门、东边出门（玩家视角左进右出） */
+  private exitX = 0
+  private toastY = 0
+  /** 出餐口的 x；顾客取餐站在柜台外 queueZ 那条线上 */
+  private pickupX = 0
   private playerAnim: SkeletalAnimation | null = null
   private playerModel: Node | null = null
   private playerWalking = false
   private carryBubble!: Bubble
-  private grillBubble!: Bubble
+  private grillRings: Ring[] = []
   private benchBubble!: Bubble
+  private burgerStack: BurgerStack | null = null
+  private benchTopY = 1
   private grillStation: Station | null = null
   private benchStation: Station | null = null
-  private grillKey = -1
   private iconBuf: (SpriteFrame | null)[] = []
-  private timeLabel!: Label
-  private scoreLabel!: Label
   private resultNode!: Node
   private resultTitle!: Label
   private resultBody!: Label
   private againNode!: Node
   private resultOpen = false
-  /** 上一帧画出来的来客数与好评数。Label.string 每次赋值都会重排，值没变就别碰 */
-  private shownArrived = -1
-  private shownScore = -1
 
   private screenW = 0
   private screenH = 0
@@ -326,8 +420,6 @@ export class StationView extends Component {
     }
     this.resultNode = result
     this.againNode = again
-    this.timeLabel = timeLabel
-    this.scoreLabel = scoreLabel
     this.resultTitle = resultTitle
     this.resultBody = resultBody
     this.cameraYaw = (camera.eulerAngles.y * Math.PI) / 180
@@ -404,7 +496,9 @@ export class StationView extends Component {
       this.enabled = false
       return
     }
-    this.queueX = register.pos.x
+    // Diners order and pick up at the counter beside the computer, not in front of it
+    const counter = kitchenRoot.getChildByPath('Blockers/Block_CounterW')
+    this.queueX = counter ? counter.worldPosition.x : register.pos.x
     if (this.ingredientIcons.length !== INGREDIENTS.length || !this.plateIcon) {
       console.error(`[StationView] ingredientIcons 要 ${INGREDIENTS.length} 张（顺序同 INGREDIENTS），plateIcon 要设`)
       this.enabled = false
@@ -413,17 +507,65 @@ export class StationView extends Component {
     // Index 1 = right after the Canvas camera, so every panel and the result mask draw over it
     const world = new Node('UI_World')
     world.layer = this.node.layer
+    // convertToUINode leaves `out` untouched when the target has no UITransform — every bubble
+    // then kept its stale position and the rings drifted up by their own offset each frame
+    world.addComponent(UITransform)
     this.node.insertChild(world, 1)
     this.carryBubble = new Bubble(world, 'Carry', INGREDIENTS.length + 1)
-    this.grillBubble = new Bubble(world, 'Grill', 0)
+    for (let i = 0; i < 2; i++) this.grillRings.push(new Ring(world, `Grill_${i}`, 18))
     this.benchBubble = new Bubble(world, 'Bench', INGREDIENTS.length)
-    for (let i = 0; i < ORDER_CARDS; i++) this.orderBubbles.push(new Bubble(world, `Order_${i}`, 0))
+    this.buildBurgerStack(kitchenRoot)
+    for (let i = 0; i < ORDER_CARDS; i++) {
+      this.customerRings.push(new Ring(world, `Customer_${i}`))
+      this.nudged.push(-1)
+    }
+    this.board = new ComputerPanel(this.node, DELIVERY_OFFERS)
+    for (let i = 0; i < DELIVERY_OFFERS; i++) {
+      this.offerRows.push(null)
+      this.offerView.push(null)
+    }
+    this.registerRing = new Ring(world, 'Register')
+    this.deliveryRing = new Ring(world, 'Delivery')
+    this.registerStation = register
+    this.deliveryStation = stations.find((s) => s.kind === 'delivery') ?? null
+    this.buildDeliveryCards(ordersRoot)
+    // The strip above the diner order row: anything lower covers the kitchen
+    this.toastY = ordersRoot.position.y + (this.orderCards[0]!.getComponent(UITransform)?.height ?? 96) / 2 + 4 + TOAST_H / 2
+    const action = this.need(NODES.action)
+    if (action) this.controls = new Controls(joystick, action, discardBtn)
+    this.plateRing = new Ring(world, 'Plates')
+    this.sinkRing = new Ring(world, 'Sink')
+    this.rackRing = new Ring(world, 'Rack')
+    this.sinkStation = stations.find((s) => s.kind === 'sink') ?? null
+    this.toast = new Toast(this.node)
+    timeLabel.node.active = false
+    scoreLabel.node.active = false
+    this.pickupX = this.queueX
 
-    this.kitchen = createKitchen({ stations, cook: { ...DEFAULT_COOK }, grillSlots: 2, fridgeCap: this.fridgeCap })
+    this.kitchen = createKitchen({
+      stations,
+      cook: { ...DEFAULT_COOK },
+      grillSlots: 2,
+      fridgeCap: this.fridgeCap,
+      plates: this.plateCount,
+    })
     const day = difficultyForDay(SHIFT_DAY)
+    // 每次进游戏换一批单，但同一局内可复现。M4 接存档后改成从存档读
+    const seed = (Date.now() & 0x7fffffff) || 1
+    this.deliverySeed = (seed ^ 0x5bd1e995) >>> 0 || 1
+    this.desk = createDesk(
+      {
+        intervalSec: this.deliveryIntervalSec,
+        offerSec: this.deliveryOfferSec,
+        deadlineSec: this.deliveryDeadlineSec,
+        maxOffers: DELIVERY_OFFERS,
+        maxActive: DELIVERY_ACTIVE,
+      },
+      day.orders,
+      this.deliverySeed,
+    )
     this.shift = createShift({
-      // 每次进游戏换一批单，但同一局内可复现。M4 接存档后改成从存档读
-      seed: (Date.now() & 0x7fffffff) || 1,
+      seed,
       customers: this.customersPerShift,
       flow: {
         ...day.flow,
@@ -439,6 +581,10 @@ export class StationView extends Component {
     })
     this.resultNode.active = false
     const blockers = this.need(NODES.blockers)
+    const plate = blockers?.getChildByName('Block_Plate')
+    const rack = blockers?.getChildByName('Block_DishRack')
+    if (plate) this.platePos = { x: plate.position.x, z: plate.position.z }
+    if (rack) this.rackPos = { x: rack.position.x, z: rack.position.z }
     this.movement = createMovement({ stations, boxes: blockers ? StationView.readBoxes(blockers) : [] })
     this.router = new TouchRouter(view.getVisibleSize().width / 2, undefined, DEFAULT_ACTION)
     this.syncScreen()
@@ -543,7 +689,8 @@ export class StationView extends Component {
 
     this.waitX = floor.position.x
     this.waitZ = floor.position.z
-    this.doorX = floor.position.x - floor.scale.x / 2 - 1.5
+    this.doorX = floor.position.x + floor.scale.x / 2 + 1.5
+    this.exitX = floor.position.x - floor.scale.x / 2 - 1.5
     this.doorZ = floor.position.z
     this.queueZ = floor.position.z - floor.scale.z / 2 + 1
     for (let i = 0; i < FIGURES; i++) {
@@ -554,7 +701,7 @@ export class StationView extends Component {
       node.addChild(instantiate(shadow))
       node.active = false
       root.addChild(node)
-      this.figures.push({ node, body, anim: body.getComponent(SkeletalAnimation), id: -1, tx: 0, tz: 0, seat: -1, leaving: false, clip: '' })
+      this.figures.push({ node, body, anim: body.getComponent(SkeletalAnimation), id: -1, tx: 0, tz: 0, seat: -1, leaving: false, pickup: false, clip: '' })
     }
     return true
   }
@@ -678,7 +825,7 @@ export class StationView extends Component {
     if (this.keys.w) dy += 1
     // The panel freezes movement anyway, and the full-screen cancel zone would swallow
     // this press and close the panel on a stray W.
-    if (this.panelOpen || (dx === 0 && dy === 0)) {
+    if (this.panelOpen || this.reviewsOpen || (dx === 0 && dy === 0)) {
       if (this.keyStickDown) {
         this.keyStickDown = false
         this.router.onUp(KEY_STICK_ID)
@@ -726,16 +873,21 @@ export class StationView extends Component {
     } else {
       this.syncKeyStick()
       stepKitchen(this.kitchen, dt)
-      stepShift(this.shift, dt)
+      stepShift(this.shift, dt, this.onWalkOut)
+      this.desk.open = !this.shift.over && this.shift.flow.arrived < this.customersPerShift
+      stepDesk(this.desk, dt, this.deskEvents)
+      this.tickWitness()
       // World keeps running while the panel is open; the stick is frozen because every
       // touch lands in a capture zone, so this is a no-op then.
       stepMovement(this.movement, this.router.stick, this.cameraYaw, dt)
-      if (this.panelOpen) this.tickPanel()
+      if (this.reviewsOpen) this.tickComputer()
+      else if (this.panelOpen) this.tickPanel()
       else this.tickPlay()
     }
     this.router.tick(dt)
 
-    if (this.shift.over && !this.resultOpen) {
+    // Accepted deliveries still count after the last diner leaves
+    if (this.shift.over && !deskBusy(this.desk) && !this.resultOpen) {
       this.showResult()
       return
     }
@@ -744,6 +896,7 @@ export class StationView extends Component {
     if (this.resultOpen) return
     this.syncNodes()
     this.syncHud()
+    this.toast.tick(dt, this.toastY)
   }
 
   private syncScreen(): void {
@@ -784,6 +937,10 @@ export class StationView extends Component {
       this.report(discard(this.kitchen).reason)
       return
     }
+    if (this.router.action.holding && stationInReach(this.kitchen, this.movement.pos)?.kind === 'sink') {
+      scrubSink(this.kitchen, game.deltaTime)
+      return
+    }
     if (!this.router.action.tapped) return
 
     const station = stationInReach(this.kitchen, this.movement.pos)
@@ -800,7 +957,21 @@ export class StationView extends Component {
     }
     if (station.kind === 'register') {
       // 一下接完柜台前所有人：排队的人多时逐个按太磨，接单本身也不该是难点
-      return this.report(takeReadyOrders(this.shift.flow) > 0 ? 'none' : 'no-order')
+      if (takeReadyOrders(this.shift.flow) > 0) return this.report('none')
+      // Nobody waiting: the counter computer shows the reviews
+      this.openReviews()
+      return
+    }
+    if (station.kind === 'delivery') {
+      const d = matchDelivery(this.desk, this.kitchen.burger)
+      const r = interact(this.kitchen, this.movement.pos, station, { spec: d?.spec })
+      if (r.kind === 'serve' && d && r.verdict) {
+        const rv = serveReview(r.verdict.ok, false, d.max > 0 ? d.left / d.max : 0)
+        const line = CARD_LINES[(DELIVERY_ID_BASE + d.id) % CARD_LINES.length]!
+        this.review(DELIVERY_ID_BASE + d.id, rv.kind, rv.stars, rv.kind === 'praise' ? line.praise : line.complain)
+        settleDelivery(this.desk, d, r.verdict.ok)
+      }
+      return this.report(r.reason)
     }
     if (station.kind === 'storeroom') {
       if (held !== 'none') return this.report('hands-full')
@@ -811,7 +982,14 @@ export class StationView extends Component {
       // 谁接这一盘是玩法规则，不在组件里挑：logic 先找吃得下的，找不到砸给最急的那位
       const c = matchCustomer(this.shift.flow, this.kitchen.burger)
       const r = interact(this.kitchen, this.movement.pos, station, { spec: c?.spec })
-      if (r.kind === 'serve' && c && r.verdict) settleServe(this.shift, c, r.verdict)
+      if (r.kind === 'serve' && c && r.verdict) {
+        // Read before settleServe releases the customer
+        const rv = serveReview(r.verdict.ok, c.late, patienceRatio(this.shift.flow, c))
+        const line = CARD_LINES[c.id % CARD_LINES.length]!
+        this.review(c.id, rv.kind, rv.stars, rv.kind === 'praise' ? line.praise : line.complain)
+        settleServe(this.shift, c, r.verdict)
+        for (const f of this.figures) if (f.id === c.id && !f.leaving) f.pickup = true
+      }
       return this.report(r.reason)
     }
     this.report(interact(this.kitchen, this.movement.pos, station).reason)
@@ -823,10 +1001,14 @@ export class StationView extends Component {
       const station = this.panelStation
       this.closePanel()
       if (!station) return this.report('unsupported')
-      // Picking always closes the panel — one tap, even when the pick is refused.
-      this.report(
-        interact(this.kitchen, this.movement.pos, station, { ingredient: INGREDIENTS[i]! }).reason,
-      )
+      // Picking closes the panel, even when refused — except after a first topping, so the
+      // second hand is one more tap (tap outside to leave with just the one)
+      const r = interact(this.kitchen, this.movement.pos, station, { ingredient: INGREDIENTS[i]! })
+      this.report(r.reason)
+      const c = this.kitchen.carry
+      if (r.kind === 'take-ingredient' && station.kind === 'fridge' && c.kind === 'ingredient' && c.second === null) {
+        this.openPanel(station)
+      }
       return
     }
     if (this.router.zone('panel-outside')?.tapped) this.closePanel()
@@ -862,14 +1044,22 @@ export class StationView extends Component {
 
   private refreshZones(): void {
     const carrying = this.kitchen.carry.kind !== 'none'
-    const mode = this.resultOpen ? 'result' : this.panelOpen ? 'panel' : carrying ? 'discard' : 'none'
-    const key = `${mode}|${this.screenW}x${this.screenH}`
+    const mode = this.resultOpen
+      ? 'result'
+      : this.reviewsOpen
+        ? 'reviews'
+        : this.panelOpen
+          ? 'panel'
+          : carrying
+            ? 'discard'
+            : 'none'
+    const key = `${mode}|${this.reviewsOpen ? this.offerMask : ''}|${this.screenW}x${this.screenH}`
     if (key === this.zonesKey) return
     this.zonesKey = key
 
     // Widgets only align on active nodes, and the zone is built from the aligned position.
     this.panelNode.active = this.panelOpen && !this.resultOpen
-    this.discardNode.active = carrying && !this.panelOpen && !this.resultOpen
+    this.discardNode.active = carrying && !this.panelOpen && !this.reviewsOpen && !this.resultOpen
 
     const zones: CaptureZone[] = []
     if (this.resultOpen) {
@@ -884,6 +1074,15 @@ export class StationView extends Component {
       }
       // 兜底吞掉其余触摸：打烊了还能走路会让人以为局没结束
       zones.push({ id: 'result-outside', x: 0, y: 0, w: this.screenW, h: this.screenH })
+    } else if (this.reviewsOpen) {
+      const p = this.board.node.position
+      for (const b of this.board.buttons) {
+        const row = Number(b.id.slice(6))
+        if (!this.offerRows[row]) continue
+        zones.push(panelChildZone(b.id, p.x, p.y, b.x, b.y, b.w, b.h, this.screenW, this.screenH, this.designH))
+      }
+      // Last, so the buttons win the hit test
+      zones.push({ id: 'reviews-outside', x: 0, y: 0, w: this.screenW, h: this.screenH })
     } else if (this.panelOpen) {
       const p = this.panelNode.position
       for (let i = 0; i < this.slotNodes.length; i++) {
@@ -920,14 +1119,209 @@ export class StationView extends Component {
     this.router.setCaptureZones(zones)
   }
 
+  /** Kitchen mishaps → witnesses lose a mood tier (logic/witness.ts); the speaker's remark pops up top */
+  private tickWitness(): void {
+    const cs = this.shift.flow.customers
+    while (this.seenBurnt < this.kitchen.burnt) {
+      this.seenBurnt++
+      const who = witnessMishap(this.shift.flow, 'burnt')
+      if (who) this.review(who.id, 'witness', 0, WITNESS_LINES[this.witnessLine++ % WITNESS_LINES.length]!)
+    }
+    // One nudge per customer, when they first turn 😡
+    for (let i = 0; i < cs.length; i++) {
+      const c = cs[i]!
+      if (!c.active || !c.ordered || this.nudged[i] === c.id || moodTier(this.shift.flow, c) < 3) continue
+      this.nudged[i] = c.id
+      this.review(c.id, 'witness', 0, CARD_LINES[c.id % CARD_LINES.length]!.wait_nudge)
+    }
+  }
+
+  private readonly onWalkOut = (c: Customer): void => {
+    this.review(c.id, 'walkout', WALKOUT_STARS, CARD_LINES[c.id % CARD_LINES.length]!.complain)
+  }
+
+  private review(customerId: number, kind: ReviewKind, stars: number, text: string): void {
+    const card = customerId % CARD_LINES.length
+    const r: Review = { customerId, kind, stars, t: this.shift.t }
+    addReview(this.reviews, r)
+    const name = CARD_LINES[card]!.identity + (customerId >= DELIVERY_ID_BASE ? '（外卖）' : '')
+    const line: ReviewLine = { name, avatar: card, stars, text }
+    this.reviewLines.push(line)
+    if (this.reviewLines.length > this.reviews.cap) this.reviewLines.shift()
+    this.toast.push(line)
+  }
+
+  private openReviews(): void {
+    const newest: ReviewLine[] = []
+    for (let i = this.reviewLines.length - 1; i >= 0; i--) newest.push(this.reviewLines[i]!)
+    this.board.show(averageStars(this.reviews), newest)
+    this.reviewsOpen = true
+    this.syncOffers()
+    this.router.cancelAll()
+  }
+
+  /** Map desk offers onto panel rows and redraw; the mask feeds the zone key */
+  private syncOffers(): void {
+    let j = 0
+    let mask = ''
+    for (const d of this.desk.slots) {
+      if (d.status !== 'offer' || j >= this.offerRows.length) continue
+      this.offerRows[j] = d
+      const v = this.offerView[j] ?? { text: '', sec: 0 }
+      v.text = StationView.specText(d.spec)
+      v.sec = Math.ceil(d.left)
+      this.offerView[j] = v
+      j++
+    }
+    for (let i = 0; i < this.offerRows.length; i++) {
+      if (i >= j) {
+        this.offerRows[i] = null
+        this.offerView[i] = null
+      }
+      mask += this.offerRows[i] ? '1' : '0'
+    }
+    this.offerMask = mask
+    this.board.syncOffers(this.offerView)
+  }
+
+  private tickComputer(): void {
+    for (let i = 0; i < this.offerRows.length; i++) {
+      const d = this.offerRows[i]
+      if (!d) continue
+      if (this.router.zone(`accept${i}`)?.tapped) {
+        this.report(acceptDelivery(this.desk, d) ? 'none' : 'hands-full')
+        return this.syncOffers()
+      }
+      if (this.router.zone(`reject${i}`)?.tapped) {
+        rejectDelivery(this.desk, d)
+        this.review(DELIVERY_ID_BASE + d.id, 'reject', REJECT_STARS, '外卖单被拒了')
+        return this.syncOffers()
+      }
+    }
+    if (this.router.zone('reviews-outside')?.tapped) return this.closeReviews()
+    this.syncOffers()
+  }
+
+  private readonly deskEvents: DeskEvents = {
+    onExpire: (d) => this.review(DELIVERY_ID_BASE + d.id, 'reject', REJECT_STARS, '外卖单挂了半天没人接'),
+    onLate: (d) => this.review(DELIVERY_ID_BASE + d.id, 'walkout', WALKOUT_STARS, '骑手等不到餐，单子作废了'),
+  }
+
+  /** Two extra HUD cards for accepted deliveries, cloned from Order_0 */
+  private buildDeliveryCards(root: Node): void {
+    const src = this.orderCards[0]!
+    const h = src.getComponent(UITransform)?.height ?? 80
+    for (let i = 0; i < DELIVERY_ACTIVE; i++) {
+      const card = instantiate(src)
+      card.name = `Delivery_${i}`
+      root.addChild(card)
+      // Left column under the diner row
+      card.setPosition(this.orderCards[0]!.position.x, -(h + 12) * (i + 1), 0)
+      card.active = false
+      this.deliveryCards.push(card)
+      this.deliveryTexts.push(card.getChildByName('Text')!.getComponent(Label)!)
+      this.deliveryBars.push(card.getChildByName('Bar')!)
+      this.deliveryShown.push(-1)
+    }
+  }
+
+  /** Rings over the counter computer (offers waiting) and the takeaway shelf (orders due) */
+  private syncDeliveryRings(): void {
+    const cam = this.cameraComp
+    const soonest = (status: Delivery['status']): number => {
+      let k = 2
+      for (const d of this.desk.slots) if (d.status === status && d.max > 0) k = Math.min(k, d.left / d.max)
+      return k
+    }
+    const r = this.registerStation
+    const offer = soonest('offer')
+    if (r && offer <= 1) {
+      this.registerRing.show(offer, StationView.ringColor(offer), '🛵')
+      this.registerRing.follow(cam, r.pos.x, BUBBLE_Y.grill, r.pos.z, this.uiHalfW, this.uiHalfH)
+    } else this.registerRing.hide()
+    const s = this.deliveryStation
+    const due = soonest('accepted')
+    if (s && due <= 1) {
+      this.deliveryRing.show(due, StationView.ringColor(due), '🛍')
+      this.deliveryRing.follow(cam, s.pos.x, BUBBLE_Y.grill, s.pos.z, this.uiHalfW, this.uiHalfH)
+    } else this.deliveryRing.hide()
+    if (this.desk.nextId !== this.seenOffer) {
+      this.seenOffer = this.desk.nextId
+      this.toast.push({ name: '外卖平台', avatar: PLATFORM_AVATAR, stars: 0, text: '新外卖单，去点单台电脑接单' })
+    }
+  }
+
+  private closeReviews(): void {
+    this.reviewsOpen = false
+    this.board.hide()
+    this.router.cancelAll()
+  }
+
+  /** What a tap (or hold) on the action key would do here, shown on the key */
+  private actionVerb(): string {
+    const st = stationInReach(this.kitchen, this.movement.pos)
+    if (!st) return ''
+    const k = this.kitchen
+    const held = k.carry.kind
+    switch (st.kind) {
+      case 'fridge':
+        return held === 'crate' ? '补货' : '取料'
+      case 'grill':
+        return held === 'patty' && k.carry.cook === 'raw' ? '下锅' : '取肉'
+      case 'assembly':
+        return held === 'none' ? '端盘' : held === 'plate' ? '放下' : '组装'
+      case 'serve':
+        return '上菜'
+      case 'delivery':
+        return '交外卖'
+      case 'register':
+        return '接单'
+      case 'storeroom':
+        return '搬箱'
+      case 'sink':
+        return k.sink.stage === 'soaked' ? '按住刷' : k.sink.stage === 'soaking' ? '泡着' : '泡碗'
+      default:
+        return ''
+    }
+  }
+
+  /** Clean plates over the shelf, the sink's soak/scrub progress, the rack drying */
+  private syncKitchenRings(): void {
+    const k = this.kitchen
+    const cam = this.cameraComp
+    if (k.plates !== Infinity) {
+      this.plateRing.show(-1, RING_OK, `🍽${k.plates}`, k.plates > 0 ? Color.WHITE : LATE_BAR_COLOR)
+      this.plateRing.follow(cam, this.platePos.x, BUBBLE_Y.bench, this.platePos.z, this.uiHalfW, this.uiHalfH)
+    }
+    const s = this.sinkStation
+    if (s) {
+      const sink = k.sink
+      const w = DEFAULT_WASH
+      if (sink.stage === 'soaking') this.sinkRing.show(1 - sink.left / w.soakSec, ASK_COLOR, '💧')
+      else if (sink.stage === 'soaked') this.sinkRing.show(sink.scrub, RING_OK, '🧽')
+      else if (k.dirty > 0) this.sinkRing.show(-1, RING_OK, `脏${k.dirty}`, LATE_BAR_COLOR)
+      else this.sinkRing.hide()
+      if (sink.stage !== 'empty' || k.dirty > 0) this.sinkRing.follow(cam, s.pos.x, BUBBLE_Y.bench, s.pos.z, this.uiHalfW, this.uiHalfH)
+    }
+    if (k.rack.count > 0) {
+      this.rackRing.show(1 - k.rack.left / DEFAULT_WASH.drySec, RING_OK, `${k.rack.count}`)
+      this.rackRing.follow(cam, this.rackPos.x, BUBBLE_Y.bench, this.rackPos.z, this.uiHalfW, this.uiHalfH)
+    } else this.rackRing.hide()
+  }
+
+  private static ringColor(k: number): Readonly<Color> {
+    return k > 0.5 ? RING_OK : k > 0.25 ? RING_WARN : LATE_BAR_COLOR
+  }
+
   /** 订单卡文本。只在换人时调用，不在每帧热路径上 */
   private static orderText(c: Customer): string {
-    const req = c.spec.required.map((i) => INGREDIENT_LABEL[i]).join(' ')
-    const ban =
-      c.spec.banned.length > 0
-        ? `\n忌 ${c.spec.banned.map((i) => INGREDIENT_LABEL[i]).join(' ')}`
-        : ''
-    return `${req}\n${COOK_LABEL[c.spec.doneness]}${ban}`
+    return StationView.specText(c.spec, '\n')
+  }
+
+  private static specText(spec: OrderSpec, sep = ' '): string {
+    const req = spec.required.map((i) => INGREDIENT_LABEL[i]).join(' ')
+    const ban = spec.banned.length > 0 ? `${sep}忌 ${spec.banned.map((i) => INGREDIENT_LABEL[i]).join(' ')}` : ''
+    return `${req}${sep}${COOK_LABEL[spec.doneness]}${ban}`
   }
 
   private icon(i: string): SpriteFrame | null {
@@ -944,21 +1338,30 @@ export class StationView extends Component {
     if (carry.kind === 'none') this.carryBubble.hide()
     else if (carry.kind === 'ingredient') {
       buf[0] = this.icon(carry.ingredient)
-      this.carryBubble.show(100 + INGREDIENTS.indexOf(carry.ingredient), buf, 1, '', Color.WHITE)
+      const n = carry.second === null ? 1 : 2
+      if (carry.second !== null) buf[1] = this.icon(carry.second)
+      const key = 100 + INGREDIENTS.indexOf(carry.ingredient) * 10 + (carry.second === null ? 9 : INGREDIENTS.indexOf(carry.second))
+      this.carryBubble.show(key, buf, n, '', Color.WHITE)
     } else if (carry.kind === 'crate') {
       buf[0] = this.icon(carry.ingredient)
       this.carryBubble.show(400 + INGREDIENTS.indexOf(carry.ingredient), buf, 1, '整箱', Color.WHITE)
     } else if (carry.kind === 'patty') {
-      buf[0] = this.icon('patty')
-      this.carryBubble.show(200 + COOK_LEVELS.indexOf(carry.cook), buf, 1, COOK_LABEL[carry.cook], COOK_COLOR[carry.cook])
-    } else {
-      this.fillBurger(1)
+      const n = carry.plated ? 2 : 1
       buf[0] = this.plateIcon
+      buf[n - 1] = this.icon('patty')
+      this.carryBubble.show(200 + n * 10 + COOK_LEVELS.indexOf(carry.cook), buf, n, COOK_LABEL[carry.cook], COOK_COLOR[carry.cook])
+    } else {
       const cook = k.burger.cook
+      // The 3D stack already shows what is on it: doneness caption only
+      const n = this.burgerStack ? 0 : k.burger.ingredients.length + 1
+      if (n > 0) {
+        this.fillBurger(1)
+        buf[0] = this.plateIcon
+      }
       this.carryBubble.show(
         300 + k.burger.ingredients.length * 10 + (cook ? COOK_LEVELS.indexOf(cook) : 9),
         buf,
-        k.burger.ingredients.length + 1,
+        n,
         cook ? COOK_LABEL[cook] : '',
         cook ? COOK_COLOR[cook] : Color.WHITE,
       )
@@ -967,25 +1370,18 @@ export class StationView extends Component {
 
     const g = this.grillStation
     if (g) {
-      let key = 0
-      for (let i = 0; i < k.grill.length; i++) {
-        key = key * 6 + (k.grill[i]!.busy ? COOK_LEVELS.indexOf(grillCookLevel(k, i)) + 1 : 0)
-      }
-      if (key === 0) this.grillBubble.hide()
-      else {
-        if (key !== this.grillKey) {
-          this.grillKey = key
-          let text = ''
-          let worst: CookLevel = 'raw'
-          for (let i = 0; i < k.grill.length; i++) {
-            const lv = grillCookLevel(k, i)
-            if (i > 0) text += '  '
-            text += k.grill[i]!.busy ? COOK_LABEL[lv] : '空'
-            if (k.grill[i]!.busy && COOK_LEVELS.indexOf(lv) > COOK_LEVELS.indexOf(worst)) worst = lv
-          }
-          this.grillBubble.show(key, buf, 0, text, COOK_COLOR[worst])
+      const w = k.cfg.cook
+      for (let i = 0; i < this.grillRings.length; i++) {
+        const ring = this.grillRings[i]!
+        const slot = k.grill[i]
+        if (!slot || !slot.busy) {
+          ring.hide()
+          continue
         }
-        this.grillBubble.follow(cam, g.pos.x, BUBBLE_Y.grill, g.pos.z, this.uiHalfW, this.uiHalfH)
+        const lv = grillCookLevel(k, i)
+        // Full ring = burnt, so the arc racing towards 12 o'clock is the warning
+        ring.show(slot.elapsed / w.burntAt, COOK_COLOR[lv], COOK_LABEL[lv])
+        ring.follow(cam, g.pos.x, BUBBLE_Y.grill, g.pos.z, this.uiHalfW, this.uiHalfH, (i - 0.5) * 64)
       }
     }
 
@@ -993,18 +1389,52 @@ export class StationView extends Component {
     if (b) {
       if (!k.assemblyOccupied) this.benchBubble.hide()
       else {
-        this.fillBurger(0)
+        const n = this.burgerStack ? 0 : k.burger.ingredients.length
+        if (n > 0) this.fillBurger(0)
         const cook = k.burger.cook
         this.benchBubble.show(
           k.burger.ingredients.length * 10 + (cook ? COOK_LEVELS.indexOf(cook) : 9),
           buf,
-          k.burger.ingredients.length,
+          n,
           cook ? COOK_LABEL[cook] : '',
           cook ? COOK_COLOR[cook] : Color.WHITE,
         )
         this.benchBubble.follow(cam, b.pos.x, BUBBLE_Y.bench, b.pos.z, this.uiHalfW, this.uiHalfH)
       }
     }
+
+    const bs = this.burgerStack
+    if (bs) {
+      const burger = k.burger
+      if (carry.kind === 'plate') {
+        const yaw = this.movement.facingYaw
+        bs.show(burger.ingredients, burger.cook, k.burgerPlated, m.x + Math.sin(yaw) * HAND.reach, HAND.y, m.z + Math.cos(yaw) * HAND.reach)
+      } else if (k.assemblyOccupied && b) bs.show(burger.ingredients, burger.cook, false, b.pos.x, this.benchTopY, b.pos.z)
+      else bs.hide()
+    }
+  }
+
+  /** Layer art is cloned from food props already in the scene, so no new asset wiring is needed */
+  private buildBurgerStack(kitchenRoot: Node): void {
+    const find = (p: string): Node | null => kitchenRoot.getChildByPath(`Props/${p}`)
+    const benchPlate = find('Prop_AssemblyPlate/plate')
+    const art = {
+      bread: find('Prop_Crates/bread'),
+      meat: find('Prop_Crates/meat-raw'),
+      cheese: find('Prop_Crates/cheese'),
+      cabbage: find('Prop_Crates/cabbage'),
+      tomato: find('Prop_Crates/tomato'),
+      plate: benchPlate,
+    }
+    for (const [k, v] of Object.entries(art)) {
+      if (!v) {
+        console.warn(`[StationView] 汉堡叠层缺素材 ${k}，退回平铺图标`)
+        return
+      }
+    }
+    this.burgerStack = new BurgerStack(kitchenRoot.scene, art as { [K in keyof typeof art]: Node })
+    // Sits on the bench's decor plate
+    this.benchTopY = benchPlate!.worldPosition.y + 0.02
   }
 
   /**
@@ -1023,12 +1453,12 @@ export class StationView extends Component {
       f.leaving = true
       if (f.seat >= 0) this.seatOwner[f.seat] = -1
       f.seat = -1
-      f.tx = this.doorX
-      f.tz = this.doorZ
+      f.tx = f.pickup ? this.pickupX : this.exitX
+      f.tz = f.pickup ? this.queueZ : this.doorZ
     }
     for (let i = 0; i < cs.length; i++) {
       const c = cs[i]!
-      const b = this.orderBubbles[i]!
+      const b = this.customerRings[i]!
       if (!c.active) {
         b.hide()
         continue
@@ -1040,6 +1470,7 @@ export class StationView extends Component {
         if (!f) continue
         f.id = c.id
         f.leaving = false
+        f.pickup = false
         f.seat = -1
         f.clip = ''
         f.node.setPosition(this.doorX, 0, this.doorZ)
@@ -1049,14 +1480,13 @@ export class StationView extends Component {
         const k = queueIndex(flow, c)
         f.tx = this.queueX + k * QUEUE_GAP
         f.tz = this.queueZ
-        const left = orderPatienceLeft(flow, c)
-        const sec = Math.ceil(left)
-        // 走到柜台之前不显示：那段不倒计时
-        if (left >= this.orderPatienceSec) b.hide()
-        else b.show(sec, this.iconBuf, 0, `点单 ${sec}`, sec <= 8 ? LATE_BAR_COLOR : Color.WHITE)
-        if (left < this.orderPatienceSec) b.follow(this.cameraComp, f.node.position.x, BUBBLE_Y.carry, f.node.position.z, this.uiHalfW, this.uiHalfH)
+        // Walking in: just the "!" so the player sees someone is coming; the ring starts at the counter
+        const walking = orderPatienceLeft(flow, c) >= this.orderPatienceSec
+        const left = patienceRatio(flow, c)
+        b.show(walking ? -1 : left, StationView.ringColor(left), '❗', ASK_COLOR)
       } else {
-        b.hide()
+        const left = patienceRatio(flow, c)
+        b.show(c.late ? 1 : left, c.late ? LATE_BAR_COLOR : StationView.ringColor(left), MOOD_FACE[moodTier(flow, c)])
         if (f.seat < 0) {
           const s = this.seatOwner.indexOf(-1)
           if (s >= 0) {
@@ -1068,6 +1498,10 @@ export class StationView extends Component {
         f.tx = spot ? this.waitX + spot[0] : this.queueX
         f.tz = spot ? this.waitZ + spot[1] : this.queueZ
       }
+      const p = f.node.position
+      const head = f.clip === 'sit' ? this.headSitY : this.headStandY
+      // Not pinned to the screen edge: the ring belongs to the head, off-screen with it
+      b.follow(this.cameraComp, p.x, p.y + head, p.z)
     }
     for (const f of this.figures) {
       if (f.id < 0) continue
@@ -1082,6 +1516,12 @@ export class StationView extends Component {
         f.body.setRotationFromEuler(0, (Math.atan2(dx, dz) * 180) / Math.PI, 0)
         clip = 'walk'
       } else {
+        if (f.pickup && f.leaving) {
+          f.pickup = false
+          f.tx = this.exitX
+          f.tz = this.doorZ
+          continue
+        }
         if (f.leaving) {
           f.id = -1
           f.leaving = false
@@ -1107,15 +1547,23 @@ export class StationView extends Component {
   }
 
   private syncHud(): void {
-    const arrived = this.shift.flow.arrived
-    if (arrived !== this.shownArrived) {
-      this.shownArrived = arrived
-      this.timeLabel.string = `顾客 ${arrived}/${this.customersPerShift}`
+    let j = 0
+    for (const d of this.desk.slots) {
+      if (d.status !== 'accepted' || j >= this.deliveryCards.length) continue
+      const card = this.deliveryCards[j]!
+      if (!card.active) card.active = true
+      if (this.deliveryShown[j] !== d.id) {
+        this.deliveryShown[j] = d.id
+        this.deliveryTexts[j]!.string = `🛵 ${StationView.specText(d.spec, '\n')}`
+      }
+      this.deliveryBars[j]!.setScale(d.max > 0 ? Math.max(0, d.left / d.max) : 0, 1, 1)
+      j++
     }
-    if (this.shift.served !== this.shownScore) {
-      this.shownScore = this.shift.served
-      this.scoreLabel.string = `好评 ${this.shift.served}`
+    for (; j < this.deliveryCards.length; j++) {
+      if (this.deliveryCards[j]!.active) this.deliveryCards[j]!.active = false
+      this.deliveryShown[j] = -1
     }
+    this.syncDeliveryRings()
 
     const cs = this.shift.flow.customers
     for (let i = 0; i < this.orderCards.length; i++) {
@@ -1146,6 +1594,8 @@ export class StationView extends Component {
   private showResult(): void {
     this.resultOpen = true
     this.panelOpen = false
+    if (this.reviewsOpen) this.closeReviews()
+    this.toast.clear()
     this.router.cancelAll()
 
     const r = shiftResult(this.shift)
@@ -1155,6 +1605,7 @@ export class StationView extends Component {
       `来客 ${r.arrived}    好评 ${r.served}\n` +
       `超时免单 ${r.lateServed}    上错 ${r.wrong}\n` +
       `没人接单走了 ${r.walkedOut}\n` +
+      `外卖 送达 ${this.desk.delivered}  做错 ${this.desk.wrong}  超时 ${this.desk.late}  拒 ${this.desk.rejected}\n` +
       `好评率 ${Math.round(r.goodRate * 100)}%`
     this.resultNode.active = true
     this.zonesKey = ''
@@ -1166,11 +1617,14 @@ export class StationView extends Component {
     this.resultOpen = false
     this.resultNode.active = false
     resetShift(this.shift)
+    resetDesk(this.desk, this.deliverySeed)
+    this.seenOffer = 1
     resetKitchen(this.kitchen)
-    this.shownArrived = -1
-    this.shownScore = -1
+    this.seenBurnt = 0
+    this.nudged.fill(-1)
     for (const f of this.figures) {
       f.id = -1
+      f.pickup = false
       f.node.active = false
     }
     this.seatOwner.fill(-1)
@@ -1200,7 +1654,13 @@ export class StationView extends Component {
     this.syncBubbles()
     this.syncCustomers()
 
+    this.syncKitchenRings()
     const stick = this.router.stick
+    if (this.controls) {
+      this.controls.syncStick(stick.dirX, stick.dirY, stick.magnitude)
+      this.controls.setPressed(this.router.action.down)
+      this.controls.setAction(this.actionVerb())
+    }
     if (this.joystickNode.active !== stick.active) this.joystickNode.active = stick.active
     if (stick.active) {
       this.joystickNode.setPosition(
