@@ -5232,9 +5232,9 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 10.7,
+      "x": 10.8,
       "y": 0,
-      "z": -2.6
+      "z": -1.5
     },
     "_lrot": {
       "__type__": "cc.Quat",
@@ -12918,9 +12918,9 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 13,
+      "x": 10.9,
       "y": 0.45,
-      "z": -1.6
+      "z": -1.4
     },
     "_lrot": {
       "__type__": "cc.Quat",
@@ -12933,7 +12933,7 @@
       "__type__": "cc.Vec3",
       "x": 1,
       "y": 0.9,
-      "z": 2.8
+      "z": 1.4
     },
     "_mobility": 0,
     "_layer": 1073741824,
@@ -22438,6 +22438,9 @@
     "headSitY": 0.76,
     "orderPatienceSec": 25,
     "customersPerShift": 10,
+    "plateCount": 6,
+    "sparePlates": 4,
+    "lateLeaveSec": 20,
     "deliveryIntervalSec": 40,
     "deliveryOfferSec": 15,
     "deliveryDeadlineSec": 75,

@@ -7,7 +7,7 @@
 import { orderPatienceLeft, patienceRatio } from './customer'
 import type { Customer, CustomerFlow } from './customer'
 
-export type Mishap = 'burnt'
+export type Mishap = 'burnt' | 'stained' | 'crash' | 'vent'
 
 /** 一次事故 = 当前那段耐心掉 1/4，正好是 moodTier 的一档 */
 export const WITNESS_PENALTY = 0.25

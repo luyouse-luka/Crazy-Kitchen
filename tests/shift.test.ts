@@ -136,7 +136,7 @@ describe('重开一局', () => {
     resetShift(st)
     expect(st.t).toBe(0)
     expect(st.over).toBe(false)
-    expect(shiftResult(st)).toEqual({ arrived: 0, served: 0, lateServed: 0, wrong: 0, timedOut: 0, walkedOut: 0, goodRate: 1 })
+    expect(shiftResult(st)).toEqual({ arrived: 0, served: 0, lateServed: 0, wrong: 0, timedOut: 0, walkedOut: 0, leftLate: 0, goodRate: 1 })
     run(st, 35)
     expect(st.flow.customers.map((c) => c.spec.required.join('+'))).toEqual(first)
   })
@@ -152,7 +152,7 @@ describe('重开一局', () => {
 
 describe('星级按好评率', () => {
   const r = (goodRate: number): ShiftResult =>
-    ({ arrived: 10, served: 0, lateServed: 0, wrong: 0, timedOut: 0, walkedOut: 0, goodRate })
+    ({ arrived: 10, served: 0, lateServed: 0, wrong: 0, timedOut: 0, walkedOut: 0, leftLate: 0, goodRate })
   it('四档分界', () => {
     expect([1, 0.9, 0.89, 0.7, 0.5, 0.49].map((k) => starsForShift(r(k)))).toEqual([3, 3, 2, 2, 1, 0])
   })
@@ -220,5 +220,36 @@ describe('要去点单台接单', () => {
     run(st, 1)
     expect(st.flow.customers.find((x) => x.id === 1)!.ordered).toBe(true)
     expect(takeNextOrder(st.flow)).toBeNull()
+  })
+})
+
+describe('超时后再等一会儿就走', () => {
+  const mkL = (lateLeaveSec?: number): ShiftState => mk({ customers: 1, flow: { ...CFG.flow, stayWhenLate: true, lateLeaveSec } })
+
+  it('耐心耗尽后再过 lateLeaveSec 秒离场，记 leftLate，这一天能打烊', () => {
+    const st = mkL(20)
+    const gone: number[] = []
+    const dt = 1 / 30
+    const step = (sec: number) => {
+      for (let i = 0; i < Math.ceil(sec / dt); i++) stepShift(st, dt, (c) => gone.push(c.id))
+    }
+    // arrives at t=0, runs out at 25, gives up at 45
+    step(44)
+    expect(st.flow.customers.some((c) => c.active && c.late)).toBe(true)
+    expect(gone).toEqual([])
+    step(2)
+    expect(st.flow.leftLate).toBe(1)
+    expect(st.over).toBe(true)
+    expect(shiftResult(st).leftLate).toBe(1)
+    expect(shiftResult(st).goodRate).toBe(0)
+    // Same hook as a walk-out, so the view plays the same leaving review
+    expect(gone).toEqual([1])
+  })
+
+  it('不设 lateLeaveSec 就一直等（旧规则）', () => {
+    const st = mkL(undefined)
+    run(st, 600)
+    expect(st.flow.leftLate).toBe(0)
+    expect(st.over).toBe(false)
   })
 })

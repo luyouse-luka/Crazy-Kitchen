@@ -15,6 +15,7 @@ import { defaultSimConfig } from '../game/assets/logic/sim'
 import type { AABB } from '../game/assets/logic/collision'
 import type { Station, StationKind } from '../game/assets/logic/types'
 import { SPEC } from '../tools/scene-spec'
+import { CRASH_IMPACT } from '../game/assets/logic/kitchen'
 
 const stick = (dirX: number, dirY: number, magnitude = 1): StickState => ({
   dirX,
@@ -126,6 +127,32 @@ describe('movement · 工位碰撞', () => {
     const dx = Math.abs(m.pos.x - GRILL.pos.x)
     const dz = Math.abs(m.pos.z - GRILL.pos.z)
     expect(dx > 0.5 || dz > 0.5).toBe(true)
+  })
+
+  it('impact：迎面撞上接近 1，浅角度蹭着走低于 CRASH_IMPACT，没挡到为 0', () => {
+    const head = createMovement({ stations: [GRILL], x: -2, z: -1 })
+    for (let i = 0; i < 20; i++) stepMovement(head, stick(0, 1), 0, DT)
+    expect(head.impact).toBeGreaterThan(0.95)
+    // ~20° off the wall face
+    const slide = createMovement({ stations: [GRILL], x: -2, z: -1.6 })
+    stepMovement(slide, stick(Math.cos(0.35), Math.sin(0.35)), 0, DT)
+    expect(slide.blocked).toBe(true)
+    expect(slide.impact).toBeLessThan(CRASH_IMPACT)
+    const free = createMovement({ stations: [GRILL], x: 2, z: 0 })
+    stepMovement(free, stick(0, 1), 0, DT)
+    expect(free.impact).toBe(0)
+  })
+
+  it('场景镜头（yaw −45°）下推屏幕「上」撞后排台面，算迎面撞（Cocos 预览里 0.29 滑过去过）', () => {
+    // The scene camera is -45° (StationView reads it off Main Camera); ISO_CAMERA_YAW is +45°, the wrong way round here
+    const SCENE_YAW = -Math.PI / 4
+    const backRow: AABB = { center: { x: 2, z: -2.5 }, halfX: 3, halfZ: 0.5 }
+    const m = createMovement({ boxes: [backRow], x: 0.5, z: -1 })
+    // 8 frames: past first contact, still short of the row's east end
+    for (let i = 0; i < 8; i++) stepMovement(m, stick(0, 1), SCENE_YAW, DT)
+    expect(m.blocked).toBe(true)
+    expect(m.impact).toBeCloseTo(1 - Math.SQRT1_2, 2)
+    expect(m.impact).toBeGreaterThanOrEqual(CRASH_IMPACT)
   })
 
   it('远离工位时 blocked 为 false', () => {

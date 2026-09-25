@@ -68,6 +68,12 @@ export interface OrderSpec {
   doneness: Doneness
   /** 秒。引擎倒计时，M1 标定的核心参数之一 */
   patience: number
+  /** Wants fries on the side (fryer bought in the shop). Made and handed over separately from the burger */
+  fries?: boolean
+  /** Two patties, both at `doneness` */
+  double?: boolean
+  /** Wants a drink on the side (drink machine bought). Handed over separately, like fries */
+  drink?: boolean
 }
 
 // ─────────────────────────── 顾客卡 ───────────────────────────
@@ -143,11 +149,14 @@ export interface Burger {
   ingredients: Ingredient[]
   /** 没放肉饼时为 null；放了就跟着烤炉走 raw→…→burnt */
   cook: CookLevel | null
+  /** A second patty went on (double orders); `cook2` is its doneness */
+  double?: boolean
+  cook2?: CookLevel | null
 }
 
 // ─────────────────────────── 场地 ───────────────────────────
 
-export const STATION_KINDS = ['fridge', 'grill', 'assembly', 'serve', 'sink', 'storeroom', 'register', 'delivery'] as const
+export const STATION_KINDS = ['fridge', 'grill', 'assembly', 'serve', 'sink', 'storeroom', 'register', 'delivery', 'rack', 'shelf', 'fryer', 'extinguisher', 'drinks'] as const
 
 export type StationKind = (typeof STATION_KINDS)[number]
 

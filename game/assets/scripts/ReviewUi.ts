@@ -1,4 +1,5 @@
-import { Color, Graphics, Label, Node, tween, UIOpacity, UITransform } from 'cc'
+import { Color, Graphics, Label, Node, Tween, tween, UIOpacity, UITransform } from 'cc'
+import { FEEL } from './Feel'
 
 /** Placeholder avatars until the character art has portraits: a coloured disc with the first glyph */
 const AVATAR = [
@@ -46,7 +47,8 @@ function drawAvatar(g: Graphics, x: number, y: number, r: number, idx: number): 
   g.fill()
 }
 
-const W = 1000
+export const TOAST_W = 1000
+const W = TOAST_W
 /** One row so it fits the strip above the order cards */
 export const TOAST_H = 54
 const H = TOAST_H
@@ -63,6 +65,7 @@ export class Toast {
   private opacity: UIOpacity
   private queue: ReviewLine[] = []
   private left = 0
+  private fading = false
 
   constructor(parent: Node) {
     this.node = new Node('UI_Toast')
@@ -89,17 +92,21 @@ export class Toast {
     this.node.active = false
   }
 
-  /** `y` = canvas y of the popup's centre */
-  tick(dt: number, y: number): void {
+  /** (x, y) = canvas coords of the popup's centre */
+  tick(dt: number, x: number, y: number): void {
     if (this.left > 0) {
       this.left -= dt
+      if (this.left <= FEEL.fadeSec && !this.fading) {
+        this.fading = true
+        tween(this.opacity).to(FEEL.fadeSec, { opacity: 0 }).start()
+      }
       if (this.left > 0) return
       this.node.active = false
     }
     const next = this.queue.shift()
     if (!next) return
     this.show(next)
-    this.node.setPosition(0, y, 0)
+    this.node.setPosition(x, y, 0)
     this.left = SHOW_SEC
   }
 
@@ -115,8 +122,10 @@ export class Toast {
     this.name.string = stars ? `${r.name}  ${stars}` : r.name
     this.text.string = r.text
     this.node.active = true
+    this.fading = false
+    Tween.stopAllByTarget(this.opacity)
     this.opacity.opacity = 0
-    tween(this.opacity).to(0.15, { opacity: 255 }).start()
+    tween(this.opacity).to(FEEL.fadeSec, { opacity: 255 }).start()
   }
 }
 

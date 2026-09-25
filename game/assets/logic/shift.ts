@@ -12,7 +12,7 @@
  * `matchCustomer()` 挑人 → `interact(serve, {spec})` 判定 → `settleServe()` 记账。
  */
 import { createCustomerFlow, releaseCustomer, resetCustomerFlow, stepCustomerFlow } from './customer'
-import type { Customer, CustomerFlow, FlowParams, OrderDifficulty } from './customer'
+import type { Customer, CustomerFlow, FlowParams, OrderDifficulty, Side } from './customer'
 import { createRng, reseed } from './rng'
 import type { Rng } from './rng'
 import type { OrderVerdict } from './order'
@@ -49,6 +49,8 @@ export interface ShiftResult {
   timedOut: number
   /** 没人来接单、等不及走掉的 —— 差评 */
   walkedOut: number
+  /** Ordered but gave up after going late (flow.lateLeaveSec) */
+  leftLate: number
   /** 好评率 0..1。没人来过算满分，别让空局显示 0% */
   goodRate: number
 }
@@ -93,10 +95,35 @@ export function stepShift(st: ShiftState, dt: number, onWalkOut?: (c: Customer) 
 /**
  * 上菜记账。`verdict` 来自 `kitchen.interact(serve)`，`c` 来自 `matchCustomer()`。
  *
- * 顾客在这里离场 —— 对错都走，**上错菜不给第二次机会**：能重试的话玩家会拿出餐口
+ * 顾客在这里离场（除非还等着薯条，返回 false）—— 对错都走，**上错菜不给第二次机会**：能重试的话玩家会拿出餐口
  * 当试错工具，一单一单试到对为止，banned 那一维就白设计了。
  */
-export function settleServe(st: ShiftState, c: Customer, verdict: OrderVerdict): void {
+export function settleServe(st: ShiftState, c: Customer, verdict: OrderVerdict): boolean {
+  // Right burger, a side still due: keep waiting. A wrong burger ends it now — nothing left to wait for
+  if (verdict.ok && (c.friesDue || c.drinkDue)) {
+    c.burgerVerdict = verdict
+    return false
+  }
+  settle(st, c, verdict)
+  return true
+}
+
+/** Fries handed to `c` (from matchFries). Returns the order's verdict when that completes it, else null */
+export function settleFries(st: ShiftState, c: Customer): OrderVerdict | null {
+  return settleSide(st, c, 'fries')
+}
+
+/** A side handed to `c` (from matchSide). Returns the order's verdict when that completes it, else null */
+export function settleSide(st: ShiftState, c: Customer, side: Side): OrderVerdict | null {
+  if (side === 'fries') c.friesDue = false
+  else c.drinkDue = false
+  const v = c.burgerVerdict
+  if (!v || c.friesDue || c.drinkDue) return null
+  settle(st, c, v)
+  return v
+}
+
+function settle(st: ShiftState, c: Customer, verdict: OrderVerdict): void {
   if (!verdict.ok) st.wrong++
   else if (c.late) st.lateServed++
   else st.served++
@@ -113,6 +140,7 @@ export function shiftResult(st: ShiftState): ShiftResult {
     wrong: st.wrong,
     timedOut: st.flow.timedOut,
     walkedOut: st.flow.walkedOut,
+    leftLate: st.flow.leftLate,
     goodRate: arrived === 0 ? 1 : st.served / arrived,
   }
 }

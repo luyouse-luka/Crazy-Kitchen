@@ -25,8 +25,13 @@ export function addIngredient(burger: Burger, ing: Ingredient): boolean {
 }
 
 /** 放入烤好的肉饼，汉堡的火候跟着这块肉走。一个汉堡只能有一块。 */
-export function addCookedPatty(burger: Burger, cook: CookLevel): boolean {
-  if (burger.ingredients.includes('patty')) return false
+export function addCookedPatty(burger: Burger, cook: CookLevel, allowDouble = false): boolean {
+  if (burger.ingredients.includes('patty')) {
+    if (!allowDouble || burger.double) return false
+    burger.double = true
+    burger.cook2 = cook
+    return true
+  }
   burger.ingredients.push('patty')
   burger.cook = cook
   return true

@@ -10,6 +10,7 @@
  * 看不出是这里动的。`chance()` 即使结果用不上也照样消耗一次，那行短路顺序是刻意的。
  */
 import { judge } from './order'
+import type { OrderVerdict } from './order'
 import { chance, nextInt } from './rng'
 import type { Rng } from './rng'
 import { DONENESS } from './types'
@@ -29,6 +30,8 @@ export interface FlowParams {
    * 不写 = 离场 —— M1 的难度曲线是按离场标定的，模拟器必须保持这个默认。
    */
   stayWhenLate?: boolean
+  /** With stayWhenLate: a late diner gives up this many seconds after running out and leaves (bad review). Omitted = waits forever */
+  lateLeaveSec?: number
   /** 这一局总共来几位，到数就不再来。不写 = 不限（模拟器按局长截断） */
   maxArrivals?: number
   /**
@@ -44,7 +47,20 @@ export interface OrderDifficulty {
   extraMax: number
   /** 出现 banned 食材的概率 */
   bannedChance: number
+  /**
+   * Chance a diner also wants fries. Omitted/0 = never, and then the RNG is not touched —
+   * orders stay identical to the calibrated ones until the fryer is bought.
+   */
+  friesChance?: number
+  /** Chance of a drink on the side. Omitted/0 = never, RNG untouched (same as fries) */
+  drinkChance?: number
+  /** Chance of a double-patty order. Omitted/0 = never, RNG untouched (same as fries) */
+  doubleChance?: number
 }
+
+/** ⏳ Self-chosen: double orders show up from this day, this often */
+export const DOUBLE_FROM_DAY = 4
+export const DOUBLE_CHANCE = 0.25
 
 export interface Customer {
   active: boolean
@@ -59,6 +75,12 @@ export interface Customer {
   /** 到店后等接单等了多久，秒（含走到柜台那段） */
   orderWait: number
   spec: OrderSpec
+  /** Ordered fries and has not had them yet */
+  friesDue: boolean
+  /** Ordered a drink and has not had it yet */
+  drinkDue: boolean
+  /** The burger was handed over while a side was still due: its verdict, settled when the last side arrives */
+  burgerVerdict: OrderVerdict | null
   /**
    * 模拟器拿它记「AI 厨师为这一单做到哪一步」。
    * 真人局不碰它 —— 玩家手上那个汉堡在 kitchen.ts 的 carry 里。
@@ -76,6 +98,8 @@ export interface CustomerFlow {
   timedOut: number
   /** 等接单等到走人的 */
   walkedOut: number
+  /** Ordered, went late, then gave up waiting (lateLeaveSec) */
+  leftLate: number
   peakConcurrent: number
   flow: FlowParams
   orders: OrderDifficulty
@@ -96,6 +120,7 @@ export function createCustomerFlow(flow: FlowParams, orders: OrderDifficulty, rn
     arrived: 0,
     timedOut: 0,
     walkedOut: 0,
+    leftLate: 0,
     peakConcurrent: 0,
     flow,
     orders,
@@ -120,6 +145,9 @@ export function resetCustomerFlow(st: CustomerFlow, flow: FlowParams, orders: Or
       ordered: false,
       orderWait: 0,
       spec: { required: [], banned: [], doneness: 'medium', patience: 0 },
+      friesDue: false,
+      drinkDue: false,
+      burgerVerdict: null,
       burger: { ingredients: [], cook: null },
     })
   }
@@ -133,11 +161,19 @@ export function resetCustomerFlow(st: CustomerFlow, flow: FlowParams, orders: Or
   st.arrived = 0
   st.timedOut = 0
   st.walkedOut = 0
+  st.leftLate = 0
   st.peakConcurrent = 0
 }
 
 function rollOrder(st: CustomerFlow, spec: OrderSpec): void {
   rollSpec(st.rng, st.orders, st.pool, st.flow.patienceSec, spec)
+  const k = st.orders.friesChance ?? 0
+  spec.fries = k > 0 && chance(st.rng, k)
+  // After fries, so a fries-only stream stays as it was
+  const kd = st.orders.doubleChance ?? 0
+  spec.double = kd > 0 && chance(st.rng, kd)
+  const kk = st.orders.drinkChance ?? 0
+  spec.drink = kk > 0 && chance(st.rng, kk)
 }
 
 /**
@@ -183,6 +219,7 @@ export function releaseCustomer(st: CustomerFlow, c: Customer): void {
  *
  * `onTimeout` 在顾客被释放**之前**调用 —— 调用方要清掉挂在这位顾客身上的东西
  * （模拟器的烤炉预留、端在手上的那一盘）。
+ * `onWalkOut` fires for both kinds of leaving with a grievance: nobody took the order, or late and gave up.
  */
 export function stepCustomerFlow(
   st: CustomerFlow,
@@ -210,6 +247,9 @@ export function stepCustomerFlow(
       c.burger.ingredients.length = 0
       c.burger.cook = null
       rollOrder(st, c.spec)
+      c.friesDue = c.spec.fries === true
+      c.drinkDue = c.spec.drink === true
+      c.burgerVerdict = null
       st.activeCount++
       st.arrived++
       onArrive?.(c)
@@ -234,7 +274,16 @@ export function stepCustomerFlow(
       continue
     }
     c.patienceLeft -= dt
-    if (c.patienceLeft > 0 || c.late) continue
+    if (c.late) {
+      const give = st.flow.lateLeaveSec
+      if (give !== undefined && c.patienceLeft <= -give) {
+        st.leftLate++
+        onWalkOut?.(c)
+        releaseCustomer(st, c)
+      }
+      continue
+    }
+    if (c.patienceLeft > 0) continue
     st.timedOut++
     onTimeout?.(c)
     if (st.flow.stayWhenLate) c.late = true
@@ -263,12 +312,32 @@ export function matchCustomer(st: CustomerFlow, burger: Burger): Customer | null
   let fit: Customer | null = null
   let urgent: Customer | null = null
   for (const c of st.customers) {
-    if (!c.active || !c.ordered) continue
+    if (!c.active || !c.ordered || c.burgerVerdict) continue
     if (!urgent || c.patienceLeft < urgent.patienceLeft) urgent = c
     if (!judge(burger, c.spec).ok) continue
     if (!fit || c.patienceLeft < fit.patienceLeft) fit = c
   }
   return fit ?? urgent
+}
+
+/**
+ * Fries in hand at the pass: who gets them. Someone already holding their burger first (they are
+ * only waiting on this), then the most urgent. Nobody owed fries → null; fries cannot be served wrong.
+ */
+export function matchFries(st: CustomerFlow): Customer | null {
+  return matchSide(st, 'fries')
+}
+
+export type Side = 'fries' | 'drink'
+
+/** Same rule as matchFries, for any side */
+export function matchSide(st: CustomerFlow, side: Side): Customer | null {
+  let best: Customer | null = null
+  for (const c of st.customers) {
+    if (!c.active || !c.ordered || !(side === 'fries' ? c.friesDue : c.drinkDue)) continue
+    if (!best || (!!c.burgerVerdict !== !!best.burgerVerdict ? !!c.burgerVerdict : c.patienceLeft < best.patienceLeft)) best = c
+  }
+  return best
 }
 
 /** 排队的顺序：没接单的按到店先后。0 = 站在点单台前那位。已接单或不在场返回 -1 */

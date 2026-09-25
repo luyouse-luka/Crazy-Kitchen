@@ -125,6 +125,8 @@ export interface MovementState {
   moving: boolean
   /** 本帧被工位或边界推回过 */
   blocked: boolean
+  /** 本帧位移被挡掉的比例 0–1：蹭着墙走约 0.3，迎面撞上接近 1 */
+  impact: number
   cfg: MovementConfig
   /** 每帧复用的位移向量，零分配（铁律②） */
   _step: Vec2
@@ -151,6 +153,7 @@ export function createMovement(init: MovementInit = {}): MovementState {
     facingYaw: 0,
     moving: false,
     blocked: false,
+    impact: 0,
     cfg: {
       speed: init.speed ?? DEFAULT_CHEF_SPEED,
       radius: init.radius ?? CHEF_RADIUS,
@@ -177,6 +180,7 @@ export function stepMovement(
   if (!stickToVelocity(st._step, stick, cameraYaw, st.cfg.speed) || clamped <= 0) {
     st.moving = false
     st.blocked = false
+    st.impact = 0
     return
   }
 
@@ -184,7 +188,11 @@ export function stepMovement(
   st.facingYaw = Math.atan2(st.facing.x, st.facing.z)
 
   scale(st._step, st._step, clamped)
+  const x0 = st.pos.x
+  const z0 = st.pos.z
   st.blocked = moveAndSlide(st.pos, st.pos, st._step, st.cfg.radius, st.cfg.boxes, st.cfg.bounds)
+  const want = Math.hypot(st._step.x, st._step.z)
+  st.impact = st.blocked && want > 0 ? Math.max(0, 1 - Math.hypot(st.pos.x - x0, st.pos.z - z0) / want) : 0
   st.moving = true
 }
 
@@ -194,4 +202,5 @@ export function teleport(st: MovementState, x: number, z: number): void {
   st.pos.z = z
   st.moving = false
   st.blocked = false
+  st.impact = 0
 }

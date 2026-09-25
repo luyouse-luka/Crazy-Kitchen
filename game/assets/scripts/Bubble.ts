@@ -45,10 +45,10 @@ export class Bubble {
     this.node.active = false
   }
 
-  /** `frames[0..count)` are drawn left to right; `text` may be empty. */
-  show(key: number, frames: readonly (SpriteFrame | null)[], count: number, text: string, color: Color): void {
+  /** `frames[0..count)` are drawn left to right; `text` may be empty. Returns whether it redrew. */
+  show(key: number, frames: readonly (SpriteFrame | null)[], count: number, text: string, color: Color): boolean {
     if (!this.node.active) this.node.active = true
-    if (key === this.key) return
+    if (key === this.key) return false
     this.key = key
     const n = Math.min(count, this.icons.length)
     const x0 = -((n - 1) * (ICON + GAP)) / 2
@@ -62,6 +62,7 @@ export class Bubble {
     }
     this.label.string = text
     this.label.color = color
+    return true
   }
 
   hide(): void {

@@ -1,4 +1,4 @@
-# `logic/` 公开接口清单 · v0.8（2026-09-24）
+# `logic/` 公开接口清单 · v0.12（2026-09-25）
 
 `logic/` 是**服务器侧的代码**与**你的 Cocos 组件**之间唯一的接缝，接缝要有文档。
 
@@ -33,6 +33,7 @@
 | `witness.ts` | **M4 顾客目击**：厨房出事 → 在场顾客掉一档情绪，挑一位开口 |
 | `reviews.ts` | **评价**：离店星级 + 营业中吐槽的记录，给顶部弹窗和电脑评价列表 |
 | `delivery.ts` | **外卖**：电脑上接单 / 拒单、送达期限、外卖取餐口交货。自带 rng，不碰顾客流 |
+| `progress.ts` | **M4 天数推进与存档格式**：过线解锁下一天、每天的客流、坏档退回新档 |
 
 **尚未建**（按里程碑排）：`chaos.ts`（M4 混乱事件调度）· `economy.ts`（M4 金币/升级/解锁）。
 
@@ -380,10 +381,21 @@ interface InteractResult {
 ```ts
 plateOut(st, dineIn)          // 上菜后调：堂食过 returnSec 脏盘回池边；外卖盘子当场回架
 interact(station=sink)        // 空手点：池边脏盘全泡进去（'soak'）
-scrubSink(st, dt) -> boolean  // 按住动作键每帧调；泡好才刷得动，刷满进架子晾，晾完回放盘处
+scrubSink(st, dt) -> boolean  // 按住动作键每帧调；泡好才刷得动，刷满进架子晾
+releaseScrub(st) -> boolean   // 松手那一帧调：刷过 STAIN_MIN(0.5) 就带污渍上架（偷工），返回是否偷工
+interact(station=rack)        // 空手或摞没满：从架子拿晾好的（'take-stack'），一摞最多 STACK_MAX(5)
+interact(station=shelf)       // 端着摞：放进放盘处（'shelve'），这时才能用
+interact(station=storeroom, { plates: true })  // 从冷库领备用盘子（'take-stack'），KitchenConfig.sparePlates 个，领完 'out-of-stock'
+carrySpeedFactor(st)          // 摞 > STACK_SLOW(3) 返回 0.7，组件乘到 movement.cfg.speed 上
+bumpStack(st, impact) -> n    // movement.blocked 时调；摞 > 3 且 impact ≥ CRASH_IMPACT(0.2，约 37°) 全摔，返回摔了几个
 ```
 
-开新汉堡没盘 → `blocked('no-plate')`；端着汉堡丢弃，盘子变脏回池边。
+开新汉堡没盘 → `blocked('no-plate')`；端着汉堡丢弃，盘子变脏回池边；端着一摞丢弃，整摞进脏盘堆。
+带污渍的盘子取肉时**先用**，端给堂食记 `stainedServed++`。事件计数 `burnt / crashed / stainedServed`
+组件按增量读，交给 `witness.ts`。
+
+⚠ `rack` / `shelf` 两个工位没有 `Station_*` 节点，组件从 `Blockers/Block_DishRack`、`Block_Plate` 造出来。
+**没事可做时 `stationInReach` 不返回它们**（架子上没晾好的 / 手上没摞），否则会抢走紧挨着的洗碗池和组装台。
 
 ## `movement.ts`
 
@@ -404,6 +416,7 @@ interface MovementState {
   facingYaw: number  // atan2(facing.x, facing.z)
   moving: boolean
   blocked: boolean   // 本帧被工位或边界推回过
+  impact: number     // 本帧位移被挡掉的比例 = 1 - cos(撞墙角)：45° 约 0.29，迎面接近 1
 }
 
 createMovement({ stations?, boxes?, speed?, radius?, bounds?, x?, z? }): MovementState
@@ -448,7 +461,8 @@ interface CustomerFlow {
 
 createCustomerFlow(flow, orders, rng) -> CustomerFlow
 resetCustomerFlow(st, flow, orders)
-stepCustomerFlow(st, t, dt, onTimeout?, onArrive?)   // 先到达再倒耐心
+stepCustomerFlow(st, t, dt, onTimeout?, onArrive?, onWalkOut?)   // 先到达再倒耐心
+// FlowParams.lateLeaveSec：stayWhenLate 下超时后再等这么多秒就走，记 flow.leftLate，也走 onWalkOut
 releaseCustomer(st, c)                               // 幂等
 closeShop(st, onLeave?)                              // 在场的一律记超时
 matchCustomer(st, burger) -> Customer | null         // 上菜给谁
@@ -475,11 +489,11 @@ moodTier(st, c) -> 0|1|2|3|4                         // 头顶五档情绪，由
 ```ts
 interface ShiftConfig { seed, durationSec, flow, orders }
 interface ShiftState  { t, over, flow: CustomerFlow, served, wrong }
-interface ShiftResult { arrived, served, wrong, timedOut, completionRate }
+interface ShiftResult { arrived, served, lateServed, wrong, timedOut, walkedOut, leftLate, goodRate }
 
 createShift(cfg) -> ShiftState
 resetShift(st, cfg?)                       // 重开一局，不分配
-stepShift(st, dt, onWalkOut?)             // onWalkOut：没人接单走掉的那位，离场前回调
+stepShift(st, dt, onWalkOut?)             // onWalkOut：没人接单走掉的、超时后等不下去走掉的，离场前回调
 timeLeft(st) -> number                     // 倒计时用，打烊后恒 0
 settleServe(st, customer, verdict)         // 上菜记账，顾客离场
 shiftResult(st) -> ShiftResult
@@ -504,15 +518,112 @@ if (r.kind === 'serve' && c && r.verdict) settleServe(shift, c, r.verdict)
 ## `witness.ts`
 
 ```ts
-type Mishap = 'burnt'                       // 以后加脏盘 / 摔盘 / 发泄
+type Mishap = 'burnt' | 'stained' | 'crash' | 'vent'
 canWitness(st, c) -> boolean                // 还在门口走的看不见厨房
 witnessMishap(st, kind) -> Customer | null  // 看得见的每位扣 1/4 当前耐心，返回开口的那位
 ```
 
 开口的是**扣之前最满意**的那位。不碰 `flow.rng`（理由同 `customer.ts` 那条 ⚠）。
-事件源各报各的，惩罚只在这一处：组件发现 `kitchen.burnt` 涨了就调一次。
+事件源各报各的，惩罚只在这一处：组件发现 `kitchen.burnt / crashed / stainedServed` 涨了就调一次。
 
 ---
+
+## `vent.ts`（发泄 × 顾客发火，2026-09-25）
+
+```ts
+startRant(st, customerId, stars)   // 不满意的顾客（没人接单 / 等太久 / 上错 / 超时）先去前台发火 RANT_SEC 秒
+stepVent(st, dt, onDone?)          // onDone(rant)：发完了，这时才发评价，星数用 rantStars(rant)
+vent(st, 'fridge' | 'register')    // 长按 VENT_HOLD_SEC(0.6s)。前台要有人在发火才算，开一场对骂；返回对骂的那位 / true（摔门）/ null
+argueTap(st) -> number             // 对骂中点一下，返回第几下（挑台词用）；不在对骂返回 -1。点满 ARGUE_TAPS(6) 结束
+endArgue(st)                       // 走开了。停手 ARGUE_IDLE_SEC(1.5s) 由 stepVent 自己结束
+ventSpeedFactor(st)                // 发泄后 VENT_BOOST_SEC(4s) 内 ×1.3，乘到 movement.cfg.speed
+ranting(st, id) / rantsLeft(st)    // 小人走去发火位 / 打烊要等 rantsLeft === 0
+```
+
+对骂（`st.argue`）期间那位的发火倒计时停住；结束时顾客当场走、这时才给加速。那位的评价少 RETORT_PENALTY(1) 颗星（最低 0）。`st.vents` 每涨一次，组件调 `witnessMishap(flow, 'vent')`。
+
+---
+
+## `economy.ts`（2026-09-25）
+
+```ts
+earn(ledger, ok, late, stars, delivery, fries?) -> number   // 一单：做对且准时 = PRICE(10) / DELIVERY_PRICE(12) (+ FRIES_PRICE(4)) + tipFor(stars)；错或超时 0
+ledgerTotal(ledger)                                   // 当天收入，打烊时 bank() 进存档
+createLedger() / resetLedger(l)
+```
+
+数值全是 ⏳ 占位。
+
+---
+
+## `progress.ts`
+
+```ts
+SAVE_KEY = 'kc.progress'   // 组件用 sys.localStorage 读写（微信下落到 wx storage）
+PASS_STARS = 1             // ⏳ 占位
+interface Progress { day: number; best: number[]; coins: number; owned: string[] }   // day = 解锁到第几天；存档 v2，v1 读进来 coins = 0；没有 owned 的读成 []
+parseProgress(raw) -> Progress       // 空 / 坏 JSON / 旧版本 / 越界一律退回新档或夹回范围
+serializeProgress(p) -> string
+bank(p, amount)                      // 当天收入存进 coins，没过线也照存
+finishDay(p, day, stars) -> boolean  // 记最好成绩；过线返回 true 并解锁 day+1（重打旧的一天不会往回拉）。天数没有上限
+dayFlow(day, arrivalSec) -> { flow, orders }   // 难度表的客流间隔按 arrivalSec / 第 1 天间隔 等比放宽
+```
+
+一天仍是「接待完 N 位顾客打烊」（09-23 定），不是限时。过了 `LAST_DAY` 照样往下打，客流停在难度表最后一档。
+
+---
+
+## `shop.ts`（2026-09-25）
+
+```ts
+SHOP: ShopItem[]                 // fryer ¥150 · fast-grill ¥120 · fast-wash ¥100 · big-tray ¥80（⏳ 占位）
+buy(p, id) -> 'ok' | 'owned' | 'poor' | 'unknown'   // 扣 coins、记进 p.owned；组件负责存档
+owns(p, id)
+FRIES_CHANCE / FAST_GRILL / FAST_WASH / BIG_TRAY    // 升级的效果大小，组件每天开局写进 kitchen.cfg / orders
+```
+
+`flowFactor(p)`：到店间隔乘数，按已买升级收紧（`FLOW_UP`），什么都没买 = 1。
+炸好的薯条 `FRY_BURN_SEC` 秒不取变 `fryer.stage = 'burnt'`（`kitchen.burntFries++`），空手点 = `'dump-fries'` 倒掉。
+
+**薯条**：`orders.friesChance > 0` 时顾客的 `spec.fries` 才可能为 true —— 为 0 / 不写时**一次都不调 RNG**，出题与标定逐位一致。
+`kitchen.cfg.fryerSec` 设了炸锅工位才响应（空手点 = 下锅 / 取出，`carry.kind = 'fries'`），在 `serve` 交出返回 `'serve-fries'`。
+`matchFries(flow)` 挑给谁；`settleServe` 汉堡对了但还欠薯条时返回 false、顾客留下（`c.burgerVerdict` 记着判定），
+`settleFries(shift, c)` 补齐时按那份判定结算。汉堡上错当场结算。`matchCustomer` 跳过已经拿到汉堡的人。
+
+---
+
+## `tasks.ts`（每日任务，2026-09-25）
+
+```ts
+rollTasks(day, customers, fryer) -> Task[]   // 每天 DAILY_TASKS=3 条，只看天数（自带 RNG，不碰出题）；没炸锅不抽薯条任务
+collectStats(shiftResult, kitchen, desk, ledger) -> DayStats
+taskStatus(task, stats, closed) -> 'open' | 'done' | 'failed'
+taskText(task, stats)                       // 「好评 3/6 盘」之类
+taskReward(statuses)                        // 每条完成 TASK_REWARD=20，全完成再加 ALL_DONE_BONUS=30；失败不扣
+```
+
+「做到 N」类够了当场完成、打烊还不够算失败；「一次都不」类犯一次当场失败、撑到打烊才算完成。
+`Ledger.fries` = 收了钱的薯条份数（薯条任务用）。
+
+## `decor.ts`（休息日装修，2026-09-25）
+
+```ts
+DECOR_ITEMS / DECOR_SLOTS          // 东西（盆栽 ¥60 · 小盆栽 ¥50 · 书架 ¥100）与固定装饰位（每位允许哪些、场景原样摆什么）
+WALL_COLORS / FLOOR_COLORS          // 各 4 色，下标 0 = 材质原色；COLOR_PRICE = 30
+place(p, slot, item | null) -> 'ok' | 'same' | 'poor' | 'not-allowed' | 'unknown'   // 没买过的先扣钱买下
+paint(p, 'wall' | 'floor', index)   // 每次换色都收钱
+newDecor() / parseDecor(raw)        // Progress.decor；缺失或坏值 = 场景原样
+```
+
+纯好看，不影响玩法。组件：每天开局 `phase = 'closed'`，在前台选开门 / 休息；`'rest'` 时世界不走、前台打开装修菜单。
+
+## 第 16 轮新增（2026-09-25）
+
+- 起火：`cfg.fireSec`（组件设 `FIRE_SEC`）。糊肉在烤炉上放过 `burntAt + fireSec` → `kitchen.fire = true`、`fires++`；起火时烤炉返回 `'on-fire'`。`'extinguisher'` 工位空手拿 / 拿着挂回；拿着点烤炉 = `'extinguish'`（清空全部烤位）。不设 `fireSec` = 永不起火、灭火器工位不响应
+- 双层：`orders.doubleChance`（0/不写 = 不调 RNG）→ `spec.double`；`cfg.doublePatty` 允许第二块肉，`burger.double / cook2`；`judge` 双层单缺第二块记 `missing: ['patty']`，两块火候都要对
+- 饮料：`orders.drinkChance` → `spec.drink`；`cfg.drinkSec` 开饮料机（`'drinks'` 工位：`pour` → `take-drink`，满了 `DRINK_SPILL_SEC` 不拿 → `spilled`，`wipe-spill`）；`serve` 交出 = `'serve-drink'`
+- 配餐通用：`matchSide(flow, 'fries' | 'drink')`、`settleSide(shift, c, side)`；汉堡对了但还欠任何配餐时 `settleServe` 返回 false；`matchFries` / `settleFries` 保留为薯条的简写
+- `earn(..., fries, drink)`；`Ledger.drinks`
 
 ## `reviews.ts`
 

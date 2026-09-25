@@ -36,6 +36,9 @@ export function judge(burger: Burger, spec: OrderSpec): OrderVerdict {
     if (!burger.ingredients.includes(ing)) missing.push(ing)
   }
 
+  // A double order needs the second patty; an extra one on a single order is not an error (same rule as extras)
+  if (spec.double && !burger.double && burger.ingredients.includes('patty')) missing.push('patty')
+
   const forbidden: Ingredient[] = []
   for (let i = 0; i < spec.banned.length; i++) {
     const ing = spec.banned[i]!
@@ -43,7 +46,7 @@ export function judge(burger: Burger, spec: OrderSpec): OrderVerdict {
   }
 
   // cook 为 null（压根没放肉饼）时这里自然为 false，不需要特判
-  const cookOk = burger.cook === spec.doneness
+  const cookOk = burger.cook === spec.doneness && (!burger.double || burger.cook2 === spec.doneness)
 
   return {
     ok: missing.length === 0 && forbidden.length === 0 && cookOk,

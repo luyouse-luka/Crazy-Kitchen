@@ -1,5 +1,5 @@
 import { Color, instantiate, MeshRenderer, Node, Vec3 } from 'cc'
-import type { CookLevel, Ingredient } from '../logic/types'
+import type { Burger, CookLevel, Ingredient } from '../logic/types'
 
 /** Scene nodes cloned as layer art; the stack squashes each into a disc, so any food model works */
 export interface StackArt {
@@ -47,6 +47,7 @@ export class BurgerStack {
   private bottom: Node
   private top: Node
   private layers = new Map<Ingredient, Node>()
+  private patty2: Node
   private key = ''
 
   constructor(parent: Node, art: StackArt) {
@@ -61,6 +62,7 @@ export class BurgerStack {
       if (s.tint) tint(n, s.tint)
       this.layers.set(ing, n)
     }
+    this.patty2 = this.layer(art.meat, D * 0.95, LAYERS.patty.h)
     this.node.active = false
   }
 
@@ -68,10 +70,12 @@ export class BurgerStack {
     this.node.active = false
   }
 
-  show(ings: readonly Ingredient[], cook: CookLevel | null, plated: boolean, x: number, y: number, z: number): void {
+  show(b: Burger, plated: boolean, x: number, y: number, z: number): void {
     this.node.active = true
     this.node.setPosition(x, y, z)
-    const key = `${ings.join()}|${cook}|${plated}`
+    const ings = b.ingredients
+    const cook = b.cook
+    const key = `${ings.join()}|${cook}|${b.double ? b.cook2 : '-'}|${plated}`
     if (key === this.key) return
     this.key = key
     for (const n of this.node.children) n.active = false
@@ -89,6 +93,10 @@ export class BurgerStack {
       const s = LAYERS[ing]
       if (ing === 'patty' && cook) tint(this.layers.get(ing)!, COOK_TINT[cook])
       put(this.layers.get(ing)!, s.h)
+      if (ing === 'patty' && b.double) {
+        if (b.cook2) tint(this.patty2, COOK_TINT[b.cook2])
+        put(this.patty2, s.h)
+      }
     }
     if (bun) put(this.top, BUN_H)
   }

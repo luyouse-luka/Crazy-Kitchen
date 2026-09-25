@@ -104,3 +104,39 @@ export function focusForPlayer(out: Vec2, p: Vec2, b: FocusBounds): void {
   out.x = (u + v) / 2
   out.z = (u - v) / 2
 }
+
+/** World-space box, metres */
+export interface Box3 {
+  minX: number
+  minY: number
+  minZ: number
+  maxX: number
+  maxY: number
+  maxZ: number
+}
+
+/**
+ * Does the box stand between the point and the camera? The camera is orthographic, so every
+ * sight line runs parallel to CAMERA_OFFSET — no camera position needed. Slab test on the ray.
+ */
+export function hidesPoint(b: Box3, x: number, y: number, z: number, dir = CAMERA_OFFSET): boolean {
+  let t0 = 0
+  let t1 = Infinity
+  const o = [x, y, z]
+  const d = [dir.x, dir.y, dir.z]
+  const lo = [b.minX, b.minY, b.minZ]
+  const hi = [b.maxX, b.maxY, b.maxZ]
+  for (let i = 0; i < 3; i++) {
+    if (Math.abs(d[i]!) < 1e-9) {
+      if (o[i]! < lo[i]! || o[i]! > hi[i]!) return false
+      continue
+    }
+    let a = (lo[i]! - o[i]!) / d[i]!
+    let c = (hi[i]! - o[i]!) / d[i]!
+    if (a > c) [a, c] = [c, a]
+    t0 = Math.max(t0, a)
+    t1 = Math.min(t1, c)
+    if (t0 > t1) return false
+  }
+  return true
+}

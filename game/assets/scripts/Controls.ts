@@ -1,4 +1,5 @@
 import { Color, Graphics, Label, Node, Sprite, UITransform } from 'cc'
+import { pop, pressTo } from './Feel'
 
 const STICK_R = 90
 const KNOB_R = 36
@@ -85,12 +86,12 @@ export class Controls {
     if (text === this.actionShown) return
     this.actionShown = text
     this.actionText.string = text || '·'
+    if (text) pop(this.actionText.node)
   }
 
   setPressed(down: boolean): void {
     if (down === this.pressed) return
     this.pressed = down
-    const s = down ? 0.92 : 1
-    this.actionNode.setScale(s, s, 1)
+    pressTo(this.actionNode, down)
   }
 }
