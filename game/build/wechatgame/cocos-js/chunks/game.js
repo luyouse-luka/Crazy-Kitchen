@@ -1,0 +1,4 @@
+console.log('[CC Subpackage] wasm chunks loaded');
+System.register("external:emscripten/meshopt/meshopt_decoder.wasm.js",[],function(_export,_context){"use strict";_export("default",function(){});return{setters:[],execute:function(){}};});
+System.register("external:emscripten/meshopt/meshopt_decoder.wasm.wasm",[],function(_export,_context){"use strict";return{setters:[],execute:function(){_export("default",'');}};});
+System.register("external:emscripten/meshopt/meshopt_decoder.asm.js",[],function(_export,_context){"use strict";_export("default",function(){});return{setters:[],execute:function(){}};});

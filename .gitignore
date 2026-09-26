@@ -2,7 +2,8 @@
 # 这几个目录是编辑器每台机器各自生成的，进仓库会天天冲突（ROADMAP §4 / §6.5）
 game/library/
 game/temp/
-game/build/
+game/build/*
+!game/build/wechatgame/
 game/profiles/
 game/native/
 game/local/

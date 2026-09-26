@@ -5,7 +5,8 @@
 library/
 temp/
 local/
-build/
+build/*
+!build/wechatgame/
 profiles/
 native
 #//////////////////////////

@@ -1,0 +1,99 @@
+{
+    "importBase": "import",
+    "nativeBase": "native",
+    "name": "resources",
+    "deps": [],
+    "uuids": [
+        "0f397cb1-1dda-4404-a637-120794a144dc",
+        "2f390aae-a5de-420b-9896-fe54befa2352",
+        "3710c5c8-094c-4b21-8853-2c4799e1e90d",
+        "3cc7cef3-cec0-4bdd-84ce-a46e485aadfa",
+        "4baa4ebc-b500-4681-92f9-2e08ca94f533",
+        "52c30b6c-9713-452b-aa07-7cdf0f055dc2",
+        "5c7f1c06-f607-40ec-ab7a-c22051c029f1",
+        "9ed2bac5-421e-4ee3-8410-b9f45dc3a672",
+        "ac8ad726-c320-452f-b335-880f952f73cb",
+        "b6a61e59-a60a-43c2-888f-b1541e67da91",
+        "d620b9d4-d552-4834-8ef0-dd508dff6162",
+        "e3651de2-9f40-4bdd-b371-80e716e36fbe",
+        "f061db92-7006-4bbf-8ef2-e07163c5f896"
+    ],
+    "paths": {
+        "b6a61e59-a60a-43c2-888f-b1541e67da91": [
+            "sfx/burnt",
+            "cc.AudioClip",
+            1
+        ],
+        "3710c5c8-094c-4b21-8853-2c4799e1e90d": [
+            "sfx/crash",
+            "cc.AudioClip",
+            1
+        ],
+        "3cc7cef3-cec0-4bdd-84ce-a46e485aadfa": [
+            "sfx/deny",
+            "cc.AudioClip",
+            1
+        ],
+        "5c7f1c06-f607-40ec-ab7a-c22051c029f1": [
+            "sfx/ding",
+            "cc.AudioClip",
+            1
+        ],
+        "4baa4ebc-b500-4681-92f9-2e08ca94f533": [
+            "sfx/drop",
+            "cc.AudioClip",
+            1
+        ],
+        "2f390aae-a5de-420b-9896-fe54befa2352": [
+            "sfx/pick",
+            "cc.AudioClip",
+            1
+        ],
+        "52c30b6c-9713-452b-aa07-7cdf0f055dc2": [
+            "sfx/ready",
+            "cc.AudioClip",
+            1
+        ],
+        "f061db92-7006-4bbf-8ef2-e07163c5f896": [
+            "sfx/result",
+            "cc.AudioClip",
+            1
+        ],
+        "d620b9d4-d552-4834-8ef0-dd508dff6162": [
+            "sfx/scrub",
+            "cc.AudioClip",
+            1
+        ],
+        "0f397cb1-1dda-4404-a637-120794a144dc": [
+            "sfx/serve",
+            "cc.AudioClip",
+            1
+        ],
+        "ac8ad726-c320-452f-b335-880f952f73cb": [
+            "sfx/tap",
+            "cc.AudioClip",
+            1
+        ],
+        "e3651de2-9f40-4bdd-b371-80e716e36fbe": [
+            "sfx/trash",
+            "cc.AudioClip",
+            1
+        ],
+        "9ed2bac5-421e-4ee3-8410-b9f45dc3a672": [
+            "sfx/wrong",
+            "cc.AudioClip",
+            1
+        ]
+    },
+    "scenes": {},
+    "packs": {},
+    "versions": {
+        "import": [],
+        "native": []
+    },
+    "redirect": [],
+    "debug": true,
+    "extensionMap": {},
+    "hasPreloadScript": true,
+    "dependencyRelationships": {}
+}
