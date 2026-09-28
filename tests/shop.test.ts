@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buy, flowFactor, FLOW_UP, owns, SHOP } from '../game/assets/logic/shop'
+import { buy, flowFactor, FLOW_UP, fridgeCap, owns, SHOP, shelfCap, shopItems } from '../game/assets/logic/shop'
 import { newProgress, parseProgress, serializeProgress } from '../game/assets/logic/progress'
 import { createShift, settleFries, settleServe, shiftResult, stepShift } from '../game/assets/logic/shift'
 import type { ShiftConfig, ShiftState } from '../game/assets/logic/shift'
@@ -202,5 +202,26 @@ describe('炸锅工位', () => {
     stepKitchen(k, FRY_BURN_SEC * 2)
     expect(k.burntFries).toBe(1)
     expect(k.carry.kind).toBe('fries')
+  })
+})
+
+describe('容量升级：冰柜 4→6→8、放盘处 4→5→6', () => {
+  it('逐级买，二级要先有一级；商店每条线只列下一级', () => {
+    const p = parseProgress(null)
+    p.coins = 1000
+    expect([fridgeCap(p), shelfCap(p)]).toEqual([4, 4])
+    expect(buy(p, 'fridge-2')).toBe('unknown')
+    expect(shopItems(p).map((x) => x.id)).toContain('fridge-1')
+    expect(shopItems(p).map((x) => x.id)).not.toContain('fridge-2')
+    expect(buy(p, 'fridge-1')).toBe('ok')
+    expect(fridgeCap(p)).toBe(6)
+    expect(shopItems(p).map((x) => x.id)).not.toContain('fridge-1')
+    expect(shopItems(p).map((x) => x.id)).toContain('fridge-2')
+    expect(buy(p, 'fridge-2')).toBe('ok')
+    expect(fridgeCap(p)).toBe(8)
+    expect(shopItems(p).map((x) => x.id)).toContain('fridge-2')
+    buy(p, 'shelf-1')
+    buy(p, 'shelf-2')
+    expect(shelfCap(p)).toBe(6)
   })
 })

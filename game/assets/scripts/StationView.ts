@@ -49,6 +49,7 @@ import {
   discard,
   grillCookLevel,
   interact,
+  pairHasPatty,
   resetKitchen,
   stationInReach,
   stepKitchen,
@@ -73,7 +74,7 @@ import type { OrderSpec } from '../logic/types'
 import { bank, dayFlow, finishDay, parseProgress, SAVE_KEY, serializeProgress } from '../logic/progress'
 import { createLedger, earn, ledgerTotal, resetLedger } from '../logic/economy'
 import type { Progress } from '../logic/progress'
-import { BIG_TRAY, buy, DRINK_CHANCE, FAST_GRILL, FAST_WASH, flowFactor, FRIES_CHANCE, owns, SHOP } from '../logic/shop'
+import { BIG_TRAY, buy, DRINK_CHANCE, FAST_GRILL, FAST_WASH, flowFactor, FRIES_CHANCE, fridgeCap, owns, SHELF_CAPS, shelfCap, shopItems } from '../logic/shop'
 import { ListPanel } from './ShopUi'
 import type { ListRow } from './ShopUi'
 import { COLOR_PRICE, DECOR_ITEMS, DECOR_SLOTS, FLOOR_COLORS, paint, place, WALL_COLORS } from '../logic/decor'
@@ -211,6 +212,8 @@ const HINT: Partial<Record<BlockReason, string>> = {
   'still-soaking': '还在泡',
   'rack-empty': '架子上没有晾好的盘子',
   'stack-full': '一趟拿不了更多了',
+  'shelf-full': '放盘处放满了',
+  'patty-to-grill': '生肉饼先拿去烤',
   'still-frying': '还在炸',
   'on-fire': '着火了！去拿灭火器',
   'still-pouring': '还在接',
@@ -359,9 +362,6 @@ export class StationView extends Component {
   @property({ type: SpriteFrame, tooltip: '盘子图标（手上端着汉堡时显示）' })
   plateIcon: SpriteFrame | null = null
 
-  @property({ tooltip: '冰柜每样食材最多放几份。空了要去库房抱一箱回来补满' })
-  fridgeCap = 4
-
   @property({ tooltip: '站着时头顶离脚底多少米（耐心圈贴在这里）。手感旋钮，预览里对着看' })
   headStandY = 1.45
 
@@ -374,14 +374,14 @@ export class StationView extends Component {
   @property({ tooltip: '一局来几位顾客，接待完就结算' })
   customersPerShift = 10
 
-  @property({ tooltip: '一开局有几个干净盘子。每做一个汉堡占一个，堂食吃完脏着送回洗碗池' })
-  plateCount = 6
-
   @property({ tooltip: '冷库里的备用干净盘子（摔碎后去这里领一摞）' })
   sparePlates = 4
 
   @property({ tooltip: '顾客超时后再等多少秒就走人（差评）' })
   lateLeaveSec = 20
+
+  @property({ tooltip: '顾客耐心倍率：点单台等接单、等上菜、超时后再等，三段一起乘（情绪五档按比例跟着拉长）' })
+  patienceScale = 1.5
 
   @property({ tooltip: '外卖单隔多少秒来一张（挂在点单台电脑上）' })
   deliveryIntervalSec = 40
@@ -793,14 +793,14 @@ export class StationView extends Component {
       stations,
       cook: { ...DEFAULT_COOK },
       grillSlots: 2,
-      fridgeCap: this.fridgeCap,
-      plates: this.plateCount,
       sparePlates: this.sparePlates,
       fireSec: FIRE_SEC,
       doublePatty: true,
     })
     this.progress = parseProgress(StationView.load())
     this.applyUpgrades()
+    // Capacities come from the save, which is read only after the kitchen exists
+    resetKitchen(this.kitchen)
     this.day = this.progress.day
     // 每次进游戏换一批单；同一次游戏里重打同一天出的是同一批（seed 不变）
     const seed = (Date.now() & 0x7fffffff) || 1
@@ -930,11 +930,12 @@ export class StationView extends Component {
         ...d.flow,
         intervalSec: d.flow.intervalSec * flowFactor(this.progress),
         intervalJitter: this.arrivalJitter,
-        lateLeaveSec: this.lateLeaveSec,
+        patienceSec: d.flow.patienceSec * this.patienceScale,
+        lateLeaveSec: this.lateLeaveSec * this.patienceScale,
         // 走进来要多久由场景几何算，不是拍的：接单的时机要和小人真走到柜台对上
         takeOrder: {
           walkInSec: Math.hypot(this.queueX - this.doorX, this.queueZ - this.doorZ) / CUSTOMER_SPEED,
-          patienceSec: this.orderPatienceSec,
+          patienceSec: this.orderPatienceSec * this.patienceScale,
         },
       },
       orders: {
@@ -957,6 +958,8 @@ export class StationView extends Component {
     const tray = owns(p, 'big-tray')
     cfg.stackMax = tray ? BIG_TRAY.max : undefined
     cfg.stackSlow = tray ? BIG_TRAY.slow : undefined
+    cfg.fridgeCap = fridgeCap(p)
+    cfg.shelfCap = cfg.plates = shelfCap(p)
     cfg.fryerSec = owns(p, 'fryer') ? FRY_SEC : undefined
     cfg.drinkSec = owns(p, 'drinks') ? DRINK_SEC : undefined
     if (this.drinksNode) this.drinksNode.active = cfg.drinkSec !== undefined
@@ -1536,7 +1539,7 @@ export class StationView extends Component {
       const r = interact(this.kitchen, this.movement.pos, station, { ingredient: INGREDIENTS[i]! })
       this.act(r)
       const c = this.kitchen.carry
-      if (r.kind === 'take-ingredient' && station.kind === 'fridge' && c.kind === 'ingredient' && c.second === null) {
+      if (r.kind === 'take-ingredient' && station.kind === 'fridge' && (c.kind === 'patty' || (c.kind === 'ingredient' && c.second === null))) {
         this.openPanel(station)
       }
       return
@@ -1554,7 +1557,7 @@ export class StationView extends Component {
     // Stock only moves on a pick or a restock, never while the panel is up — draw it once here
     const stock = this.kitchen.stock
     for (let i = 0; i < INGREDIENTS.length; i++) {
-      this.slotCounts[i]!.string = `${stock[i]}/${this.fridgeCap}`
+      this.slotCounts[i]!.string = `${stock[i]}/${this.kitchen.cfg.fridgeCap}`
       this.slotIcons[i]!.grayscale = fridge && stock[i]! <= 0
     }
     const plates = this.slotNodes[INGREDIENTS.length]!
@@ -2027,7 +2030,7 @@ export class StationView extends Component {
         return held === 'crate' ? '补货' : '取料'
       case 'grill':
         if (k.fire) return held === 'extinguisher' ? '灭火' : '着火了'
-        return held === 'patty' && k.carry.cook === 'raw' ? '下锅' : '取肉'
+        return (held === 'patty' && k.carry.cook === 'raw') || pairHasPatty(k.carry) ? '下锅' : '取肉'
       case 'assembly':
         return held === 'none' ? '端盘' : held === 'plate' ? '放下' : '组装'
       case 'serve':
@@ -2055,6 +2058,25 @@ export class StationView extends Component {
     }
   }
 
+  /** Two-handed loads (a crate, a stack of plates) fill both slots */
+  private syncHands(ctl: Controls): void {
+    const c = this.kitchen.carry
+    switch (c.kind) {
+      case 'ingredient':
+        return ctl.setHands(this.icon(c.ingredient), c.second === null ? null : this.icon(c.second))
+      case 'patty':
+        return ctl.setHands(this.icon('patty'), null)
+      case 'plate':
+        return ctl.setHands(this.plateIcon, null)
+      case 'stack':
+        return ctl.setHands(this.plateIcon, this.plateIcon)
+      case 'crate':
+        return ctl.setHands(this.icon(c.ingredient), this.icon(c.ingredient))
+      default:
+        return ctl.setHands(null, null)
+    }
+  }
+
   /** Clean plates over the shelf, the sink's soak/scrub progress, the rack drying */
   private syncKitchenRings(): void {
     const k = this.kitchen
@@ -2064,7 +2086,7 @@ export class StationView extends Component {
       for (let i = 0; i < this.plateModels.length; i++) this.plateModels[i]!.active = i < k.plates
     }
     if (k.plates !== Infinity) {
-      const fill = Math.min(1, k.plates / this.plateCount)
+      const fill = Math.min(1, k.plates / (k.cfg.shelfCap ?? 1))
       this.plateRing.show(fill, StationView.ringColor(fill), '🍽')
       this.plateRing.follow(cam, this.platePos.x, BUBBLE_Y.bench, this.platePos.z, this.uiHalfW, this.uiHalfH)
     }
@@ -2312,7 +2334,7 @@ export class StationView extends Component {
     }
     const step = own[1]!.position.y - own[0]!.position.y
     const base = own[0]!
-    while (own.length < this.plateCount + this.sparePlates) {
+    while (own.length < SHELF_CAPS[2] + this.sparePlates) {
       const n = instantiate(base)
       root!.addChild(n)
       n.setPosition(base.position.x, base.position.y + step * own.length, base.position.z)
@@ -2685,7 +2707,7 @@ export class StationView extends Component {
       // Bought items take effect from the next day started (applyUpgrades in restart)
       return {
         title: `商店 · ${money}`,
-        rows: SHOP.map((it) => {
+        rows: shopItems(p).map((it) => {
           const have = owns(p, it.id)
           return {
             name: `${it.name}  ¥${it.price}`,
@@ -2906,6 +2928,7 @@ export class StationView extends Component {
       this.controls.syncStick(stick.dirX, stick.dirY, stick.magnitude)
       this.controls.setPressed(this.router.action.down)
       this.controls.setAction(this.actionVerb())
+      this.syncHands(this.controls)
     }
     if (this.joystickNode.active !== stick.active) this.joystickNode.active = stick.active
     if (stick.active) {

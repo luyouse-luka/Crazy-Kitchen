@@ -142,7 +142,7 @@ describe('洗碗：泡 → 刷 → 晾', () => {
     const k = mk(0)
     washTo(k, 1, 0.6)
     expect(releaseScrub(k)).toBe(true)
-    expect(k.rack.stained).toBe(true)
+    expect(k.rack.stained).toBe(1)
     step(k, WASH.drySec + 0.05)
     interact(k, at(RACK), RACK)
     interact(k, at(SHELF), SHELF)
@@ -231,17 +231,42 @@ describe('搬盘子：叠太多变慢、撞墙全摔', () => {
     expect(interact(k, at(FRIDGE), FRIDGE, { ingredient: 'bun' }).reason).toBe('hands-full')
   })
 
-  it('松手保留进度；架子没晾完刷不完', () => {
+  it('刷完并进架子上正在晾的那批，一起重新计时', () => {
     const k = mk(0)
     k.rack.count = 1
-    k.rack.left = 100
+    k.rack.left = 0.5
     k.sink.stage = 'soaked'
     k.sink.count = 2
     scrubSink(k, 1)
     expect(k.sink.scrub).toBeCloseTo(0.5)
     scrubSink(k, 5)
-    expect(k.sink.stage).toBe('soaked')
-    expect(k.sink.scrub).toBe(1)
+    expect(k.sink.stage).toBe('empty')
+    expect(k.rack.count).toBe(3)
+    expect(k.rack.left).toBe(WASH.drySec)
+  })
+
+  it('池里泡着或泡好时，新送来的脏盘直接并进这一批', () => {
+    const k = mk(0)
+    k.dirty = 1
+    interact(k, at(SINK), SINK)
+    k.dirty = 2
+    expect(interact(k, at(SINK), SINK).kind).toBe('soak')
+    expect([k.sink.stage, k.sink.count, k.dirty]).toEqual(['soaking', 3, 0])
+    step(k, WASH.soakSec + 0.05)
+    k.dirty = 1
+    interact(k, at(SINK), SINK)
+    expect([k.sink.stage, k.sink.count]).toEqual(['soaked', 4])
+  })
+
+  it('放盘处满了：放到上限为止，其余留在手上', () => {
+    const k = mk(0)
+    k.cfg.shelfCap = 4
+    k.plates = 3
+    k.carry.kind = 'stack'
+    k.carry.count = 3
+    expect(interact(k, at(SHELF), SHELF).kind).toBe('shelve')
+    expect([k.plates, k.carry.kind, k.carry.count]).toEqual([4, 'stack', 2])
+    expect(interact(k, at(SHELF), SHELF).reason).toBe('shelf-full')
   })
 
   it('没脏盘 / 手上有东西都泡不了', () => {

@@ -5,13 +5,15 @@
  */
 import type { Progress } from './progress'
 
-export type ItemId = 'fryer' | 'drinks' | 'fast-grill' | 'fast-wash' | 'big-tray'
+export type ItemId = 'fryer' | 'drinks' | 'fast-grill' | 'fast-wash' | 'big-tray' | 'fridge-1' | 'fridge-2' | 'shelf-1' | 'shelf-2'
 
 export interface ShopItem {
   id: ItemId
   name: string
   price: number
   desc: string
+  /** Next level of an upgrade: sold only once this is owned */
+  needs?: ItemId
 }
 
 export const SHOP: readonly ShopItem[] = [
@@ -20,7 +22,28 @@ export const SHOP: readonly ShopItem[] = [
   { id: 'fast-grill', name: '烤得更快', price: 120, desc: '烤肉快 20%（糊得也快），客人来得更勤' },
   { id: 'fast-wash', name: '洗得更快', price: 100, desc: '泡、刷、晾都快 30%，客人来得更勤' },
   { id: 'big-tray', name: '大托盘', price: 80, desc: '一趟搬 7 个盘子（5 个以上变慢），客人来得更勤' },
+  { id: 'fridge-1', name: '冰柜扩容 Lv1', price: 80, desc: '每样食材放 6 份（原 4 份）' },
+  { id: 'fridge-2', name: '冰柜扩容 Lv2', price: 150, desc: '每样食材放 8 份', needs: 'fridge-1' },
+  { id: 'shelf-1', name: '放盘处扩容 Lv1', price: 60, desc: '放盘处放 5 个盘子（原 4 个）' },
+  { id: 'shelf-2', name: '放盘处扩容 Lv2', price: 100, desc: '放盘处放 6 个盘子（满级）', needs: 'shelf-1' },
 ]
+
+/** Fridge units per ingredient and shelf plates, by upgrade level. ⏳ Self-chosen */
+export const FRIDGE_CAPS = [4, 6, 8] as const
+export const SHELF_CAPS = [4, 5, 6] as const
+
+export function fridgeCap(p: Progress): number {
+  return FRIDGE_CAPS[owns(p, 'fridge-2') ? 2 : owns(p, 'fridge-1') ? 1 : 0]
+}
+
+export function shelfCap(p: Progress): number {
+  return SHELF_CAPS[owns(p, 'shelf-2') ? 2 : owns(p, 'shelf-1') ? 1 : 0]
+}
+
+/** One row per upgrade line: the next level to buy, or the top one once maxed */
+export function shopItems(p: Progress): ShopItem[] {
+  return SHOP.filter((it) => (!it.needs || owns(p, it.needs)) && !(owns(p, it.id) && SHOP.some((n) => n.needs === it.id)))
+}
 
 /** Share of diners who add fries once the fryer is bought */
 export const FRIES_CHANCE = 0.4
@@ -51,6 +74,7 @@ export function buy(p: Progress, id: string): BuyResult {
   const item = SHOP.find((x) => x.id === id)
   if (!item) return 'unknown'
   if (p.owned.includes(item.id)) return 'owned'
+  if (item.needs && !p.owned.includes(item.needs)) return 'unknown'
   if (p.coins < item.price) return 'poor'
   p.coins -= item.price
   p.owned.push(item.id)

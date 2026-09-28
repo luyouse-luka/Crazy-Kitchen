@@ -44,10 +44,10 @@ export const SPEC: Record<string, NodeSpec> = {
   /** 外卖取餐口：前台东段，出口西边紧挨着（2026-09-24）。骑手从东头出口进出 */
   Station_Delivery: { pos: [2.5, 0.45, 2.5], scale: [1, 0.9, 1] },
   /**
-   * 库房货架，贴东墙从北墙排到南墙边。南端留下的空角会把玩家顶到画面边缘（`pnpm cam`），所以堵上。
-   * triggerRange 隔着南墙也够得着，但南墙外那块是封死的，走不进去。
+   * 库房货架：进门左手边、贴北墙（2026-09-28）。原先压在门洞 z ∈ (-1.9, -0.5) 上，人进不去。
+   * 门外够不着，要跨进门一步。
    */
-  Station_Storeroom: { pos: [13, 0.45, -1.6], scale: [1, 0.9, 2.8] },
+  Station_Storeroom: { pos: [10.9, 0.45, -2.5], scale: [1, 0.9, 1] },
 
   /**
    * `Kitchen/Blockers` 底下：只挡路、不能交互。Cube，scale 即米数。

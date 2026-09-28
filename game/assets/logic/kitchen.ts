@@ -27,9 +27,9 @@ export type CarryKind = 'none' | 'ingredient' | 'patty' | 'plate' | 'crate' | 's
 
 export interface Carry {
   kind: CarryKind
-  /** valid when kind === 'ingredient' (never 'patty') or 'crate' (any) */
+  /** valid when kind === 'ingredient' or 'crate'. An 'ingredient' pair may hold a raw patty; a lone raw patty is kind 'patty' */
   ingredient: Ingredient
-  /** kind === 'ingredient' only: a second, different topping carried in the same trip */
+  /** kind === 'ingredient' only: the other hand — any fridge item, duplicates and a raw patty included */
   second: Ingredient | null
   /** valid when kind === 'patty' */
   cook: CookLevel
@@ -61,6 +61,8 @@ export interface KitchenConfig {
   fridgeCap?: number
   /** Clean plates at the start. Omitted = bottomless (the simulator never washes up) */
   plates?: number
+  /** Most clean plates the shelf holds; a stack past it stays in hand. Omitted = no limit */
+  shelfCap?: number
   /** Spare clean plates in the storeroom, fetched as a stack — the way back after a crash. Omitted = none */
   sparePlates?: number
   wash?: WashConfig
@@ -110,8 +112,8 @@ export interface WashConfig {
   returnSec: number
 }
 
-/** ⏳ Shortened 2026-09-25 (was soak 4 / scrub 2 / dry 6): the user found the wash loop too slow */
-export const DEFAULT_WASH: WashConfig = { soakSec: 2.5, scrubSec: 1.5, drySec: 4, returnSec: 8 }
+/** ⏳ Shortened again 2026-09-28 (was 2.5 / 1.5 / 4, before that 4 / 2 / 6): still too slow on device */
+export const DEFAULT_WASH: WashConfig = { soakSec: 1, scrubSec: 1, drySec: 2, returnSec: 8 }
 
 /** Letting go of the scrub past this point racks the batch stained; before it, progress just waits (GDD §12.5) */
 export const STAIN_MIN = 0.5
@@ -128,8 +130,8 @@ export const STACK_SLOW_SPEED = 0.7
 export const CRASH_IMPACT = 0.2
 
 /**
- * 洗碗池只收一批、架子只晾一批 —— 两批同时洗会让「先洗还是先攒」这个取舍消失。
- * stage: 'empty' → 'soaking'（倒计时）→ 'soaked'（等人来刷）→ 刷完进架子
+ * One batch in the sink: plates brought mid-wash join it, and a scrubbed batch joins whatever is drying (2026-09-28).
+ * stage: 'empty' → 'soaking' → 'soaked' (waits for a scrub) → rack
  */
 export interface Sink {
   stage: 'empty' | 'soaking' | 'soaked'
@@ -142,7 +144,8 @@ export interface Sink {
 export interface Rack {
   count: number
   left: number
-  stained: boolean
+  /** How many of `count` were racked with the scrub cut short */
+  stained: number
   ready: number
   readyStained: number
 }
@@ -218,7 +221,7 @@ export function createKitchen(cfg: KitchenConfig): KitchenState {
     dirty: 0,
     returning: [],
     sink: { stage: 'empty', count: 0, left: 0, scrub: 0 },
-    rack: { count: 0, left: 0, stained: false, ready: 0, readyStained: 0 },
+    rack: { count: 0, left: 0, stained: 0, ready: 0, readyStained: 0 },
     fryer: { stage: 'empty', left: 0 },
     drinks: { stage: 'empty', left: 0 },
     spills: 0,
@@ -293,8 +296,9 @@ export function stepKitchen(st: KitchenState, dt: number): void {
     rack.left -= dt
     if (rack.left <= 0) {
       rack.ready += rack.count
-      if (rack.stained) rack.readyStained += rack.count
+      rack.readyStained += rack.stained
       rack.count = 0
+      rack.stained = 0
     }
   }
 }
@@ -389,6 +393,8 @@ export type BlockReason =
   | 'still-soaking'
   | 'rack-empty'
   | 'stack-full'
+  | 'shelf-full'
+  | 'patty-to-grill'
   | 'still-frying'
   | 'still-pouring'
   | 'on-fire'
@@ -469,41 +475,48 @@ export function interact(
 }
 
 /**
- * 从冰箱取料。手上最多两样**不同**的配料；肉饼只能单独拿（它得先下锅）。
- * 拿满两样再点第三样 = 换掉后拿的那样；点肉饼 = 手上的全退回。
- * 点错不该逼玩家先跑一趟垃圾桶 —— 那趟路在 30 秒一局里是实打实的惩罚，而错因只是眼花。
+ * 从冰箱取料：两只手各拿一样，任意组合（面包+肉饼、面包+面包）。两手满了再点 = 换掉后拿的那样，
+ * 换下来的退回冰箱 —— 点错不该逼玩家先跑一趟垃圾桶。
  *
- * 盘子是唯一的例外：那是组装好的汉堡，换食材等于整个扔掉，
- * 代价和「拿错一片生菜」完全不是一回事，要丢得走 discard，让玩家自己按那一下。
+ * 端着盘子（汉堡或烤好的肉）时不能拿：换食材等于整个扔掉，要丢得走 discard。
  */
 function takeFromFridge(st: KitchenState, ing: Ingredient | undefined): InteractResult {
   if (st.carry.kind === 'crate') return restock(st)
   if (ing === undefined) return blocked('unsupported')
   const c = st.carry
-  if (c.kind === 'plate' || c.kind === 'stack' || c.plated) return blocked('hands-full')
-  if (c.kind === 'ingredient' && (ing === c.ingredient || ing === c.second)) return blocked('duplicate-ingredient')
+  const raw = c.kind === 'patty' && c.cook === 'raw' && !c.plated
+  if (c.kind !== 'none' && c.kind !== 'ingredient' && !raw) return blocked('hands-full')
   const i = INGREDIENTS.indexOf(ing)
   if (st.stock[i]! <= 0) return blocked('out-of-stock')
   st.stock[i]!--
-  if (ing !== 'patty' && c.kind === 'ingredient') {
+  if (c.kind === 'none') setHands(c, ing, null)
+  else if (raw) setHands(c, 'patty', ing)
+  else {
     if (c.second !== null) giveBack(st, c.second)
-    c.second = ing
-    return done('take-ingredient')
+    setHands(c, c.ingredient, ing)
   }
-  // Swapping hands the old pick back — a mis-tap must not cost stock either
-  if (c.kind === 'ingredient') {
-    giveBack(st, c.ingredient)
-    if (c.second !== null) giveBack(st, c.second)
-  } else if (c.kind === 'patty' && c.cook === 'raw') giveBack(st, 'patty')
+  return done('take-ingredient')
+}
+
+/** Raw fridge items in hand. A lone raw patty is kind 'patty' so the grill and bench paths stay as they were */
+function setHands(c: Carry, a: Ingredient | null, b: Ingredient | null): void {
+  const first = a ?? b
+  const second = a === null ? null : b
   c.second = null
-  if (ing === 'patty') {
+  if (first === null) c.kind = 'none'
+  else if (first === 'patty' && second === null) {
     c.kind = 'patty'
     c.cook = 'raw'
   } else {
     c.kind = 'ingredient'
-    c.ingredient = ing
+    c.ingredient = first
+    c.second = second
   }
-  return done('take-ingredient')
+}
+
+/** A hand pair with a raw patty in it */
+export function pairHasPatty(c: Carry): boolean {
+  return c.kind === 'ingredient' && (c.ingredient === 'patty' || c.second === 'patty')
 }
 
 function giveBack(st: KitchenState, ing: Ingredient): void {
@@ -541,6 +554,26 @@ function useGrill(st: KitchenState, want: number): InteractResult {
     return done('extinguish')
   }
   if (st.fire) return blocked('on-fire')
+  // One hand has a raw patty: it goes on, whatever is in the other hand stays
+  if (pairHasPatty(st.carry)) {
+    const c = st.carry
+    let slot = -1
+    let a: Ingredient | null = c.ingredient
+    let b: Ingredient | null = c.second
+    for (;;) {
+      const free = firstFreeSlot(st)
+      if (free < 0) break
+      if (a === 'patty') a = null
+      else if (b === 'patty') b = null
+      else break
+      st.grill[free]!.busy = true
+      st.grill[free]!.elapsed = 0
+      if (slot < 0) slot = free
+    }
+    if (slot < 0) return blocked('grill-full')
+    setHands(c, a, b)
+    return done('place-patty', slot)
+  }
   // hands full with a raw patty → put it on
   if (st.carry.kind === 'patty') {
     if (st.carry.cook !== 'raw') return blocked('not-raw-patty')
@@ -605,15 +638,16 @@ function useAssembly(st: KitchenState): InteractResult {
       return done('put-plate')
 
     case 'ingredient': {
-      startBurgerIfEmpty(st)
+      // A raw patty in the pair stays in hand for the grill; so does whatever the burger already has
       const c = st.carry
-      const a = addIngredient(st.burger, c.ingredient)
-      const b = c.second !== null && addIngredient(st.burger, c.second)
-      if (!a && !b) return blocked('duplicate-ingredient')
-      // Whatever the burger already had stays in hand
-      if (c.second === null || (a && b)) c.kind = 'none'
-      else if (a) c.ingredient = c.second
-      c.second = null
+      const fits = (x: Ingredient | null): boolean => x !== null && x !== 'patty' && !(st.assemblyOccupied && st.burger.ingredients.includes(x))
+      const first = fits(c.ingredient)
+      const second = fits(c.second) && (c.second !== c.ingredient || !first)
+      if (!first && !second) return blocked(pairHasPatty(c) ? 'patty-to-grill' : 'duplicate-ingredient')
+      startBurgerIfEmpty(st)
+      if (first) addIngredient(st.burger, c.ingredient)
+      if (second) addIngredient(st.burger, c.second!)
+      setHands(c, first ? null : c.ingredient, second ? null : c.second)
       return done('add-to-burger')
     }
 
@@ -707,23 +741,23 @@ function useExtinguisher(st: KitchenState): InteractResult {
   return done('take-extinguisher')
 }
 
-/** 空手点洗碗池：把池边的脏盘全部泡进去 */
+/** 空手点洗碗池：把池边的脏盘全部泡进去。池里已经有一批时并进去，不用等这批洗完 */
 function loadSink(st: KitchenState): InteractResult {
   if (st.carry.kind !== 'none') return blocked('hands-full')
   const sink = st.sink
-  if (sink.stage === 'soaking') return blocked('still-soaking')
-  if (sink.stage === 'soaked') return blocked('sink-busy')
-  if (st.dirty <= 0) return blocked('nothing-to-wash')
-  sink.stage = 'soaking'
-  sink.count = st.dirty
-  sink.left = st.cfg.wash?.soakSec ?? DEFAULT_WASH.soakSec
-  sink.scrub = 0
+  if (st.dirty <= 0) return blocked(sink.stage === 'soaking' ? 'still-soaking' : sink.stage === 'soaked' ? 'sink-busy' : 'nothing-to-wash')
+  if (sink.stage === 'empty') {
+    sink.stage = 'soaking'
+    sink.left = st.cfg.wash?.soakSec ?? DEFAULT_WASH.soakSec
+    sink.scrub = 0
+  }
+  sink.count += st.dirty
   st.dirty = 0
   return done('soak')
 }
 
 /**
- * 按住动作键刷一帧。泡好了才能刷，刷满进架子晾（架子上那批没晾完就刷不完 —— 放不下）。
+ * 按住动作键刷一帧。泡好了才能刷，刷满进架子晾（并进架子上正在晾的那批）。
  * 返回这一帧有没有在刷，组件拿它播动画。
  */
 export function scrubSink(st: KitchenState, dt: number): boolean {
@@ -731,26 +765,27 @@ export function scrubSink(st: KitchenState, dt: number): boolean {
   if (sink.stage !== 'soaked' || st.carry.kind !== 'none') return false
   const w = st.cfg.wash ?? DEFAULT_WASH
   sink.scrub = Math.min(1, sink.scrub + dt / w.scrubSec)
-  if (sink.scrub >= 1 && st.rack.count === 0) toRack(st, false)
+  if (sink.scrub >= 1) toRack(st, false)
   return true
 }
 
 /**
  * 刷到一半松手：过了 STAIN_MIN 这批就带着污渍上架（偷工换时间，GDD §12.5）；
- * 没过就当没刷完，进度留着回来接着刷。架子还有一批在晾时放不上去，同样留着。返回是不是偷工上架了。
+ * 没过就当没刷完，进度留着回来接着刷。返回是不是偷工上架了。
  */
 export function releaseScrub(st: KitchenState): boolean {
   const sink = st.sink
-  if (sink.stage !== 'soaked' || sink.scrub < STAIN_MIN || sink.scrub >= 1 || st.rack.count > 0) return false
+  if (sink.stage !== 'soaked' || sink.scrub < STAIN_MIN || sink.scrub >= 1) return false
   toRack(st, true)
   return true
 }
 
 function toRack(st: KitchenState, stained: boolean): void {
   const sink = st.sink
-  st.rack.count = sink.count
+  // Joining a batch still drying restarts its clock: the wet ones set the pace
+  st.rack.count += sink.count
   st.rack.left = (st.cfg.wash ?? DEFAULT_WASH).drySec
-  st.rack.stained = stained
+  if (stained) st.rack.stained += sink.count
   sink.stage = 'empty'
   sink.count = 0
   sink.scrub = 0
@@ -779,14 +814,18 @@ function takeFromRack(st: KitchenState, spare = false): InteractResult {
   return done('take-stack')
 }
 
+/** Up to the shelf's capacity; the rest stays in hand. Stained ones go on first, like the rack hands them out */
 function putOnShelf(st: KitchenState): InteractResult {
   const c = st.carry
   if (c.kind !== 'stack') return blocked(c.kind === 'none' ? 'hands-empty' : 'hands-full')
-  st.plates += c.count
-  st.stained += c.countStained
-  c.kind = 'none'
-  c.count = 0
-  c.countStained = 0
+  const n = Math.min(c.count, (st.cfg.shelfCap ?? Infinity) - st.plates)
+  if (n <= 0) return blocked('shelf-full')
+  const ns = Math.min(c.countStained, n)
+  st.plates += n
+  st.stained += ns
+  c.count -= n
+  c.countStained -= ns
+  if (c.count === 0) c.kind = 'none'
   return done('shelve')
 }
 
@@ -898,7 +937,7 @@ export function resetKitchen(st: KitchenState): void {
   st.sink.scrub = 0
   st.rack.count = 0
   st.rack.left = 0
-  st.rack.stained = false
+  st.rack.stained = 0
   st.rack.ready = 0
   st.rack.readyStained = 0
   st.fryer.stage = 'empty'

@@ -77,7 +77,7 @@ describe('触发范围', () => {
   })
 })
 
-describe('手持：最多两样不同的配料，肉饼单独拿', () => {
+describe('手持：两只手各拿一样，任意组合', () => {
   it('拿着一样再点另一样 = 两样都拿着', () => {
     const st = mk()
     expect(take(st, 'bun').kind).toBe('take-ingredient')
@@ -103,21 +103,67 @@ describe('手持：最多两样不同的配料，肉饼单独拿', () => {
     expect(put(st).reason).toBe('duplicate-ingredient')
   })
 
-  it('拿满两样再点第三样 = 换掉后拿的那样；同一样点两次被挡', () => {
+  it('拿满两样再点第三样 = 换掉后拿的那样；同一样能拿两份', () => {
     const st = mk()
     take(st, 'bun')
     take(st, 'cheese')
-    expect(take(st, 'bun').reason).toBe('duplicate-ingredient')
     take(st, 'tomato')
     expect([st.carry.ingredient, st.carry.second]).toEqual(['bun', 'tomato'])
+    const b = mk()
+    take(b, 'bun')
+    expect(take(b, 'bun').kind).toBe('take-ingredient')
+    expect([b.carry.ingredient, b.carry.second]).toEqual(['bun', 'bun'])
   })
 
-  it('换成生肉也行 —— 面板里 patty 和配料是同一排格子', () => {
+  it('面包 + 生肉：烤炉只放下肉，面包留在手上，再去组装台放面包', () => {
     const st = mk()
     take(st, 'bun')
-    expect(take(st, 'patty').kind).toBe('take-ingredient')
-    expect(st.carry.kind).toBe('patty')
-    expect(st.carry.cook).toBe('raw')
+    take(st, 'patty')
+    expect([st.carry.kind, st.carry.ingredient, st.carry.second]).toEqual(['ingredient', 'bun', 'patty'])
+    expect(interact(st, at(GRILL), GRILL).kind).toBe('place-patty')
+    expect(st.grill[0]!.busy).toBe(true)
+    expect([st.carry.kind, st.carry.ingredient, st.carry.second]).toEqual(['ingredient', 'bun', null])
+    expect(put(st).kind).toBe('add-to-burger')
+    expect(st.burger.ingredients).toEqual(['bun'])
+    expect(st.carry.kind).toBe('none')
+  })
+
+  it('先拿生肉再拿面包也一样；组装台只收面包，肉留手上等下锅', () => {
+    const st = mk()
+    take(st, 'patty')
+    take(st, 'bun')
+    expect(put(st).kind).toBe('add-to-burger')
+    expect(st.burger.ingredients).toEqual(['bun'])
+    expect([st.carry.kind, st.carry.cook]).toEqual(['patty', 'raw'])
+    expect(interact(st, at(GRILL), GRILL).kind).toBe('place-patty')
+    expect(st.carry.kind).toBe('none')
+  })
+
+  it('两块生肉一次都下锅；烤位只剩一个时放一块、另一块留手上', () => {
+    const st = mk()
+    take(st, 'patty')
+    take(st, 'patty')
+    expect(put(st).reason).toBe('patty-to-grill')
+    expect(interact(st, at(GRILL), GRILL).kind).toBe('place-patty')
+    expect(st.grill.every((g) => g.busy)).toBe(true)
+    expect(st.carry.kind).toBe('none')
+    const one = mk()
+    one.grill[0]!.busy = true
+    take(one, 'patty')
+    take(one, 'patty')
+    interact(one, at(GRILL), GRILL)
+    expect([one.carry.kind, one.carry.cook]).toEqual(['patty', 'raw'])
+    expect(interact(one, at(GRILL), GRILL).reason).toBe('grill-full')
+  })
+
+  it('面包 + 面包：组装台放一个，另一个留手上', () => {
+    const st = mk()
+    take(st, 'bun')
+    take(st, 'bun')
+    put(st)
+    expect(st.burger.ingredients).toEqual(['bun'])
+    expect([st.carry.kind, st.carry.ingredient, st.carry.second]).toEqual(['ingredient', 'bun', null])
+    expect(put(st).reason).toBe('duplicate-ingredient')
   })
 
   it('手上是盘子时冰箱仍然不给 —— 换食材等于把整个汉堡扔了，要丢得自己按 discard', () => {
@@ -444,9 +490,9 @@ describe('冰柜库存与库房', () => {
     take(st, 'cheese')
     expect(st.stock[bun]).toBe(1)
     take(st, 'patty')
-    expect(st.stock[bun]).toBe(2)
+    expect(st.stock[bun]).toBe(1)
     expect(st.stock[INGREDIENTS.indexOf('cheese')]).toBe(2)
-    expect(st.carry.kind).toBe('patty')
+    expect([st.carry.ingredient, st.carry.second]).toEqual(['bun', 'patty'])
   })
 
   it('库房抱一箱，回冰柜补满那一格', () => {
