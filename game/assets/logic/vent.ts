@@ -28,6 +28,8 @@ export interface Rant {
   /** The review they will leave, before any retort */
   stars: number
   retorted: boolean
+  /** Answered with a thrown plate of food instead of words */
+  thrown: boolean
 }
 
 export interface VentState {
@@ -37,6 +39,7 @@ export interface VentState {
   /** Event counters, read by increment like kitchen.burnt */
   vents: number
   retorts: number
+  throws: number
   /** The rant being shouted back at, or null. Its timer is frozen until the match ends */
   argue: Rant | null
   /** Taps so far in the current match */
@@ -45,13 +48,14 @@ export interface VentState {
 }
 
 export function createVent(): VentState {
-  return { boostLeft: 0, rants: [], vents: 0, retorts: 0, argue: null, taps: 0, idle: 0 }
+  return { boostLeft: 0, rants: [], vents: 0, retorts: 0, throws: 0, argue: null, taps: 0, idle: 0 }
 }
 
 export function resetVent(st: VentState): void {
   st.boostLeft = 0
   st.vents = 0
   st.retorts = 0
+  st.throws = 0
   st.argue = null
   st.taps = 0
   st.idle = 0
@@ -62,13 +66,14 @@ export function resetVent(st: VentState): void {
 export function startRant(st: VentState, id: number, stars: number): void {
   let r = st.rants.find((x) => x.id < 0)
   if (!r) {
-    r = { id: -1, left: 0, stars: 0, retorted: false }
+    r = { id: -1, left: 0, stars: 0, retorted: false, thrown: false }
     st.rants.push(r)
   }
   r.id = id
   r.left = RANT_SEC
   r.stars = stars
   r.retorted = false
+  r.thrown = false
 }
 
 export function ranting(st: VentState, id: number): boolean {
@@ -110,8 +115,7 @@ export function stepVent(st: VentState, dt: number, onDone?: (r: Rant) => void):
 export function vent(st: VentState, spot: VentSpot): Rant | true | null {
   if (spot === 'register') {
     if (st.argue) return null
-    let target: Rant | null = null
-    for (const r of st.rants) if (r.id >= 0 && !r.retorted && (!target || r.left < target.left)) target = r
+    const target = unanswered(st)
     if (!target) return null
     target.retorted = true
     st.retorts++
@@ -122,6 +126,29 @@ export function vent(st: VentState, spot: VentSpot): Rant | true | null {
   }
   boost(st)
   return true
+}
+
+/** The rant nobody has answered yet that is closest to leaving */
+export function unanswered(st: VentState): Rant | null {
+  let target: Rant | null = null
+  for (const r of st.rants) if (r.id >= 0 && !r.retorted && (!target || r.left < target.left)) target = r
+  return target
+}
+
+/**
+ * Throw what is in hand at a ranting customer (2026-09-29, user: only at the desk's ranters). Same price as
+ * arguing — a star off, witnesses, the boost — but they bolt at once instead of after a match. Not mid-match.
+ */
+export function throwAt(st: VentState): Rant | null {
+  if (st.argue) return null
+  const r = unanswered(st)
+  if (!r) return null
+  r.retorted = true
+  r.thrown = true
+  r.left = 0
+  st.throws++
+  boost(st)
+  return r
 }
 
 /** One tap in the match. Returns the tap's index (picks the line), or -1 when no match is on */

@@ -51,6 +51,8 @@ export interface ShiftResult {
   walkedOut: number
   /** Ordered but gave up after going late (flow.lateLeaveSec) */
   leftLate: number
+  /** Argued out mid-wait (logic/vent.ts) */
+  provoked: number
   /** 好评率 0..1。没人来过算满分，别让空局显示 0% */
   goodRate: number
 }
@@ -141,6 +143,7 @@ export function shiftResult(st: ShiftState): ShiftResult {
     timedOut: st.flow.timedOut,
     walkedOut: st.flow.walkedOut,
     leftLate: st.flow.leftLate,
+    provoked: st.flow.provoked,
     goodRate: arrived === 0 ? 1 : st.served / arrived,
   }
 }

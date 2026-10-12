@@ -65,10 +65,10 @@ import {
   FRY_SEC,
   STACK_SLOW,
 } from '../logic/kitchen'
-import type { BlockReason, InteractKind, InteractResult, KitchenState } from '../logic/kitchen'
+import type { BlockReason, CarryKind, InteractKind, InteractResult, KitchenState } from '../logic/kitchen'
 import { createShift, resetShift, settleServe, settleSide, shiftResult, starsForShift, stepShift } from '../logic/shift'
 import type { ShiftConfig, ShiftState } from '../logic/shift'
-import { DOUBLE_CHANCE, DOUBLE_FROM_DAY, matchCustomer, matchSide, moodTier, orderPatienceLeft, patienceRatio, queueIndex, takeReadyOrders } from '../logic/customer'
+import { angriest, DOUBLE_CHANCE, DOUBLE_FROM_DAY, giftCustomer, giftTarget, matchCustomer, matchSide, stormOff, moodTier, orderPatienceLeft, patienceRatio, queueIndex, takeReadyOrders } from '../logic/customer'
 import type { Customer, Side } from '../logic/customer'
 import type { OrderSpec } from '../logic/types'
 import { bank, dayFlow, finishDay, parseProgress, SAVE_KEY, serializeProgress } from '../logic/progress'
@@ -86,7 +86,7 @@ import { COOK_LABEL, COOK_LEVELS, INGREDIENT_LABEL } from '../logic/types'
 import { Bubble } from './Bubble'
 import { Ring } from './Ring'
 import { WallCutaway } from './WallCutaway'
-import { argueTap, createVent, endArgue, rantStars, ranting, rantsLeft, resetVent, startRant, stepVent, vent, VENT_HOLD_SEC, ventSpeedFactor } from '../logic/vent'
+import { ARGUE_TAPS, argueTap, createVent, endArgue, rantStars, ranting, rantsLeft, resetVent, startRant, stepVent, throwAt, vent, VENT_HOLD_SEC, ventSpeedFactor } from '../logic/vent'
 import type { Rant, VentSpot, VentState } from '../logic/vent'
 import { witnessMishap } from '../logic/witness'
 import type { Mishap } from '../logic/witness'
@@ -96,7 +96,7 @@ import type { SfxName } from './Sfx'
 import { addReview, averageStars, createReviewLog, REJECT_STARS, serveReview, WALKOUT_STARS } from '../logic/reviews'
 import type { Review, ReviewKind, ReviewLog } from '../logic/reviews'
 import { CARD_LINES } from './cardLines'
-import { ComputerPanel, Toast, TOAST_H, TOAST_W } from './ReviewUi'
+import { ComputerPanel, NameTab, Toast, TOAST_H, TOAST_W } from './ReviewUi'
 import { Controls } from './Controls'
 import { BurgerStack } from './BurgerStack'
 import type { OfferRow, ReviewLine } from './ReviewUi'
@@ -193,7 +193,8 @@ const WITNESS_LINES: Record<Mishap, readonly string[]> = {
 const URGE_ANGRY = ['快点行不行！', '还要多久啊！', '我赶时间！', '饿死了……']
 const URGE_LATE = ['都超时了！', '我的汉堡呢？！', '还做不做了！']
 const ARGUE_CHEF = ['催什么催！', '不买就滚！', '嫌慢你自己来做！', '爱吃不吃！', '门在那边！', '下次别来了！'] as const
-const ARGUE_CUSTOMER = ['你什么态度！', '我要投诉你！', '什么破店！', '叫你们老板出来！', '差评！必须差评！', '走就走！'] as const
+/** What a chef can throw at a ranting customer, as it flies */
+const THROWN: Partial<Record<CarryKind, string>> = { ingredient: '🥬', patty: '🥩', plate: '🍔', fries: '🍟', drink: '🥤' }
 const HINT: Partial<Record<BlockReason, string>> = {
   'hands-full': '手上拿满了',
   'hands-empty': '手上没东西',
@@ -307,6 +308,11 @@ const DRINKS_SPOT = [5.9, -2.7] as const
 /** Fixed touch targets keep this far inside the safe area (ROADMAP M6) */
 const SAFE_GAP = 50
 
+interface WxMenu {
+  getMenuButtonBoundingClientRect?(): { left: number }
+  getSystemInfoSync?(): { windowWidth: number }
+}
+
 interface MenuRow extends ListRow {
   run: () => void
 }
@@ -355,6 +361,9 @@ export class StationView extends Component {
 
   @property({ type: [Prefab], tooltip: '顾客外形，按站位轮换' })
   customerModels: Prefab[] = []
+
+  @property({ type: Prefab, tooltip: '灭火器 GLB 的场景 Prefab；未指定时保留圆柱占位' })
+  extinguisherModel: Prefab | null = null
 
   @property({ type: [SpriteFrame], tooltip: '食材图标，顺序同 INGREDIENTS' })
   ingredientIcons: SpriteFrame[] = []
@@ -441,6 +450,9 @@ export class StationView extends Component {
   private shift!: ShiftState
   private orderCards: Node[] = []
   private orderTexts: Label[] = []
+  private orderNames: NameTab[] = []
+  /** Scratch for the register tap: who was still waiting to order */
+  private waitingIds: number[] = []
   private orderBars: Node[] = []
   private orderBarSprites: Sprite[] = []
   /** 进度条在场景里的原色，准时状态下用它 */
@@ -494,6 +506,7 @@ export class StationView extends Component {
   private deliveryStation: Station | null = null
   private deliveryCards: Node[] = []
   private deliveryTexts: Label[] = []
+  private deliveryNames: NameTab[] = []
   private deliveryBars: Node[] = []
   private deliveryShown: number[] = []
   private controls!: Controls
@@ -681,6 +694,10 @@ export class StationView extends Component {
       }
       this.orderCards.push(card)
       this.orderTexts.push(text)
+      // Name tab takes the top strip; the recipe text gives it room (shrinks to fit)
+      text.node.setPosition(0, 0, 0)
+      text.node.getComponent(UITransform)?.setContentSize(text.node.getComponent(UITransform)!.width, 44)
+      this.orderNames.push(new NameTab(card))
       this.orderBars.push(bar)
       this.orderBarSprites.push(barSprite)
       this.barLate.push(false)
@@ -714,6 +731,16 @@ export class StationView extends Component {
     stations.push(rack, shelf, this.fryerStation)
     // Extinguisher on the north wall by the cold-room door; drink machine east of the fridge, shown once bought
     const ext = this.colourBlock(kitchenRoot, 'Station_Extinguisher', EXT_SPOT[0], EXT_SPOT[1], 0.5, 0.5, utils.createMesh(primitives.cylinder(0.24, 0.24, 0.6)), 0.55, new Color(220, 40, 40, 255))
+    if (ext && this.extinguisherModel) {
+      const body = ext.getChildByName('Body')!
+      body.active = false
+      body.destroy()
+      const model = instantiate(this.extinguisherModel)
+      ext.addChild(model)
+      // The host's 0.5 m box is used by interaction / collision, not by the art.
+      model.setScale(2, 1, 2)
+      model.setPosition(0, 0.25, 0)
+    }
     if (ext) stations.push(this.toStation(ext, 'extinguisher'))
     this.drinksNode = this.colourBlock(kitchenRoot, 'Station_Drinks', DRINKS_SPOT[0], DRINKS_SPOT[1], 0.8, 0.6, utils.createMesh(primitives.box({ width: 1, height: 1.1, length: 1 })), 0.55, new Color(70, 170, 210, 255))
     if (this.drinksNode) {
@@ -1354,7 +1381,7 @@ export class StationView extends Component {
   private layoutHud(): void {
     const t = this.taskCard
     const left = Math.max(HUD_MARGIN, this.inset.left)
-    const right = Math.max(HUD_MARGIN, this.inset.right)
+    const right = Math.max(HUD_MARGIN, this.inset.right, this.capsuleRight())
     const top = Math.max(HUD_MARGIN, this.inset.top)
     t.node.setPosition(this.uiHalfW - right - TASK_CARD_W / 2, this.uiHalfH - top - t.height / 2, 0)
     const avail = this.uiHalfW * 2 - left - right - TASK_CARD_W - HUD_MARGIN
@@ -1368,6 +1395,15 @@ export class StationView extends Component {
     const cardH = this.orderCards[0]!.getComponent(UITransform)?.height ?? 96
     this.toastX = cx
     this.toastY = this.ordersY + (cardH * k) / 2 + 4 + (TOAST_H * kt) / 2
+  }
+
+  /** WeChat's menu capsule sits over the top-right corner outside the safe area; keep the task card left of it */
+  private capsuleRight(): number {
+    const wx = (globalThis as { wx?: WxMenu }).wx
+    const r = wx?.getMenuButtonBoundingClientRect?.()
+    const w = wx?.getSystemInfoSync?.().windowWidth
+    if (!r || !w || !(r.left > 0)) return 0
+    return ((w - r.left) * this.uiHalfW * 2) / w + HUD_MARGIN
   }
 
   private tickPlay(): void {
@@ -1410,7 +1446,13 @@ export class StationView extends Component {
     }
     if (station.kind === 'register') {
       // 一下接完柜台前所有人：排队的人多时逐个按太磨，接单本身也不该是难点
-      if (takeReadyOrders(this.shift.flow) > 0) return this.sfx.play('pick')
+      const cs = this.shift.flow.customers
+      for (let i = 0; i < cs.length; i++) this.waitingIds[i] = cs[i]!.active && !cs[i]!.ordered ? cs[i]!.id : -1
+      if (takeReadyOrders(this.shift.flow) > 0) {
+        for (let i = 0; i < cs.length; i++) if (cs[i]!.ordered && cs[i]!.id === this.waitingIds[i]) this.say(cs[i]!.id, CARD_LINES[cs[i]!.id % CARD_LINES.length]!.greet, ASK_COLOR)
+        return this.sfx.play('pick')
+      }
+      if (this.throwFood()) return
       // Nobody waiting: the counter computer shows the reviews
       this.openReviews()
       return
@@ -1436,6 +1478,7 @@ export class StationView extends Component {
       if (held === 'fries' || held === 'drink') {
         const side: Side = held === 'fries' ? 'fries' : 'drink'
         const c = matchSide(this.shift.flow, side)
+        if (!c && this.gift(side, station)) return
         const r = interact(this.kitchen, this.movement.pos, station, { spec: c?.spec })
         if ((r.kind === 'serve-fries' || r.kind === 'serve-drink') && c) {
           const v = c.burgerVerdict
@@ -1482,7 +1525,7 @@ export class StationView extends Component {
 
   /** A diner's order is complete: review (or rant), then `settle` releases them. Review is read before settling */
   private finishOrder(c: Customer, ok: boolean, station: Station, settle: () => void): void {
-    const rv = serveReview(ok, c.late, patienceRatio(this.shift.flow, c))
+    const rv = serveReview(ok, c.late, patienceRatio(this.shift.flow, c), c.gifted)
     const line = CARD_LINES[c.id % CARD_LINES.length]!
     const upset = rv.kind !== 'praise'
     if (upset) this.rant(c.id, rv.kind, rv.stars, line.complain)
@@ -1765,12 +1808,17 @@ export class StationView extends Component {
   }
 
   private urge(id: number, lines: readonly string[]): void {
+    if (this.say(id, lines[id % lines.length]!, BAD_COLOR)) this.sfx.play('deny', 0.6)
+  }
+
+  /** A line over a customer's head. False = their figure is not on stage */
+  private say(id: number, text: string, color: Readonly<Color>, dx = 0): boolean {
     const f = this.figureOf(id)
-    if (!f) return
+    if (!f) return false
     const p = f.node.position
     const head = p.y + (p.y > 0 ? this.headSitY : this.headStandY)
-    this.floaters.spawn(this.cameraComp, p.x, head + 0.45, p.z, lines[id % lines.length]!, BAD_COLOR, 26)
-    this.sfx.play('deny', 0.6)
+    this.floaters.spawn(this.cameraComp, p.x + dx, head + 0.45, p.z, text, color, 26)
+    return true
   }
 
   private mishap(kind: Mishap): void {
@@ -1812,10 +1860,17 @@ export class StationView extends Component {
     const spot: VentSpot | null = st?.kind === 'fridge' ? 'fridge' : st?.kind === 'register' ? 'register' : null
     if (!spot || !st) return false
     this.ventedThisPress = true
-    const r = vent(this.venting, spot)
+    let r = vent(this.venting, spot)
+    // Nobody ranting yet: a 😡 diner still waiting takes the chef on, and storms off without their food
+    const c = r === null && spot === 'register' ? angriest(this.shift.flow) : null
+    if (c) {
+      stormOff(this.shift.flow, c)
+      this.rant(c.id, 'walkout', WALKOUT_STARS, CARD_LINES[c.id % CARD_LINES.length]!.complain)
+      r = vent(this.venting, spot)
+    }
     const m = this.movement.pos
     if (r === null) {
-      this.report('unsupported', '没人在前台发火')
+      this.report('unsupported', '没人在发火')
       return true
     }
     this.floaters.spawn(this.cameraComp, m.x, BUBBLE_Y.carry, m.z, r === true ? '💢 砰！' : '💢 狂点对骂！', BAD_COLOR, 30)
@@ -1847,11 +1902,8 @@ export class StationView extends Component {
     // Alternate sides so rapid taps do not stack on one spot
     const dx = i % 2 === 0 ? -0.35 : 0.35
     this.floaters.spawn(this.cameraComp, m.x + dx, BUBBLE_Y.carry + 0.2, m.z, ARGUE_CHEF[i % ARGUE_CHEF.length]!, HINT_COLOR, 28)
-    const f = this.figureOf(id)
-    if (f) {
-      const p = f.node.position
-      this.floaters.spawn(this.cameraComp, p.x - dx, this.headStandY + 0.5, p.z, ARGUE_CUSTOMER[i % ARGUE_CUSTOMER.length]!, BAD_COLOR, 26)
-    }
+    const back = StationView.comeback(id, i)
+    if (back) this.say(id, back, BAD_COLOR, -dx)
     this.sfx.play('wrong', 0.6)
     this.shake(FEEL.shakeSmall)
     return true
@@ -1860,13 +1912,60 @@ export class StationView extends Component {
   private argueEnded(id: number): void {
     const n = this.argueCount
     this.argueCount = 0
+    const exit = CARD_LINES[id % CARD_LINES.length]!.argue[3]!
     if (n > 0) {
       const last = n - 1
-      this.markHighlight(100 + n * 10, `和「${StationView.nameOf(id)}」对骂了 ${n} 回合`, `你：「${ARGUE_CHEF[last % ARGUE_CHEF.length]}」\n对方：「${ARGUE_CUSTOMER[last % ARGUE_CUSTOMER.length]}」然后摔门走了`)
+      this.markHighlight(100 + n * 10, `和「${StationView.nameOf(id)}」对骂了 ${n} 回合`, `你：「${ARGUE_CHEF[last % ARGUE_CHEF.length]}」\n对方：「${exit}」然后摔门走了`)
     }
-    const f = this.figureOf(id)
-    if (f) this.floaters.spawn(this.cameraComp, f.node.position.x, this.headStandY + 0.9, f.node.position.z, '（摔门走了）', BAD_COLOR, 26)
+    // A full match already ended on this line
+    if (n < ARGUE_TAPS) this.say(id, exit, BAD_COLOR)
     this.sfx.play('trash')
+  }
+
+  /** The customer's side of tap `i`: their card's comebacks on every other tap, their exit line on the last */
+  private static comeback(id: number, i: number): string | null {
+    const a = CARD_LINES[id % CARD_LINES.length]!.argue
+    if (i >= ARGUE_TAPS - 1) return a[3]!
+    return i % 2 === 0 ? a[Math.min(2, i / 2)]! : null
+  }
+
+  /** Register tap with food in hand while someone rants: lob it at them (logic/vent.ts throwAt) */
+  private throwFood(): boolean {
+    const k = this.kitchen
+    const icon = THROWN[k.carry.kind]
+    if (!icon || (k.carry.kind === 'plate' && k.burger.ingredients.length === 0)) return false
+    const r = throwAt(this.venting)
+    if (!r) return false
+    const id = r.id
+    discard(k)
+    const m = this.movement.pos
+    const f = this.figureOf(id)
+    this.sfx.play('tap')
+    if (f) {
+      const p = f.node.position
+      const from = new Vec3(m.x, BUBBLE_Y.carry, m.z)
+      const to = new Vec3(p.x, p.y + this.headStandY, p.z)
+      this.floaters.fly(this.cameraComp, from, to, icon, () => {
+        this.floaters.spawn(this.cameraComp, to.x, to.y + 0.3, to.z, '💥', BAD_COLOR, 44)
+        this.say(id, CARD_LINES[id % CARD_LINES.length]!.argue[3]!, BAD_COLOR, 0.4)
+        this.sfx.play('crash')
+        this.shake(FEEL.shakeBig)
+      })
+    }
+    this.markHighlight(95, `朝「${StationView.nameOf(id)}」扔了一份 ${icon}`, `正中脑门，对方抱头跑了`)
+    return true
+  }
+
+  /** A side nobody ordered goes to the least patient diner, on the house (logic/customer.ts giftCustomer) */
+  private gift(side: Side, st: Station): boolean {
+    const c = giftTarget(this.shift.flow)
+    if (!c) return false
+    discard(this.kitchen)
+    giftCustomer(c)
+    this.say(c.id, `🎁 ${SIDE_ICON[side]}`, GOOD_COLOR)
+    this.floaters.spawn(this.cameraComp, st.pos.x, BUBBLE_Y.grill, st.pos.z, `送给「${StationView.nameOf(c.id)}」 耐心回来了`, GOOD_COLOR, 26)
+    this.sfx.play('ready')
+    return true
   }
 
   private markHighlight(score: number, title: string, quote: string): void {
@@ -1886,7 +1985,8 @@ export class StationView extends Component {
   private readonly onRantDone = (r: Rant): void => {
     const rv = this.rantReview.get(r.id)
     this.rantReview.delete(r.id)
-    if (rv) this.review(r.id, r.retorted ? 'complain' : rv.kind, rantStars(r), r.retorted ? `${rv.text}（还跟厨师对骂了一场）` : rv.text)
+    const tail = r.thrown ? '（还被厨师扔了一身吃的）' : r.retorted ? '（还跟厨师对骂了一场）' : ''
+    if (rv) this.review(r.id, r.retorted ? 'complain' : rv.kind, rantStars(r), rv.text + tail)
     for (const f of this.figures) {
       if (f.id !== r.id || !f.leaving) continue
       f.tx = this.exitX
@@ -1981,6 +2081,7 @@ export class StationView extends Component {
       card.active = false
       this.deliveryCards.push(card)
       this.deliveryTexts.push(card.getChildByName('Text')!.getComponent(Label)!)
+      this.deliveryNames.push(new NameTab(card))
       this.deliveryBars.push(card.getChildByName('Bar')!)
       this.deliveryShown.push(-1)
     }
@@ -2564,6 +2665,7 @@ export class StationView extends Component {
       if (this.deliveryShown[j] !== d.id) {
         this.deliveryShown[j] = d.id
         this.deliveryTexts[j]!.string = `🛵 ${StationView.specText(d.spec, '\n')}`
+        this.deliveryNames[j]!.set(StationView.nameOf(DELIVERY_ID_BASE + d.id), (DELIVERY_ID_BASE + d.id) % CARD_LINES.length)
         pop(card, 1.1)
       }
       this.deliveryBars[j]!.setScale(d.max > 0 ? Math.max(0, d.left / d.max) : 0, 1, 1)
@@ -2591,6 +2693,7 @@ export class StationView extends Component {
       if (this.orderShown[i] !== shown) {
         this.orderShown[i] = shown
         this.orderTexts[i]!.string = StationView.orderText(c)
+        this.orderNames[i]!.set(StationView.nameOf(c.id), c.id % CARD_LINES.length)
         pop(card, 1.1)
       }
       // 超时的整条变红，比「空条」一眼更好认：这位还在等，但已经拿不到钱了
@@ -2626,7 +2729,7 @@ export class StationView extends Component {
     this.resultHead =
       `来客 ${r.arrived}    好评 ${r.served}\n` +
       `超时免单 ${r.lateServed}    上错 ${r.wrong}\n` +
-      `没人接单走了 ${r.walkedOut}    等太久走了 ${r.leftLate}    摔碎盘子 ${this.kitchen.broken}\n` +
+      `没人接单走了 ${r.walkedOut}    等太久走了 ${r.leftLate}` + (r.provoked > 0 ? `    被骂走 ${r.provoked}` : '') + `    摔碎盘子 ${this.kitchen.broken}\n` +
       `外卖 送达 ${this.desk.delivered}  做错 ${this.desk.wrong}  超时 ${this.desk.late}  拒 ${this.desk.rejected}\n` +
       `好评率 ${Math.round(r.goodRate * 100)}%` + (stars === 0 ? '    拿到一颗星才能进下一天' : '') +
       `\n今日收入 ¥${takings}（小费 ¥${this.ledger.tips}）` +

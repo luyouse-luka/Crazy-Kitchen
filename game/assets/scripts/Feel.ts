@@ -20,6 +20,8 @@ export const FEEL = {
   shakeSmall: 0.06,
   shakeBig: 0.14,
   scrubTickSec: 0.35,
+  throwSec: 0.35,
+  throwArc: 80,
 } as const
 
 const ONE = new Vec3(1, 1, 1)
@@ -84,6 +86,44 @@ export class Floaters {
     this.world.set(x, y, z)
     cam.convertToUINode(this.world, this.parent, this.ui)
     this.spawnAt(this.ui.x, this.ui.y, text, color, size)
+  }
+
+  /** Lob `text` from one world point to another along an arc; `onHit` fires as it lands */
+  fly(cam: Camera, from: Vec3, to: Vec3, text: string, onHit: () => void): void {
+    cam.convertToUINode(from, this.parent, this.ui)
+    const x0 = this.ui.x
+    const y0 = this.ui.y
+    cam.convertToUINode(to, this.parent, this.ui)
+    const x1 = this.ui.x
+    const y1 = this.ui.y
+    const f = this.pool[this.next++ % this.pool.length]!
+    Tween.stopAllByTarget(f.node)
+    Tween.stopAllByTarget(f.op)
+    f.label.string = text
+    f.label.color = Color.WHITE
+    f.label.fontSize = 40
+    f.label.lineHeight = 44
+    f.node.setPosition(x0, y0, 0)
+    f.node.setScale(1, 1, 1)
+    f.node.angle = 0
+    f.op.opacity = 255
+    f.node.active = true
+    f.node.setSiblingIndex(this.parent.children.length - 1)
+    const p = { k: 0 }
+    tween(p)
+      .to(FEEL.throwSec, { k: 1 }, {
+        onUpdate: () => {
+          const k = p.k
+          f.node.setPosition(x0 + (x1 - x0) * k, y0 + (y1 - y0) * k + FEEL.throwArc * 4 * k * (1 - k), 0)
+          f.node.angle = -540 * k
+        },
+      })
+      .call(() => {
+        f.node.active = false
+        f.node.angle = 0
+        onHit()
+      })
+      .start()
   }
 
   /** At a canvas point */

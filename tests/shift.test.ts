@@ -136,7 +136,7 @@ describe('重开一局', () => {
     resetShift(st)
     expect(st.t).toBe(0)
     expect(st.over).toBe(false)
-    expect(shiftResult(st)).toEqual({ arrived: 0, served: 0, lateServed: 0, wrong: 0, timedOut: 0, walkedOut: 0, leftLate: 0, goodRate: 1 })
+    expect(shiftResult(st)).toEqual({ arrived: 0, served: 0, lateServed: 0, wrong: 0, timedOut: 0, walkedOut: 0, leftLate: 0, provoked: 0, goodRate: 1 })
     run(st, 35)
     expect(st.flow.customers.map((c) => c.spec.required.join('+'))).toEqual(first)
   })
@@ -152,7 +152,7 @@ describe('重开一局', () => {
 
 describe('星级按好评率', () => {
   const r = (goodRate: number): ShiftResult =>
-    ({ arrived: 10, served: 0, lateServed: 0, wrong: 0, timedOut: 0, walkedOut: 0, leftLate: 0, goodRate })
+    ({ arrived: 10, served: 0, lateServed: 0, wrong: 0, timedOut: 0, walkedOut: 0, leftLate: 0, provoked: 0, goodRate })
   it('四档分界', () => {
     expect([1, 0.9, 0.89, 0.7, 0.5, 0.49].map((k) => starsForShift(r(k)))).toEqual([3, 3, 2, 2, 1, 0])
   })

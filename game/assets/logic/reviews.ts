@@ -35,10 +35,11 @@ export function addReview(log: ReviewLog, r: Review): void {
  * 上菜后的星级。`ratioLeft` 取上菜那一刻的 patienceRatio（顾客还没离场时读）。
  * 做对且等得不久 5 星，等久了 4、3；超时才上（免单）2 星；上错 1 星。
  */
-export function serveReview(ok: boolean, late: boolean, ratioLeft: number): { kind: ReviewKind; stars: number } {
+export function serveReview(ok: boolean, late: boolean, ratioLeft: number, gifted = false): { kind: ReviewKind; stars: number } {
   if (!ok) return { kind: 'complain', stars: 1 }
-  if (late) return { kind: 'complain', stars: 2 }
-  return { kind: 'praise', stars: ratioLeft > 0.5 ? 5 : ratioLeft > 0.25 ? 4 : 3 }
+  const bonus = gifted ? 1 : 0
+  if (late) return { kind: 'complain', stars: 2 + bonus }
+  return { kind: 'praise', stars: Math.min(5, (ratioLeft > 0.5 ? 5 : ratioLeft > 0.25 ? 4 : 3) + bonus) }
 }
 
 /** 没人接单走掉的；外卖接了没送到也是这一档 */

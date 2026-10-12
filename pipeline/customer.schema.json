@@ -86,7 +86,14 @@
         },
         "wait_nudge": { "type": "string", "minLength": 1, "maxLength": 15 },
         "praise": { "type": "string", "minLength": 1, "maxLength": 40 },
-        "complain": { "type": "string", "minLength": 1, "maxLength": 40 }
+        "complain": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "argue": {
+          "description": "Shouting match with the chef: three comebacks, then the storm-off line. Overhead mid-rush, hence 10 chars.",
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": { "type": "string", "minLength": 1, "maxLength": 10 }
+        }
       }
     },
 

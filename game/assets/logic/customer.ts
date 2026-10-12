@@ -81,6 +81,8 @@ export interface Customer {
   drinkDue: boolean
   /** The burger was handed over while a side was still due: its verdict, settled when the last side arrives */
   burgerVerdict: OrderVerdict | null
+  /** Was given something on the house this visit (giftCustomer) */
+  gifted: boolean
   /**
    * 模拟器拿它记「AI 厨师为这一单做到哪一步」。
    * 真人局不碰它 —— 玩家手上那个汉堡在 kitchen.ts 的 carry 里。
@@ -100,6 +102,8 @@ export interface CustomerFlow {
   walkedOut: number
   /** Ordered, went late, then gave up waiting (lateLeaveSec) */
   leftLate: number
+  /** Argued out of the shop while waiting for their food */
+  provoked: number
   peakConcurrent: number
   flow: FlowParams
   orders: OrderDifficulty
@@ -121,6 +125,7 @@ export function createCustomerFlow(flow: FlowParams, orders: OrderDifficulty, rn
     timedOut: 0,
     walkedOut: 0,
     leftLate: 0,
+    provoked: 0,
     peakConcurrent: 0,
     flow,
     orders,
@@ -148,6 +153,7 @@ export function resetCustomerFlow(st: CustomerFlow, flow: FlowParams, orders: Or
       friesDue: false,
       drinkDue: false,
       burgerVerdict: null,
+      gifted: false,
       burger: { ingredients: [], cook: null },
     })
   }
@@ -162,6 +168,7 @@ export function resetCustomerFlow(st: CustomerFlow, flow: FlowParams, orders: Or
   st.timedOut = 0
   st.walkedOut = 0
   st.leftLate = 0
+  st.provoked = 0
   st.peakConcurrent = 0
 }
 
@@ -250,6 +257,7 @@ export function stepCustomerFlow(
       c.friesDue = c.spec.fries === true
       c.drinkDue = c.spec.drink === true
       c.burgerVerdict = null
+      c.gifted = false
       st.activeCount++
       st.arrived++
       onArrive?.(c)
@@ -392,6 +400,48 @@ export function takeNextOrder(st: CustomerFlow): Customer | null {
   front.ordered = true
   front.patienceLeft = front.patienceMax
   return front
+}
+
+/** Mood tier from which a waiting diner will take the chef on (the 😡 hurry-up) */
+export const PROVOKE_TIER = 3
+
+/** The angriest diner still waiting on their food, if anyone is at 😡 or worse. Rng-free */
+export function angriest(st: CustomerFlow): Customer | null {
+  let best: Customer | null = null
+  for (const c of st.customers) {
+    if (!c.active || !c.ordered || moodTier(st, c) < PROVOKE_TIER) continue
+    if (!best || c.patienceLeft < best.patienceLeft) best = c
+  }
+  return best
+}
+
+/** An argued-with diner walks out mid-wait: the order is off, no pay */
+export function stormOff(st: CustomerFlow, c: Customer): void {
+  if (!c.active) return
+  st.provoked++
+  releaseCustomer(st, c)
+}
+
+/** ⏳ A gift buys back this share of the wait (and pulls a late diner back on time) */
+export const GIFT_PATIENCE = 0.5
+
+/** Who a gift goes to: the least patient diner not yet gifted. Rng-free */
+export function giftTarget(st: CustomerFlow): Customer | null {
+  let best: Customer | null = null
+  for (const c of st.customers) {
+    if (!c.active || !c.ordered || c.gifted) continue
+    if (!best || c.patienceLeft < best.patienceLeft) best = c
+  }
+  return best
+}
+
+export function giftCustomer(c: Customer): void {
+  c.gifted = true
+  const add = GIFT_PATIENCE * c.patienceMax
+  if (c.late) {
+    c.late = false
+    c.patienceLeft = add
+  } else c.patienceLeft = Math.min(c.patienceMax, c.patienceLeft + add)
 }
 
 /** 点单台按一下，把已经走到柜台的全接了（按到店先后）。返回接了几位 */

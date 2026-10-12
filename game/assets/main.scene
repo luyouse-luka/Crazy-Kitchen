@@ -22395,6 +22395,10 @@
         "__expectedType__": "cc.Prefab"
       }
     ],
+    "extinguisherModel": {
+      "__uuid__": "20bcb1d8-8010-470a-a230-0ce7a132d72e@5348d",
+      "__expectedType__": "cc.Prefab"
+    },
     "ingredientIcons": [
       {
         "__uuid__": "39467792-665e-4914-bef9-b1f4a530fdaf@f9941",

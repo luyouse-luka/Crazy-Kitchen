@@ -47,6 +47,43 @@ function drawAvatar(g: Graphics, x: number, y: number, r: number, idx: number): 
   g.fill()
 }
 
+const TAB_H = 20
+
+/** Who ordered, along a card's top edge: avatar disc + name. A clone of a card that has one reuses it */
+export class NameTab {
+  private g: Graphics
+  private l: Label
+
+  constructor(card: Node) {
+    const w = card.getComponent(UITransform)?.width ?? 180
+    const h = card.getComponent(UITransform)?.height ?? 96
+    let tab = card.getChildByName('NameTab')
+    if (!tab) {
+      tab = new Node('NameTab')
+      tab.layer = card.layer
+      card.addChild(tab)
+      tab.setPosition(0, h / 2 - TAB_H / 2 - 4, 0)
+      tab.addComponent(UITransform).setContentSize(w - 10, TAB_H)
+      tab.addComponent(Graphics)
+      const l = addLabel(tab, 'Name', 16, -w / 2 + 5 + TAB_H + 2, 0, w - 10 - TAB_H - 4, true)
+      l.color = NAME
+    }
+    this.g = tab.getComponent(Graphics)!
+    this.l = tab.getChildByName('Name')!.getComponent(Label)!
+  }
+
+  static get height(): number {
+    return TAB_H
+  }
+
+  set(name: string, avatar: number): void {
+    const w = this.g.node.getComponent(UITransform)!.width
+    this.g.clear()
+    drawAvatar(this.g, -w / 2 + TAB_H / 2, 0, TAB_H / 2 - 2, avatar)
+    this.l.string = name
+  }
+}
+
 export const TOAST_W = 1000
 const W = TOAST_W
 /** One row so it fits the strip above the order cards */

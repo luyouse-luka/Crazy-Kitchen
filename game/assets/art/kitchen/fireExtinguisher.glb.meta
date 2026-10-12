@@ -1,0 +1,161 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "20bcb1d8-8010-470a-a230-0ce7a132d72e",
+  "files": [],
+  "subMetas": {
+    "9b742": {
+      "importer": "gltf-mesh",
+      "uuid": "20bcb1d8-8010-470a-a230-0ce7a132d72e@9b742",
+      "displayName": "",
+      "id": "9b742",
+      "name": "BottleBody.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 539
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "4624d": {
+      "importer": "gltf-material",
+      "uuid": "20bcb1d8-8010-470a-a230-0ce7a132d72e@4624d",
+      "displayName": "",
+      "id": "4624d",
+      "name": "BottleRed.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "94f47": {
+      "importer": "gltf-material",
+      "uuid": "20bcb1d8-8010-470a-a230-0ce7a132d72e@94f47",
+      "displayName": "",
+      "id": "94f47",
+      "name": "HoseBlack.material",
+      "userData": {
+        "gltfIndex": 1
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f1649": {
+      "importer": "gltf-material",
+      "uuid": "20bcb1d8-8010-470a-a230-0ce7a132d72e@f1649",
+      "displayName": "",
+      "id": "f1649",
+      "name": "ValveSilver.material",
+      "userData": {
+        "gltfIndex": 2
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "8dfa1": {
+      "importer": "gltf-material",
+      "uuid": "20bcb1d8-8010-470a-a230-0ce7a132d72e@8dfa1",
+      "displayName": "",
+      "id": "8dfa1",
+      "name": "SafetyYellow.material",
+      "userData": {
+        "gltfIndex": 3
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "3d94e": {
+      "importer": "gltf-material",
+      "uuid": "20bcb1d8-8010-470a-a230-0ce7a132d72e@3d94e",
+      "displayName": "",
+      "id": "3d94e",
+      "name": "LabelWhite.material",
+      "userData": {
+        "gltfIndex": 4
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "5348d": {
+      "importer": "gltf-scene",
+      "uuid": "20bcb1d8-8010-470a-a230-0ce7a132d72e@5348d",
+      "displayName": "",
+      "id": "5348d",
+      "name": "fireExtinguisher.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "20bcb1d8-8010-470a-a230-0ce7a132d72e@9b742"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "20bcb1d8-8010-470a-a230-0ce7a132d72e@4624d",
+        "20bcb1d8-8010-470a-a230-0ce7a132d72e@94f47",
+        "20bcb1d8-8010-470a-a230-0ce7a132d72e@f1649",
+        "20bcb1d8-8010-470a-a230-0ce7a132d72e@8dfa1",
+        "20bcb1d8-8010-470a-a230-0ce7a132d72e@3d94e"
+      ],
+      "scenes": [
+        "20bcb1d8-8010-470a-a230-0ce7a132d72e@5348d"
+      ]
+    }
+  }
+}
