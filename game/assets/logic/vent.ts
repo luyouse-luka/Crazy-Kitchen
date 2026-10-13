@@ -88,7 +88,7 @@ export function rantsLeft(st: VentState): number {
 
 /** Stars the rant ends with */
 export function rantStars(r: Rant): number {
-  return r.retorted ? Math.max(0, r.stars - RETORT_PENALTY) : r.stars
+  return r.retorted && r.stars > 0 ? Math.max(1, r.stars - RETORT_PENALTY) : r.stars
 }
 
 /** One frame. `onDone` fires as a rant ends, before its slot is freed — post the review there */

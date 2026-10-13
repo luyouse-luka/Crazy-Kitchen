@@ -22399,6 +22399,10 @@
       "__uuid__": "20bcb1d8-8010-470a-a230-0ce7a132d72e@5348d",
       "__expectedType__": "cc.Prefab"
     },
+    "drinksModel": {
+      "__uuid__": "f6c7999c-f7b6-47e6-967f-55e5c6aa539e@da4da",
+      "__expectedType__": "cc.Prefab"
+    },
     "ingredientIcons": [
       {
         "__uuid__": "39467792-665e-4914-bef9-b1f4a530fdaf@f9941",
@@ -22450,7 +22454,19 @@
     "deliveryDeadlineSec": 75,
     "arrivalSec": 30,
     "arrivalJitter": 0.5,
-    "_id": "b2BX/w4oFE7ZuRvpUNflCW"
+    "_id": "b2BX/w4oFE7ZuRvpUNflCW",
+    "onionModel": {
+      "__uuid__": "ce02d8b9-6e6c-4cfb-9c0d-db53a3b9726f@98707",
+      "__expectedType__": "cc.Prefab"
+    },
+    "pickleModel": {
+      "__uuid__": "9c688a06-30bb-4d17-a633-6437b339cba6@3538b",
+      "__expectedType__": "cc.Prefab"
+    },
+    "baconModel": {
+      "__uuid__": "33196736-02dd-4769-bd9c-b698d6738283@b3aee",
+      "__expectedType__": "cc.Prefab"
+    }
   },
   {
     "__type__": "cc.SceneGlobals",

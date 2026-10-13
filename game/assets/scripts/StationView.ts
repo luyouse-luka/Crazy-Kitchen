@@ -93,7 +93,7 @@ import type { Mishap } from '../logic/witness'
 import { FEEL, Floaters, pop, popIn } from './Feel'
 import { Sfx } from './Sfx'
 import type { SfxName } from './Sfx'
-import { addReview, averageStars, createReviewLog, REJECT_STARS, serveReview, WALKOUT_STARS } from '../logic/reviews'
+import { addReview, averageStars, createReviewLog, customerCardIndex, REJECT_STARS, serveReview, WALKOUT_STARS } from '../logic/reviews'
 import type { Review, ReviewKind, ReviewLog } from '../logic/reviews'
 import { CARD_LINES } from './cardLines'
 import { ComputerPanel, NameTab, Toast, TOAST_H, TOAST_W } from './ReviewUi'
@@ -364,6 +364,18 @@ export class StationView extends Component {
 
   @property({ type: Prefab, tooltip: '灭火器 GLB 的场景 Prefab；未指定时保留圆柱占位' })
   extinguisherModel: Prefab | null = null
+
+  @property({ type: Prefab, tooltip: '饮料机 GLB 的场景 Prefab；购买后下一天显示' })
+  drinksModel: Prefab | null = null
+
+  @property({ type: Prefab })
+  onionModel: Prefab | null = null
+
+  @property({ type: Prefab })
+  pickleModel: Prefab | null = null
+
+  @property({ type: Prefab })
+  baconModel: Prefab | null = null
 
   @property({ type: [SpriteFrame], tooltip: '食材图标，顺序同 INGREDIENTS' })
   ingredientIcons: SpriteFrame[] = []
@@ -744,6 +756,15 @@ export class StationView extends Component {
     if (ext) stations.push(this.toStation(ext, 'extinguisher'))
     this.drinksNode = this.colourBlock(kitchenRoot, 'Station_Drinks', DRINKS_SPOT[0], DRINKS_SPOT[1], 0.8, 0.6, utils.createMesh(primitives.box({ width: 1, height: 1.1, length: 1 })), 0.55, new Color(70, 170, 210, 255))
     if (this.drinksNode) {
+      if (this.drinksModel) {
+        const body = this.drinksNode.getChildByName('Body')!
+        body.active = false
+        body.destroy()
+        const model = instantiate(this.drinksModel)
+        this.drinksNode.addChild(model)
+        // Preserve the station box and the art's metre scale independently.
+        model.setScale(1 / 0.8, 1, 1 / 0.6)
+      }
       this.drinksStation = this.toStation(this.drinksNode, 'drinks')
       stations.push(this.drinksStation)
     }
@@ -1449,7 +1470,7 @@ export class StationView extends Component {
       const cs = this.shift.flow.customers
       for (let i = 0; i < cs.length; i++) this.waitingIds[i] = cs[i]!.active && !cs[i]!.ordered ? cs[i]!.id : -1
       if (takeReadyOrders(this.shift.flow) > 0) {
-        for (let i = 0; i < cs.length; i++) if (cs[i]!.ordered && cs[i]!.id === this.waitingIds[i]) this.say(cs[i]!.id, CARD_LINES[cs[i]!.id % CARD_LINES.length]!.greet, ASK_COLOR)
+        for (let i = 0; i < cs.length; i++) if (cs[i]!.ordered && cs[i]!.id === this.waitingIds[i]) this.say(cs[i]!.id, CARD_LINES[this.cardIndex(cs[i]!.id)]!.greet, ASK_COLOR)
         return this.sfx.play('pick')
       }
       if (this.throwFood()) return
@@ -1462,7 +1483,7 @@ export class StationView extends Component {
       const r = interact(this.kitchen, this.movement.pos, station, { spec: d?.spec })
       if (r.kind === 'serve' && d && r.verdict) {
         const rv = serveReview(r.verdict.ok, false, d.max > 0 ? d.left / d.max : 0)
-        const line = CARD_LINES[(DELIVERY_ID_BASE + d.id) % CARD_LINES.length]!
+        const line = CARD_LINES[this.cardIndex(DELIVERY_ID_BASE + d.id)]!
         this.review(DELIVERY_ID_BASE + d.id, rv.kind, rv.stars, rv.kind === 'praise' ? line.praise : line.complain)
         settleDelivery(this.desk, d, r.verdict.ok)
         return this.served(station, r.verdict.ok, false, rv.stars)
@@ -1526,7 +1547,7 @@ export class StationView extends Component {
   /** A diner's order is complete: review (or rant), then `settle` releases them. Review is read before settling */
   private finishOrder(c: Customer, ok: boolean, station: Station, settle: () => void): void {
     const rv = serveReview(ok, c.late, patienceRatio(this.shift.flow, c), c.gifted)
-    const line = CARD_LINES[c.id % CARD_LINES.length]!
+    const line = CARD_LINES[this.cardIndex(c.id)]!
     const upset = rv.kind !== 'praise'
     if (upset) this.rant(c.id, rv.kind, rv.stars, line.complain)
     else this.review(c.id, rv.kind, rv.stars, line.praise)
@@ -1797,7 +1818,7 @@ export class StationView extends Component {
       if (!c.active || !c.ordered) continue
       if (this.nudged[i] !== c.id && moodTier(this.shift.flow, c) >= 3) {
         this.nudged[i] = c.id
-        this.review(c.id, 'witness', 0, CARD_LINES[c.id % CARD_LINES.length]!.wait_nudge)
+        this.review(c.id, 'witness', 0, CARD_LINES[this.cardIndex(c.id)]!.wait_nudge)
         this.urge(c.id, URGE_ANGRY)
       }
       if (this.urgedLate[i] !== c.id && c.late) {
@@ -1833,9 +1854,9 @@ export class StationView extends Component {
   }
 
   private readonly onWalkOut = (c: Customer): void => {
-    const line = CARD_LINES[c.id % CARD_LINES.length]!.complain
+    const line = CARD_LINES[this.cardIndex(c.id)]!.complain
     this.rant(c.id, 'walkout', WALKOUT_STARS, line)
-    this.markHighlight(30, `「${StationView.nameOf(c.id)}」没人接单，气走了`, `临走前说：「${line}」`)
+    this.markHighlight(30, `「${this.nameOf(c.id)}」没人接单，气走了`, `临走前说：「${line}」`)
   }
 
   /** An upset customer: rant at the desk first, review on the way out (logic/vent.ts) */
@@ -1865,7 +1886,7 @@ export class StationView extends Component {
     const c = r === null && spot === 'register' ? angriest(this.shift.flow) : null
     if (c) {
       stormOff(this.shift.flow, c)
-      this.rant(c.id, 'walkout', WALKOUT_STARS, CARD_LINES[c.id % CARD_LINES.length]!.complain)
+      this.rant(c.id, 'walkout', WALKOUT_STARS, CARD_LINES[this.cardIndex(c.id)]!.complain)
       r = vent(this.venting, spot)
     }
     const m = this.movement.pos
@@ -1902,7 +1923,7 @@ export class StationView extends Component {
     // Alternate sides so rapid taps do not stack on one spot
     const dx = i % 2 === 0 ? -0.35 : 0.35
     this.floaters.spawn(this.cameraComp, m.x + dx, BUBBLE_Y.carry + 0.2, m.z, ARGUE_CHEF[i % ARGUE_CHEF.length]!, HINT_COLOR, 28)
-    const back = StationView.comeback(id, i)
+    const back = this.comeback(id, i)
     if (back) this.say(id, back, BAD_COLOR, -dx)
     this.sfx.play('wrong', 0.6)
     this.shake(FEEL.shakeSmall)
@@ -1912,10 +1933,10 @@ export class StationView extends Component {
   private argueEnded(id: number): void {
     const n = this.argueCount
     this.argueCount = 0
-    const exit = CARD_LINES[id % CARD_LINES.length]!.argue[3]!
+    const exit = CARD_LINES[this.cardIndex(id)]!.argue[3]!
     if (n > 0) {
       const last = n - 1
-      this.markHighlight(100 + n * 10, `和「${StationView.nameOf(id)}」对骂了 ${n} 回合`, `你：「${ARGUE_CHEF[last % ARGUE_CHEF.length]}」\n对方：「${exit}」然后摔门走了`)
+      this.markHighlight(100 + n * 10, `和「${this.nameOf(id)}」对骂了 ${n} 回合`, `你：「${ARGUE_CHEF[last % ARGUE_CHEF.length]}」\n对方：「${exit}」然后摔门走了`)
     }
     // A full match already ended on this line
     if (n < ARGUE_TAPS) this.say(id, exit, BAD_COLOR)
@@ -1923,8 +1944,8 @@ export class StationView extends Component {
   }
 
   /** The customer's side of tap `i`: their card's comebacks on every other tap, their exit line on the last */
-  private static comeback(id: number, i: number): string | null {
-    const a = CARD_LINES[id % CARD_LINES.length]!.argue
+  private comeback(id: number, i: number): string | null {
+    const a = CARD_LINES[this.cardIndex(id)]!.argue
     if (i >= ARGUE_TAPS - 1) return a[3]!
     return i % 2 === 0 ? a[Math.min(2, i / 2)]! : null
   }
@@ -1947,12 +1968,12 @@ export class StationView extends Component {
       const to = new Vec3(p.x, p.y + this.headStandY, p.z)
       this.floaters.fly(this.cameraComp, from, to, icon, () => {
         this.floaters.spawn(this.cameraComp, to.x, to.y + 0.3, to.z, '💥', BAD_COLOR, 44)
-        this.say(id, CARD_LINES[id % CARD_LINES.length]!.argue[3]!, BAD_COLOR, 0.4)
+        this.say(id, CARD_LINES[this.cardIndex(id)]!.argue[3]!, BAD_COLOR, 0.4)
         this.sfx.play('crash')
         this.shake(FEEL.shakeBig)
       })
     }
-    this.markHighlight(95, `朝「${StationView.nameOf(id)}」扔了一份 ${icon}`, `正中脑门，对方抱头跑了`)
+    this.markHighlight(95, `朝「${this.nameOf(id)}」扔了一份 ${icon}`, `正中脑门，对方抱头跑了`)
     return true
   }
 
@@ -1963,7 +1984,7 @@ export class StationView extends Component {
     discard(this.kitchen)
     giftCustomer(c)
     this.say(c.id, `🎁 ${SIDE_ICON[side]}`, GOOD_COLOR)
-    this.floaters.spawn(this.cameraComp, st.pos.x, BUBBLE_Y.grill, st.pos.z, `送给「${StationView.nameOf(c.id)}」 耐心回来了`, GOOD_COLOR, 26)
+    this.floaters.spawn(this.cameraComp, st.pos.x, BUBBLE_Y.grill, st.pos.z, `送给「${this.nameOf(c.id)}」 耐心回来了`, GOOD_COLOR, 26)
     this.sfx.play('ready')
     return true
   }
@@ -1973,8 +1994,12 @@ export class StationView extends Component {
     this.highlight = { score, title, quote }
   }
 
-  private static nameOf(customerId: number): string {
-    return CARD_LINES[customerId % CARD_LINES.length]!.identity
+  private cardIndex(customerId: number): number {
+    return customerCardIndex(customerId, this.day, this.customersPerShift, CARD_LINES.length)
+  }
+
+  private nameOf(customerId: number): string {
+    return CARD_LINES[this.cardIndex(customerId)]!.identity
   }
 
   private figureOf(id: number): Figure | null {
@@ -1995,7 +2020,7 @@ export class StationView extends Component {
   }
 
   private review(customerId: number, kind: ReviewKind, stars: number, text: string): void {
-    const card = customerId % CARD_LINES.length
+    const card = this.cardIndex(customerId)
     const r: Review = { customerId, kind, stars, t: this.shift.t }
     addReview(this.reviews, r)
     const name = CARD_LINES[card]!.identity + (customerId >= DELIVERY_ID_BASE ? '（外卖）' : '')
@@ -2444,7 +2469,7 @@ export class StationView extends Component {
     this.plateModels = own
   }
 
-  /** Layer art is cloned from food props already in the scene, so no new asset wiring is needed */
+  /** Clone scene food props and optional dedicated topping prefabs into the stack. */
   private buildBurgerStack(kitchenRoot: Node): void {
     const find = (p: string): Node | null => kitchenRoot.getChildByPath(`Props/${p}`)
     const benchPlate = find('Prop_AssemblyPlate/plate')
@@ -2462,7 +2487,14 @@ export class StationView extends Component {
         return
       }
     }
-    this.burgerStack = new BurgerStack(kitchenRoot.scene, art as { [K in keyof typeof art]: Node })
+    const toppings: { onion?: Node; pickle?: Node; bacon?: Node } = {}
+    if (this.onionModel) toppings.onion = instantiate(this.onionModel)
+    if (this.pickleModel) toppings.pickle = instantiate(this.pickleModel)
+    if (this.baconModel) toppings.bacon = instantiate(this.baconModel)
+    this.burgerStack = new BurgerStack(kitchenRoot.scene, {
+      ...art as { [K in keyof typeof art]: Node }, ...toppings,
+    })
+    for (const n of Object.values(toppings)) n.destroy()
     // Sits on the bench's decor plate
     this.benchTopY = benchPlate!.worldPosition.y + 0.02
   }
@@ -2665,7 +2697,7 @@ export class StationView extends Component {
       if (this.deliveryShown[j] !== d.id) {
         this.deliveryShown[j] = d.id
         this.deliveryTexts[j]!.string = `🛵 ${StationView.specText(d.spec, '\n')}`
-        this.deliveryNames[j]!.set(StationView.nameOf(DELIVERY_ID_BASE + d.id), (DELIVERY_ID_BASE + d.id) % CARD_LINES.length)
+        this.deliveryNames[j]!.set(this.nameOf(DELIVERY_ID_BASE + d.id), this.cardIndex(DELIVERY_ID_BASE + d.id))
         pop(card, 1.1)
       }
       this.deliveryBars[j]!.setScale(d.max > 0 ? Math.max(0, d.left / d.max) : 0, 1, 1)
@@ -2693,7 +2725,7 @@ export class StationView extends Component {
       if (this.orderShown[i] !== shown) {
         this.orderShown[i] = shown
         this.orderTexts[i]!.string = StationView.orderText(c)
-        this.orderNames[i]!.set(StationView.nameOf(c.id), c.id % CARD_LINES.length)
+        this.orderNames[i]!.set(this.nameOf(c.id), this.cardIndex(c.id))
         pop(card, 1.1)
       }
       // 超时的整条变红，比「空条」一眼更好认：这位还在等，但已经拿不到钱了

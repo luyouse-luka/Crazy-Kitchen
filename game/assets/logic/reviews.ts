@@ -48,6 +48,11 @@ export const WALKOUT_STARS = 1
 /** 外卖拒单 / 挂着没理：扣一点评分，比做砸了轻 */
 export const REJECT_STARS = 3
 
+/** Rotate identities across days without changing customer slots or order RNG. */
+export function customerCardIndex(customerId: number, day: number, customersPerShift: number, cardCount: number): number {
+  return (customerId + (day - 1) * customersPerShift) % cardCount
+}
+
 /** 店铺评分：所有带星的评价取平均，吐槽不算。没有评价返回 0 */
 export function averageStars(log: ReviewLog): number {
   let sum = 0

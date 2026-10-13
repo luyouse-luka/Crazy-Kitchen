@@ -9,6 +9,9 @@ export interface StackArt {
   cabbage: Node
   tomato: Node
   plate: Node
+  onion?: Node
+  pickle?: Node
+  bacon?: Node
 }
 
 const D = 0.3
@@ -17,19 +20,20 @@ const BUN_H = 0.06
 
 interface LayerSpec {
   art: keyof StackArt
+  fallback?: keyof StackArt
   h: number
   tint?: Color
 }
 
-/** onion / pickle / bacon have no model yet: a recoloured stand-in */
+/** Dedicated toppings keep their materials; old scenes retain tinted stand-ins. */
 const LAYERS: Record<Exclude<Ingredient, 'bun'>, LayerSpec> = {
   patty: { art: 'meat', h: 0.05 },
   cheese: { art: 'cheese', h: 0.015 },
   lettuce: { art: 'cabbage', h: 0.02 },
   tomato: { art: 'tomato', h: 0.02 },
-  onion: { art: 'plate', h: 0.015, tint: new Color(235, 215, 240, 255) },
-  pickle: { art: 'cabbage', h: 0.012, tint: new Color(90, 130, 50, 255) },
-  bacon: { art: 'meat', h: 0.015, tint: new Color(190, 90, 80, 255) },
+  onion: { art: 'onion', fallback: 'plate', h: 0.015, tint: new Color(235, 215, 240, 255) },
+  pickle: { art: 'pickle', fallback: 'cabbage', h: 0.012, tint: new Color(90, 130, 50, 255) },
+  bacon: { art: 'bacon', fallback: 'meat', h: 0.015, tint: new Color(190, 90, 80, 255) },
 }
 
 const COOK_TINT: Record<CookLevel, Color> = {
@@ -58,8 +62,9 @@ export class BurgerStack {
     this.bottom = this.layer(art.bread, D, BUN_H * 0.8)
     this.top = this.layer(art.bread, D, BUN_H)
     for (const [ing, s] of Object.entries(LAYERS) as [Exclude<Ingredient, 'bun'>, LayerSpec][]) {
-      const n = this.layer(art[s.art], ing === 'patty' ? D * 0.95 : D * 1.05, s.h)
-      if (s.tint) tint(n, s.tint)
+      const source = art[s.art] ?? art[s.fallback!]
+      const n = this.layer(source!, ing === 'patty' ? D * 0.95 : D * 1.05, s.h)
+      if (!art[s.art] && s.tint) tint(n, s.tint)
       this.layers.set(ing, n)
     }
     this.patty2 = this.layer(art.meat, D * 0.95, LAYERS.patty.h)

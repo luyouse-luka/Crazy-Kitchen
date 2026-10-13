@@ -8,7 +8,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "check:no-engine": "! grep -rn \"from 'cc'\\|from \\\"cc\\\"\" game/assets/logic/ && echo 'OK: logic/ 零引擎依赖'",
+    "check:no-engine": "node tools/check-no-engine.mjs",
     "check": "pnpm run check:no-engine && pnpm run typecheck && pnpm run test",
     "presim": "node tools/ensure-cocos-tsconfig.mjs",
     "sim": "vite-node tools/sim-cli.ts --",

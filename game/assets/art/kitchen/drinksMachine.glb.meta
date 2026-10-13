@@ -1,0 +1,144 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "f6c7999c-f7b6-47e6-967f-55e5c6aa539e",
+  "files": [],
+  "subMetas": {
+    "42696": {
+      "importer": "gltf-material",
+      "uuid": "f6c7999c-f7b6-47e6-967f-55e5c6aa539e@42696",
+      "displayName": "",
+      "id": "42696",
+      "name": "TraySilver.material",
+      "userData": {
+        "gltfIndex": 3
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "41ac8": {
+      "importer": "gltf-mesh",
+      "uuid": "f6c7999c-f7b6-47e6-967f-55e5c6aa539e@41ac8",
+      "displayName": "",
+      "id": "41ac8",
+      "name": "Cube.001.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 622
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "86b70": {
+      "importer": "gltf-material",
+      "uuid": "f6c7999c-f7b6-47e6-967f-55e5c6aa539e@86b70",
+      "displayName": "",
+      "id": "86b70",
+      "name": "RecessBlack.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "385cf": {
+      "importer": "gltf-material",
+      "uuid": "f6c7999c-f7b6-47e6-967f-55e5c6aa539e@385cf",
+      "displayName": "",
+      "id": "385cf",
+      "name": "CabinetWhite.material",
+      "userData": {
+        "gltfIndex": 1
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "a68c9": {
+      "importer": "gltf-material",
+      "uuid": "f6c7999c-f7b6-47e6-967f-55e5c6aa539e@a68c9",
+      "displayName": "",
+      "id": "a68c9",
+      "name": "MachineBlue.material",
+      "userData": {
+        "gltfIndex": 2
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "da4da": {
+      "importer": "gltf-scene",
+      "uuid": "f6c7999c-f7b6-47e6-967f-55e5c6aa539e@da4da",
+      "displayName": "",
+      "id": "da4da",
+      "name": "drinksMachine.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "f6c7999c-f7b6-47e6-967f-55e5c6aa539e@41ac8"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "f6c7999c-f7b6-47e6-967f-55e5c6aa539e@86b70",
+        "f6c7999c-f7b6-47e6-967f-55e5c6aa539e@385cf",
+        "f6c7999c-f7b6-47e6-967f-55e5c6aa539e@a68c9",
+        "f6c7999c-f7b6-47e6-967f-55e5c6aa539e@42696"
+      ],
+      "scenes": [
+        "f6c7999c-f7b6-47e6-967f-55e5c6aa539e@da4da"
+      ]
+    }
+  }
+}

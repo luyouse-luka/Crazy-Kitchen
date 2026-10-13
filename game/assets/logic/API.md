@@ -540,7 +540,7 @@ ventSpeedFactor(st)                // 发泄后 VENT_BOOST_SEC(4s) 内 ×1.3，�
 ranting(st, id) / rantsLeft(st)    // 小人走去发火位 / 打烊要等 rantsLeft === 0
 ```
 
-对骂（`st.argue`）期间那位的发火倒计时停住；结束时顾客当场走、这时才给加速。那位的评价少 RETORT_PENALTY(1) 颗星（最低 0）。`st.vents` 每涨一次，组件调 `witnessMishap(flow, 'vent')`。
+对骂（`st.argue`）期间那位的发火倒计时停住；结束时顾客当场走、这时才给加速。那位的评价少 RETORT_PENALTY(1) 颗星（评分最低 1；0 留给吐槽）。`st.vents` 每涨一次，组件调 `witnessMishap(flow, 'vent')`。
 
 ---
 
@@ -636,10 +636,12 @@ serveReview(ok, late, ratioLeft) -> { kind, stars } // ratioLeft 在 settleServe
 WALKOUT_STARS = 1
 REJECT_STARS = 3                                    // 外卖拒单 / 挂着没理
 averageStars(log) -> number                         // 店铺评分，吐槽不算，空表 0
+customerCardIndex(customerId, day, customersPerShift, cardCount) -> number
 ```
 
-台词不在这里：组件按 `customerId % CARD_LINES.length` 取顾客卡（`scripts/cardLines.ts`，
-由 `pnpm cards:export` 从手写卡生成）。
+台词不在这里：组件统一调用 `customerCardIndex` 取顾客卡（`scripts/cardLines.ts`，
+由 `pnpm cards:export` 从手写卡生成）。同一天重玩保持身份，换天轮换下一批；
+顾客槽位 id 和订单 RNG 不变。对骂、扔食物扣星最低为 1★，0★ 仍仅用于不计分的吐槽。
 
 ---
 
