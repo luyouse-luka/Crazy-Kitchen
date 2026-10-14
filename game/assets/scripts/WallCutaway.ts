@@ -25,7 +25,7 @@ export class WallCutaway {
 
   constructor(roots: Node[]) {
     for (const r of roots) for (const n of r.children) {
-      if (!n.name.startsWith('Wall_')) continue
+      if (!n.activeInHierarchy || !n.name.startsWith('Wall_')) continue
       const p = n.worldPosition, s = n.worldScale
       const hx = Math.abs(s.x) / 2, hy = Math.abs(s.y) / 2, hz = Math.abs(s.z) / 2
       const surfaces: Surface[] = []

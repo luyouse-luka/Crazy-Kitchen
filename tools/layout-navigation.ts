@@ -16,7 +16,7 @@ export const specBox = (name: string, spec = SPEC): Obstacle => {
 
 export function navigation(spec: Record<string, NodeSpec> = SPEC) {
   const obstacles = Object.keys(spec)
-    .filter(n => n.startsWith('Station_') || n.startsWith('Block_') || n.startsWith('Wall_'))
+    .filter(n => spec[n]!.active !== false && (n.startsWith('Station_') || n.startsWith('Block_') || n.startsWith('Wall_')))
     .map(n => specBox(n, spec))
   const runtime: Obstacle[] = [
     { name: 'Station_Drinks', center: { x: RUNTIME_SPOTS.drinks[0], z: RUNTIME_SPOTS.drinks[1] }, halfX: 0.4, halfZ: 0.3 },

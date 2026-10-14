@@ -1,4 +1,4 @@
-import { Color, gfx, Material, Mesh, MeshRenderer, Node, utils, Vec3 } from 'cc'
+import { Color, gfx, instantiate, Material, Mesh, MeshRenderer, Node, Prefab, utils, Vec3 } from 'cc'
 import { DRINK_SEC, grillCookLevel } from '../logic/kitchen'
 import type { KitchenState } from '../logic/kitchen'
 import { DRINKS_BASE_Y } from '../logic/scene-layout'
@@ -36,11 +36,12 @@ export class WorkstationEffects {
   private sink: Vec3
   private basin: Vec3
   private grill: Vec3[]
+  private pans: Node[] = []
   private drinks: Vec3
   private fryer: Vec3
   private rack: Vec3
 
-  constructor(parent: Node) {
+  constructor(parent: Node, panModel: Prefab | null = null) {
     const props = parent.getChildByName('Props')!
     const anchor = (prop: string, model: string, x: number, y: number, z: number): Vec3 => {
       const holder = props.getChildByName(prop)!.getChildByName(model)!
@@ -51,6 +52,14 @@ export class WorkstationEffects {
     this.basin = anchor('Prop_Sink_0', 'kitchenSink', 0, 1.27, -.08)
     const stoves = props.getChildByName('Prop_Grill')!.children.filter(n => n.name === 'kitchenStove')
     this.grill = stoves.map((n, i) => Vec3.transformMat4(new Vec3(), new Vec3(i ? .5 : -.5, 1.21, .49), n.worldMatrix))
+    if (panModel) this.pans = this.grill.map((p, i) => {
+      const pan = instantiate(panModel)
+      pan.name = `CookingPan_${i}`
+      props.getChildByName('Prop_Grill')!.addChild(pan)
+      pan.setScale(.48, .14, .48)
+      pan.setWorldPosition(p.x, p.y + .005, p.z)
+      return pan
+    })
     const drink = parent.getChildByName('Station_Drinks')!.worldPosition
     this.drinks = new Vec3(drink.x, DRINKS_BASE_Y + .582, drink.z + .055)
     const fryer = props.getChildByName('Prop_Fryer')!.worldPosition
@@ -88,14 +97,14 @@ export class WorkstationEffects {
       const burnt = slot?.busy && grillCookLevel(k, i) === 'burnt'
       for (let j = 0; j < (k.fire ? 6 : 4); j++) {
         const angle = j * TAU / (k.fire ? 6 : 4) + .3
-        const x = p.x + Math.cos(angle) * .19, z = p.z + Math.sin(angle) * .16
+        const x = p.x + Math.cos(angle) * .24, z = p.z + Math.sin(angle) * .23
         const h = (k.fire ? .43 : .13) * (1 + .24 * Math.sin(t * 18 + j * 2.1))
-        this.flame(x, p.y, z, k.fire ? .085 : .045, h, FIRE, t + j)
-        this.flame(x, p.y + .005, z, k.fire ? .045 : .024, h * .62, CORE, t + j)
+        this.flame(x, p.y - .02, z, k.fire ? .085 : .045, h, FIRE, t + j)
+        this.flame(x, p.y - .015, z, k.fire ? .045 : .024, h * .62, CORE, t + j)
       }
       if (slot?.busy) {
         this.disc(p.x, p.y + .06, p.z, .17, .032, burnt ? BURNT : slot.elapsed < k.cfg.cook.rareAt ? RAW : COOKED)
-        for (let j = -1; j <= 1; j++) this.box(p.x + j * .065, p.y + .094, p.z, .017, .003, .22, BURNT)
+        for (let j = -1; j <= 1; j++) this.box(p.x + j * .065, p.y + .078, p.z, .017, .003, .22, BURNT)
       }
       this.puffs(p, t, burnt || k.fire ? SMOKE : STEAM, k.fire ? .95 : .48, 6)
     }
@@ -227,6 +236,7 @@ export class WorkstationEffects {
   }
 
   destroy(): void {
+    for (const pan of this.pans) pan.destroy()
     this.node.destroy()
     this.mesh.destroy()
     this.material.destroy()

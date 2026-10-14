@@ -1,5 +1,5 @@
 /** Shared scene transforms for scene:apply, scene checks, and navigation.
- * Layout source: docs/scene-layout-2026-10-14.md; cube scales are metres.
+ * Layout source: ROADMAP.md, open-centre layout; cube scales are metres.
  */
 export interface NodeSpec {
   pos?: [number, number, number]
@@ -23,10 +23,10 @@ export const SPEC: Record<string, NodeSpec> = {
   Wall_N: { pos: [0.5, 1.25, -3.1], scale: [9.2, 2.5, 0.2] },
   Wall_StoreBack: { pos: [6.5, 1.25, -6.1], scale: [3.2, 2.5, 0.2] },
 
-  Station_Fridge: { pos: [4.5, 0.45, -0.5], scale: [1, 0.9, 1] },
-  Station_Grill: { pos: [0, 0.45, -2.5], scale: [2, 0.9, 1] },
-  Station_Assembly: { pos: [0, 0.45, 0], scale: [2, 0.9, 1] },
-  Station_Serve: { pos: [0, 0.45, 3.1], scale: [2, 0.9, 1] },
+  Station_Fridge: { pos: [-3.5, 0.45, 0], scale: [1, 0.9, 1] },
+  Station_Grill: { pos: [0.5, 0.45, -2.5], scale: [2, 0.9, 1] },
+  Station_Assembly: { pos: [-3.5, 0.45, -1.5], scale: [1, 0.9, 2] },
+  Station_Serve: { pos: [-1, 0.45, 3.1], scale: [2, 0.9, 1] },
   Station_Order: { pos: [-3.5, 0.45, 3.1], scale: [1, 0.9, 1] },
 
   Station_Delivery: { pos: [3, 0.45, 3.1], scale: [1, 0.9, 1] },
@@ -38,16 +38,16 @@ export const SPEC: Record<string, NodeSpec> = {
   Wall_Store_W1: { pos: [4.9, 0.5, -4.5], scale: [0.2, 1, 3] },
   Wall_Store_W2: { pos: [5.25, 0.5, -3.1], scale: [0.5, 1, 0.2] },
   Wall_Store_S: { pos: [7.5, 0.5, -3.1], scale: [1, 1, 0.2] },
-  Wall_Utility: { pos: [5.1, 0.45, -1], scale: [0.2, 0.9, 4] },
+  Wall_Utility: { pos: [5.1, 0.45, -1], scale: [0.2, 0.9, 4], active: false },
   Wall_Kitchen_W: { pos: [-4.1, 0.45, -1.25], scale: [0.2, 0.9, 3.5] },
-  Block_Pack: { pos: [-2.5, 0.45, 0], scale: [1, 0.9, 1] },
-  Block_Plate: { pos: [-1.5, 0.45, 0], scale: [1, 0.9, 1] },
-  Block_Fryer: { pos: [1.5, 0.45, -2.5], scale: [1, 0.9, 1] },
-  Block_CounterW: { pos: [-2, 0.45, 3.1], scale: [2, 0.9, 1] },
-  Block_CounterE: { pos: [1.75, 0.45, 3.1], scale: [1.5, 0.9, 1] },
-  Block_Return: { pos: [-3.5, 0.45, -1.25], scale: [1, 0.9, 3.5] },
-  Block_BackCounter: { pos: [-2, 0.45, -2.5], scale: [2, 0.9, 1] },
-  Block_BackCounterE: { pos: [2.5, 0.45, -2.5], scale: [1, 0.9, 1] },
+  Block_Pack: { pos: [-2.5, 0.45, 3.1], scale: [1, 0.9, 1], active: false },
+  Block_Plate: { pos: [-3.5, 0.45, 1], scale: [1, 0.9, 1] },
+  Block_Fryer: { pos: [2, 0.45, -2.5], scale: [1, 0.9, 1] },
+  Block_CounterW: { pos: [-2.5, 0.45, 3.1], scale: [1, 0.9, 1] },
+  Block_CounterE: { pos: [1.25, 0.45, 3.1], scale: [2.5, 0.9, 1] },
+  Block_Return: { pos: [-3.5, 0.45, -1.25], scale: [1, 0.9, 3.5], active: false },
+  Block_BackCounter: { pos: [-1.25, 0.45, -2.5], scale: [1.5, 0.9, 1] },
+  Block_BackCounterE: { pos: [2.75, 0.45, -2.5], scale: [0.5, 0.9, 1] },
   Block_DrinkBase: { pos: [3.5, 0.45, -2.5], scale: [1, 0.9, 1] },
 
   Block_VoidNorth: { pos: [0.5, 0.45, -4.5], scale: [9, 0.9, 3] },
@@ -69,14 +69,14 @@ export const SPEC: Record<string, NodeSpec> = {
   Anchor_Hand: { pos: [0, 1.75, 0] },
 
   Shadow: { pos: [0, 0.006, 0], scale: [0.08, 1, 0.06], active: true },
-  Prop_Fridge: { pos: [4.5, 0, -0.5], yaw: -90 },
-  Prop_Grill: { pos: [0, 0, -2.5] },
-  Prop_Assembly: { pos: [-0.5, 0, 0] },
-  Prop_AssemblyEast: { pos: [0.5, 0, 0] },
-  Prop_AssemblyPlate: { pos: [0, 1, 0] },
-  Prop_Pack: { pos: [-2.5, 0, 0] },
-  Prop_Plate: { pos: [-1.5, 0, 0] },
-  Prop_Fryer: { pos: [1.5, 0, -2.5] },
+  Prop_Fridge: { pos: [-3.5, 0, 0], yaw: 90 },
+  Prop_Grill: { pos: [0.5, 0, -2.5] },
+  Prop_Assembly: { pos: [-3.5, 0, -2], yaw: 90 },
+  Prop_AssemblyEast: { pos: [-3.5, 0, -1], yaw: 90 },
+  Prop_AssemblyPlate: { pos: [-3.5, 1, -1.5] },
+  Prop_Pack: { pos: [-2.5, 0, 3.1], yaw: 0 },
+  Prop_Plate: { pos: [-3.5, 0, 1], yaw: 90 },
+  Prop_Fryer: { pos: [2, 0, -2.5] },
   Prop_Sink_0: { pos: [7.5, 0, 0], yaw: 90, active: true },
   Prop_Sink_1: { pos: [7.5, 0, 1], yaw: 90, active: true },
   Prop_WashRack: { pos: [7.5, 0, 2], yaw: 90 },
@@ -88,12 +88,12 @@ export const SPEC: Record<string, NodeSpec> = {
   Prop_Serve: { pos: [0, 0, 3.1] },
 
   Prop_ColdDoor: { pos: [6.25, 0, -3.1], active: false },
-  Prop_ReturnBack: { pos: [-3.5, 0, -2.5] },
-  Prop_ReturnSide: { pos: [-3.5, 0, -1.25], scale: [1.5, 1, 1], yaw: 90 },
-  Prop_ReturnFront: { pos: [-3.5, 0, 0] },
-  Prop_BackCounterW: { pos: [-2.5, 0, -2.5] },
-  Prop_BackCounterW2: { pos: [-1.5, 0, -2.5] },
-  Prop_BackCounterE: { pos: [2.5, 0, -2.5] },
+  Prop_ReturnBack: { pos: [-3.5, 0, -2.5], active: false },
+  Prop_ReturnSide: { pos: [-3.5, 0, -1.25], scale: [1.5, 1, 1], yaw: 90, active: false },
+  Prop_ReturnFront: { pos: [-3.5, 0, 0], active: false },
+  Prop_BackCounterW: { pos: [-1.625, 0, -2.5], scale: [0.75, 1, 1], active: true },
+  Prop_BackCounterW2: { pos: [-0.875, 0, -2.5], scale: [0.75, 1, 1] },
+  Prop_BackCounterE: { pos: [2.75, 0, -2.5], scale: [0.5, 1, 1] },
   Prop_DrinkBase: { pos: [3.5, 0, -2.5] },
 }
 

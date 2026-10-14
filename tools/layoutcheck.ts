@@ -33,10 +33,8 @@ function checkGeometry(): Failure[] {
     return b.center[axis] + side * (axis === 'x' ? b.halfX : b.halfZ)
   }
   const passages: Array<[string, number]> = [
-    ['烤炉 ↔ 半岛', edge('Station_Assembly', 'z', -1) - edge('Station_Grill', 'z', 1)],
-    ['半岛 ↔ 前台', edge('Station_Serve', 'z', -1) - edge('Station_Assembly', 'z', 1)],
-    ['半岛东端绕行', edge('Station_Fridge', 'x', -1) - edge('Station_Assembly', 'x', 1)],
-    ['洗区主通道', edge('Station_Sink', 'x', -1) - edge('Wall_Utility', 'x', 1)],
+    ['中央纵向空地', edge('Station_Serve', 'z', -1) - edge('Station_Grill', 'z', 1)],
+    ['中央横向空地', edge('Station_Sink', 'x', -1) - edge('Station_Assembly', 'x', 1)],
     ['冷库门洞', edge('Wall_Store_S', 'x', -1) - edge('Wall_Store_W2', 'x', 1)],
     ['厨房前台东端', edge('Floor', 'x', 1) - edge('Station_Delivery', 'x', 1)],
   ]
@@ -44,9 +42,9 @@ function checkGeometry(): Failure[] {
     console.log(`   ${name}: ${width.toFixed(2)}m`)
     require(width >= AISLE - 1e-9, `${name} 小于 ${AISLE}m`)
   }
-  require(passages[1]![1] >= 3 * 2 * CHEF_RADIUS - 1e-9, '半岛与前台净宽不足三个身位')
+  require(passages[0]![1] >= 3 * 2 * CHEF_RADIUS - 1e-9, '中央空地净宽不足三个身位')
   for (const s of nav.stations) require(nav.access(s).length > 0, `${s.name} 没有可达交互点`)
-  for (const [name, x, z] of [['半岛北侧', 0, -1.25], ['半岛南侧', 0, 1.25], ['半岛绕行', 1.8, 0], ['后场入口', 6.1, 1.5], ['冷库入口', 6.25, -3.1], ['冷库取货', 6.5, -4.5]] as const) require(nav.canReach(x, z), `${name} 不可达`)
+  for (const [name, x, z] of [['中央空地', 0, 0], ['左侧制作通道', -2.5, 0], ['后场入口', 6.1, 1.5], ['冷库入口', 6.25, -3.1], ['冷库取货', 6.5, -4.5]] as const) require(nav.canReach(x, z), `${name} 不可达`)
   const floors = ['Floor', 'Floor_East', 'Floor_Store'].map(n => specBox(n))
   require(nav.reachable.every(p => floors.some(b => Math.abs(p.x - b.center.x) <= b.halfX && Math.abs(p.z - b.center.z) <= b.halfZ)), '角色可以走到地板外')
   for (const s of nav.stations) require(floors.some(b => Math.abs(s.center.x - b.center.x) + s.halfX <= b.halfX + 1e-9 && Math.abs(s.center.z - b.center.z) + s.halfZ <= b.halfZ + 1e-9), `${s.name} 越出地板`)

@@ -1,0 +1,36 @@
+{
+  "main": {
+    "bytes": 2253532,
+    "files": 45
+  },
+  "subpackages": [
+    {
+      "name": "internal",
+      "root": "subpackages/internal",
+      "bytes": 405194,
+      "files": 20
+    },
+    {
+      "name": "main",
+      "root": "subpackages/main",
+      "bytes": 5988383,
+      "files": 105
+    }
+  ],
+  "totalBytes": 8647109,
+  "mainLimit": 4194304,
+  "safeLimit": 3984384,
+  "totalLimit": 31457280,
+  "withinBudget": true,
+  "withinSafetyMargin": true,
+  "orientation": "landscapeRight",
+  "launchScene": "db://assets/main.scene",
+  "remoteBundles": [],
+  "debug": false,
+  "zip": {
+    "path": "D:\\Codex\\vultr-projects\\server-home-20260930\\project\\kitchen-chaos\\game\\build\\packages\\kitchen-chaos-frequent-stations-wechat-20261015.zip",
+    "files": 170,
+    "bytes": 2534873,
+    "byteMatch": true
+  }
+}

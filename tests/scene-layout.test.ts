@@ -24,7 +24,42 @@ interface Entry {
 const scene = JSON.parse(readFileSync('game/assets/main.scene', 'utf8')) as Entry[]
 const nav = navigation()
 
-describe('peninsula scene integration', () => {
+describe('open-centre kitchen layout', () => {
+  it('keeps the frequently used fridge and plates together in the middle of the side counter', () => {
+    const fridge = specBox('Station_Fridge')
+    const plates = specBox('Block_Plate')
+    expect(fridge.center.z).toBe(0)
+    expect(plates.center.z).toBe(1)
+    expect(nav.canReach(-2.5, 0)).toBe(true)
+    expect(nav.canReach(-2.5, 1)).toBe(true)
+    expect(nav.access(fridge).some(id => {
+      const p = nav.at(id)
+      return Math.abs(p.x + 2.5) < .06 && Math.abs(p.z) < .06
+    })).toBe(true)
+    expect(nav.access(plates).some(id => {
+      const p = nav.at(id)
+      return Math.abs(p.x + 2.5) < .06 && Math.abs(p.z - 1) < .06
+    })).toBe(true)
+  })
+
+  it('leaves the central floor clear for direct joystick crossings', () => {
+    expect(nav.stations.length).toBeGreaterThan(0)
+    for (let x = -2.5; x <= 6.5; x += 0.2) for (let z = -1.5; z <= 1.5; z += 0.2) {
+      const p = { x, z }
+      expect(nav.obstacles.some(b => circleOverlapsAABB(p, CHEF_RADIUS, b)), `central floor ${x},${z}`).toBe(false)
+      expect(nav.canReach(x, z), `central floor ${x},${z}`).toBe(true)
+    }
+    const p = { x: -2.5, z: 1.5 }
+    for (const [x, z] of [[6.5, -1.5], [-2.5, -1.5], [6.5, 1.5], [-3.4, 2.1]]) {
+      while (Math.hypot(x! - p.x, z! - p.z) > 1e-6) {
+        const d = Math.hypot(x! - p.x, z! - p.z), k = Math.min(0.05 / d, 1)
+        expect(moveAndSlide(p, p, { x: (x! - p.x) * k, z: (z! - p.z) * k }, CHEF_RADIUS, nav.obstacles, FLOOR_BOUNDS)).toBe(false)
+      }
+    }
+  })
+})
+
+describe('open-centre scene integration', () => {
   it('scene transforms, rotations and visibility match the shared specification', () => {
     for (const [name, spec] of Object.entries(SPEC)) {
       const matches = scene.filter(n => n.__type__ === 'cc.Node' && n._name === name)
@@ -68,7 +103,7 @@ describe('peninsula scene integration', () => {
     expect(blocked.access(storage)).toHaveLength(0)
   })
 
-  it('actual movement passes the peninsula tip, wash aisle and cold-room gate without collision', () => {
+  it('actual movement crosses the centre, wash aisle and cold-room gate without collision', () => {
     const p = { x: SPEC.Player!.pos![0], z: SPEC.Player!.pos![2] }
     const stops = [[2.7, 1.25], [2.7, -1.25], [0, -1.25], [2.7, -1.25], [2.7, 1.5], [6.1, 1.5], [6.1, -4.5], [6.5, -4.5]]
     for (const [x, z] of stops) {
@@ -117,7 +152,7 @@ describe('peninsula scene integration', () => {
     const height = Math.max(...gltf.scenes[gltf.scene ?? 0].nodes.map((n: number) => top(n))) * model._lscale.y
     const b = specBox('Station_Fridge')
     const box = { minX: b.center.x - b.halfX, maxX: b.center.x + b.halfX, minZ: b.center.z - b.halfZ, maxZ: b.center.z + b.halfZ, minY: 0, maxY: height }
-    expect(hidesPoint({ ...box, minZ: -2, maxZ: -1 }, 6.25, 0.3, -3.1, { x: -10.447, y: 10.505, z: 10.391 })).toBe(true)
+    expect(hidesPoint({ ...box, minX: 4, maxX: 5, minZ: -2, maxZ: -1 }, 6.25, 0.3, -3.1, { x: -10.447, y: 10.505, z: 10.391 })).toBe(true)
     for (const x of [5.9, 6.25, 6.6]) for (const y of [0.3, 1.2, 1.75]) {
       expect(hidesPoint(box, x, y, -3.1)).toBe(false)
       expect(hidesPoint(box, x, y, -4.5)).toBe(false)

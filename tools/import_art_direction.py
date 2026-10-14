@@ -70,7 +70,7 @@ def build_floors(cache, out):
 
 def build_site(out):
     config=json.loads((Path(__file__).parent/'art-direction.json').read_text())
-    scene=json.loads((Path(__file__).resolve().parents[1]/'game/assets/main.scene').read_text())
+    scene=json.loads((Path(__file__).resolve().parents[1]/'game/assets/main.scene').read_text(encoding='utf-8'))
     floors={n['_name']:n for n in scene if n.get('_name') in dict(config['floors'])}
     report=[]
     for name in ['floor-terrace','site-boundaries']:
@@ -135,9 +135,12 @@ def build_site(out):
 def build_shadows(out):
     # Static contact shadows are batched; the chef's ellipse follows its existing Shadow node.
     config=json.loads((Path(__file__).parent/'art-direction.json').read_text())
-    boxes=[(-3.5,-1.25,1,3.5),(-2,-2.5,2,1),(0,-2.5,2,1),(1.5,-2.5,1,1),(2.5,-2.5,1,1),(3.5,-2.5,1,1),
-           (-2.5,0,1,1),(-1.5,0,1,1),(0,0,2,1),(-2.75,3.1,3.5,1),(0,3.1,2,1),(2.25,3.1,2.5,1),
-           (4.5,-.5,1,1),(7.5,.5,1,2),(7.5,2,1,1),(6.5,-5.5,1,1)]
+    scene=json.loads((Path(__file__).resolve().parents[1]/'game/assets/main.scene').read_text(encoding='utf-8'))
+    names={'Station_Fridge','Station_Grill','Station_Assembly','Station_Serve','Station_Order','Station_Delivery',
+           'Station_Sink','Block_Pack','Block_Plate','Block_Fryer','Block_CounterW','Block_CounterE',
+           'Block_BackCounter','Block_BackCounterE','Block_DrinkBase','Block_DishRack','Block_Crates'}
+    boxes=[(n['_lpos']['x'],n['_lpos']['z'],n['_lscale']['x'],n['_lscale']['z'])
+           for n in scene if n.get('_name') in names and n.get('_active',True)]
     boxes.extend((.5+x,6.15,.9,.75) for x in [-2.4,-.8,.8,2.4])
     boxes=[(*b,0) for b in boxes]
     boxes.extend((x,z,.9*size,.9*size,y) for _,x,y,z,_,size in config['furniture'])

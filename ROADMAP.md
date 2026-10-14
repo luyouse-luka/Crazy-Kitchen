@@ -47,7 +47,55 @@
 
 </details>
 
-## 📍 当前断点（2026-10-14 微信主包分包优化）
+## 📍 当前断点（2026-10-15 常用工位默认位置与自定义布局计划）
+
+### 暂停与 Git 提交断点（2026-10-15）
+
+用户已认可自定义布局实现计划，选择“本会话直接实现”，随后要求先暂停、记录并将全部改动提交 Git。执行停在 Task 1 之前：只有启动说明和读取尝试，未新增编辑器代码、布局存档或装修入口。恢复时沿用已批准方案和执行方式，从 `docs/superpowers/plans/2026-10-15-custom-kitchen-layout.md` 的 Task 1 开始，不重新征求范围确认。
+
+本次提交包含已完成的周边布局、常用冰箱 / 盘架位置、灭火器去浮字、两炉位锅具、模型 / 碰撞 / 阴影同步、场景工具兼容、相关测试 / 真实输入验证脚本，以及设计、计划和验收证据。文件清单详见下面三批记录；构建目录与 ZIP 按现有 `.gitignore` 保留本地，不强行加入源码仓库。当前操作是本地提交，未推送 / 部署 / 同步。
+
+### 常用工位离开角落（2026-10-15）
+
+按用户再次反馈：默认冰箱移至左侧中段 `(-3.5, 0)`，取盘架紧邻 `(-3.5, 1)`；制作台成组向后顺移 `(-3.5, -1.5)`，中央空地及固定建筑不变。模型、碰撞、台面盘子与接触阴影同步更新，不改变加工/客流参数。
+
+`pnpm check` 519 项 / 40 文件通过；scene / cam / layout 通过。默认完成率 91.8%、后期 84.3%，idle 相对基线偏差 0.6%，守住原闸门。浏览器真实摇杆完成正确送餐、洗盘 / 晾盘 / 还盘及灭火器取还，零页面异常、警告或资源请求失败；阴影检查补充新取盘点与旧角落残留判据。证据见 `docs/frequent-stations-2026-10-15-*`。
+
+微信工程 `game/build/kitchen-chaos-frequent-stations-wechat-20261015` 与同名 ZIP 已生成；主包 2,253,532 字节，预算通过，ZIP 的 170 个文件逐字节一致。没有推送、部署或远端同步。
+
+用户已认可自定义布局设计及 7 项顺序实现计划，选择本会话直接实现；计划见 `docs/superpowers/plans/2026-10-15-custom-kitchen-layout.md`。随后用户要求暂停并提交，编辑器尚未实现；月度费用、破产与奖励继续作为后期提案。
+
+文件清单：`tools/scene-spec.ts`、`game/assets/main.scene`、`game/assets/art/restaurant/contact-shadows.glb`、`tests/scene-layout.test.ts`、`tests/restaurant-art.test.ts`、`tools/verify-open-centre.cjs`、`docs/custom-layout-design-2026-10-14.md`、新增实现计划及 `docs/frequent-stations-2026-10-15-{overview.png,kitchen.png,check.json,package.json,verification.md}`、本记录。
+
+### 冰箱位置、锅具与自定义布局提案（2026-10-14）
+
+按用户追加反馈：冰箱与取盘架对调，冰箱移到左侧中段 `(-3.5, -1.5)`，取料不再需要进入后角；删除灭火器的悬浮文字。两处肉饼烤位各增加一只浅锅，复用已有 KayKit `pot` Prefab，锅内肉饼、锅底火焰和焦痕锚点同步对齐；锅具闲置时保留，重开不重复创建，组件销毁时释放。北排烤炉 / 炸锅及填充柜小幅对齐，保持中央空地和原难度参数。
+
+`pnpm check` **519 项 / 40 文件**、scene / layout / cam 通过；20 天曲线完成率 **91.8%**，后期 **84.5%**，idle 偏差 **+2.4%**，在原校验范围内。最新 Web 中 **22 段真实摇杆移动**、侧面取料、正确制作 / 送餐、洗盘 / 晾盘 / 归架及灭火器取放通过；两只锅真实加载、浮字已移除，浏览器零错误 / 警告 / 失败请求。工位效果的烤焦、起火、灭火、洗碗、饮料、炸锅和生命周期回归也通过。只读审查无代码待修项。
+
+微信工程：`game/build/kitchen-chaos-layout-refinement-wechat-20261014/`；ZIP：`game/build/packages/kitchen-chaos-layout-refinement-wechat-20261014.zip`。实际主包 **2,253,532 字节**、main 分包 **5,988,392 字节**、internal 分包 **405,194 字节**，合计 **8,647,118 字节**，包体检查通过。Web 仍使用 `game/build/open-centre-web/` 和本地 4183 预览端口；手机手感 / 性能仍待试玩，未提交、推送或发布。
+
+用户确认自定义布局范围为“移动 / 旋转工位，固定建筑边界”。具体编辑、通道校验、存档迁移和恢复默认设计见 [自定义布局设计草案](docs/custom-layout-design-2026-10-14.md)，**尚未实现**。月度房租 / 水电 / 商税 / 安全费用、破产重整与对应奖励作为后期提案；经营日期必须独立于解锁关卡天数，当前金币存档不能直接承载负债。本轮没有接入收费或惩罚。
+
+文件清单：沿用上一条周边布局文件，新增 / 再改 `game/assets/scripts/WorkstationEffects.ts`、`docs/custom-layout-design-2026-10-14.md`、`docs/layout-refinement-2026-10-14-{overview.png,grill.png,check.json,package.json}`。锅具引用由 `tools/prepare-open-centre.mjs` 复跑，模型 / 许可原文件保留。
+
+### 周边工位与中央空地（2026-10-14，第一批）
+
+用户确认采用四周工位围合、中央大块空地，取消中央岛台。冰箱、取盘与制作台沿西侧布置；烤炉 / 炸锅 / 饮料机留在北侧，洗区在东侧、冷库仍在后方，接单 / 出餐 / 外卖留在前侧。打包道具移到左侧前台，避免打包柜堵住接单站位；原回折柜与洗区隔断关闭，碰撞和降墙逻辑忽略不活动节点。中央净空约 **10 × 4.6m**，冷库门洞保留 **1.5m**。灭火器移到前侧 `(4.5, 3.25)`，开局可见并有文字标识，失火时标识变红，拿起后隐藏、归还后恢复。
+
+出餐点向西移至 `(-1, 3.1)`，保持制作与交付距离；未更改客流、耐心、烹调 / 洗碗时间、升级、存档和角色动作。重生成接触阴影，移除原半岛留下的阴影。场景写入工具兼容 Windows CRLF，同时保留 JSON 无损往返守卫和原节点 UUID。
+
+`pnpm check` **517 项 / 40 文件**、scene / layout / cam / a7 通过。新增中央直线横穿与接单站位回归，覆盖真实碰撞移动；20 天 × 32 种子模拟完成率 **92.2%**（M1 **92.7%**），后期 **85.6%**（M1 **85.9%**），idle 偏差 **−1.1%**，无天数掉出原难度带。独立 Web 与微信构建通过；浏览器鼠标拖动摇杆完成 **25 段移动**、中央横穿 / 冷库进出、开门接单、制作并正确交付一份汉堡（错误 0）、灭火器取放，以及洗盘 / 晾盘 / 归架全流程；未直接定位角色。浏览器错误 / 警告 / 资源失败均为 0，已核对构建中的新接触阴影。只读代码审查无待修项。
+
+Web 预览：`game/build/open-centre-web/`。微信工程：`game/build/kitchen-chaos-open-centre-wechat-20261014/`；ZIP：`game/build/packages/kitchen-chaos-open-centre-wechat-20261014.zip`，170 个文件与工程逐字节一致。实际主包 **2,253,532 字节（2.15 MiB）**，main 分包 **5,987,615 字节**，internal 分包 **405,194 字节**，合计 **8,646,341 字节**，包体判据通过。均为本地独立产物；未上传、发布或推送。
+
+复跑：`node tools/prepare-open-centre.mjs` → `pnpm scene:apply --write`。重新生成阴影时用 Python 的 `tools/import_art_direction.py::build_shadows`；素材生成完再启动 Cocos 导入 / 构建，避免构建读取旧缓存。浏览器验收：`node tools/verify-open-centre.cjs <Web预览URL> <结果目录>`，需要 Playwright 与 Edge，可用 `PLAYWRIGHT_MODULE` 指定已有模块路径。验证脚本使用浏览器鼠标拖动摇杆和点击按钮，操作路径不直接改角色坐标。
+
+文件清单：`game/assets/main.scene`、`game/assets/logic/scene-layout.ts`、`game/assets/scripts/{StationView,WallCutaway}.ts`、`game/assets/art/restaurant/contact-shadows.glb`；`tools/{scene-spec.ts,sceneapply.ts,layout-navigation.ts,layoutcheck.ts,import_art_direction.py,prepare-open-centre.mjs,verify-open-centre.cjs}`；`tests/{scene-layout,restaurant-art}.test.ts`、本记录及 `docs/open-centre-2026-10-14-{overview.png,kitchen.png,check.json,package.json}`。
+
+实景：[周边布局全景](docs/open-centre-2026-10-14-overview.png) / [正常镜头](docs/open-centre-2026-10-14-kitchen.png)；[浏览器结果](docs/open-centre-2026-10-14-check.json) / [包体结果](docs/open-centre-2026-10-14-package.json)。全景临时拉远镜头仅用于展示布局，不改变正式镜头设置。
+
+**有意保留 / 下一批**：这一批没有改按钮语义、引导、开局难度参数、人物操作动作、熟度文字、自由行为和 UI 皮肤；按用户九项反馈分批处理。下一批先做首次操作引导与按钮分工。真人手机摇杆、触控与性能仍需试玩；模拟器和浏览器通过不作为真机验收。
 
 ### 微信主包分包优化（2026-10-14）
 

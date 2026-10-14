@@ -364,6 +364,9 @@ export class StationView extends Component {
   @property({ type: Prefab, tooltip: '灭火器 GLB 的场景 Prefab；未指定时保留圆柱占位' })
   extinguisherModel: Prefab | null = null
 
+  @property({ type: Prefab })
+  grillPanModel: Prefab | null = null
+
   @property({ type: Prefab, tooltip: '饮料机 GLB 的场景 Prefab；购买后下一天显示' })
   drinksModel: Prefab | null = null
 
@@ -742,7 +745,7 @@ export class StationView extends Component {
     // The fryer counter is scenery until bought: the kitchen offers nothing there without cfg.fryerSec
     this.fryerStation = this.toStation(fryerNode, 'fryer')
     stations.push(rack, shelf, this.fryerStation)
-    // Utility-side extinguisher; the purchased drink machine sits on the back counter.
+    // Foreground extinguisher; the purchased drink machine sits on the back counter.
     const ext = this.colourBlock(kitchenRoot, 'Station_Extinguisher', EXT_SPOT[0], EXT_SPOT[1], 0.5, 0.5, utils.createMesh(primitives.cylinder(0.24, 0.24, 0.6)), 0.55, new Color(220, 40, 40, 255))
     if (ext && this.extinguisherModel) {
       const body = ext.getChildByName('Body')!
@@ -872,7 +875,7 @@ export class StationView extends Component {
     this.menu = new ListPanel(this.node, DECOR_SLOTS.length + 3)
     this.buildDecor(kitchenRoot)
     this.fryerServing = kitchenRoot.getChildByPath('Props/Prop_Fryer/fries')
-    this.workstationEffects = new WorkstationEffects(kitchenRoot)
+    this.workstationEffects = new WorkstationEffects(kitchenRoot, this.grillPanModel)
     const blockers = this.need(NODES.blockers)
     this.cutaway = new WallCutaway(blockers ? [kitchenRoot, blockers] : [kitchenRoot])
     this.movement = createMovement({ stations, boxes: blockers ? StationView.readBoxes(blockers) : [], x: player.worldPosition.x, z: player.worldPosition.z })
@@ -1085,7 +1088,7 @@ export class StationView extends Component {
 
   /** Same cube-is-metres rule as readStations, for things that only block the way. */
   private static readBoxes(root: Node): AABB[] {
-    return root.children.map((c) => {
+    return root.children.filter(c => c.activeInHierarchy).map((c) => {
       const p = c.worldPosition
       const s = c.worldScale
       return { center: { x: p.x, z: p.z }, halfX: Math.abs(s.x) / 2, halfZ: Math.abs(s.z) / 2 }

@@ -19,6 +19,34 @@ const gltf = (name: string) => {
 }
 
 describe('restaurant art integration', () => {
+  it('the cooking view uses the existing pot prefab for both burner pans', () => {
+    const component = scene.find((n: any) => Array.isArray(n.ingredientIcons))
+    expect(component.grillPanModel?.__uuid__).toBe(meta('pot').userData.assetFinder.scenes[0])
+  })
+
+  it('contact shadows follow the relocated fridge and assembly instead of the empty centre', () => {
+    const data = gltf('contact-shadows')
+    const bytes: Uint8Array = readFileSync(folder + 'contact-shadows.glb')
+    const buffer = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+    const binary = 28 + buffer.getUint32(12, true)
+    const positions = data.accessors[data.meshes[0].primitives[0].attributes.POSITION]
+    const offset = binary + (data.bufferViews[positions.bufferView].byteOffset || 0) + (positions.byteOffset || 0)
+    const centres: Array<[number, number]> = []
+    for (let i = 0; i < positions.count; i += 72) {
+      let x = 0, z = 0
+      for (let j = 0; j < 72; j++) {
+        x += buffer.getFloat32(offset + (i + j) * 12, true)
+        z += buffer.getFloat32(offset + (i + j) * 12 + 8, true)
+      }
+      centres.push([x / 72, z / 72])
+    }
+    expect(centres.some(([x, z]) => Math.abs(x + 3.5) < 1e-5 && Math.abs(z - 1) < 1e-5)).toBe(true)
+    expect(centres.some(([x, z]) => Math.abs(x + 3.5) < 1e-5 && Math.abs(z + 1.5) < 1e-5)).toBe(true)
+    expect(centres.some(([x, z]) => Math.abs(x + 3.5) < 1e-5 && Math.abs(z) < 1e-5)).toBe(true)
+    expect(centres.some(([x, z]) => Math.abs(x) < 1e-5 && Math.abs(z) < 1e-5)).toBe(false)
+    expect(centres.some(([x, z]) => Math.abs(x + 3.5) < 1e-5 && Math.abs(z + 2.5) < 1e-5)).toBe(false)
+  })
+
   it('KayKit furniture and wall surfaces use lit rough materials', () => {
     for (const asset of manifest.assets.filter((a: any) => a.collection !== 'project')) {
       const data = gltf(asset.name)
