@@ -1,0 +1,93 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "3294e91b-fe42-4078-be74-5cf58750b465",
+  "files": [],
+  "subMetas": {
+    "11919": {
+      "importer": "gltf-scene",
+      "uuid": "3294e91b-fe42-4078-be74-5cf58750b465@11919",
+      "displayName": "",
+      "id": "11919",
+      "name": "site-boundaries.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "bcca5": {
+      "importer": "gltf-mesh",
+      "uuid": "3294e91b-fe42-4078-be74-5cf58750b465@bcca5",
+      "displayName": "",
+      "id": "bcca5",
+      "name": "UnnamedMesh.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 2470
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "5ff3f": {
+      "importer": "gltf-material",
+      "uuid": "3294e91b-fe42-4078-be74-5cf58750b465@5ff3f",
+      "displayName": "",
+      "id": "5ff3f",
+      "name": "SiteTrim.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "3294e91b-fe42-4078-be74-5cf58750b465@bcca5"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "3294e91b-fe42-4078-be74-5cf58750b465@5ff3f"
+      ],
+      "scenes": [
+        "3294e91b-fe42-4078-be74-5cf58750b465@11919"
+      ]
+    }
+  }
+}

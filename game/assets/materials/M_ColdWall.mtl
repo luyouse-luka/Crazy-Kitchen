@@ -81,7 +81,10 @@
         "g": 205,
         "b": 225,
         "a": 255
-      }
+      },
+      "roughness": 0.9,
+      "metallic": 0,
+      "specularIntensity": 0.15
     },
     {},
     {},

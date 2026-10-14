@@ -1,63 +1,81 @@
-import { Node } from 'cc'
-import { hidesPoint } from '../logic/camera'
+import { Color, Material, MeshRenderer, Node } from 'cc'
+import { hidesPoint, stepWallOpacity } from '../logic/camera'
 import type { Box3 } from '../logic/camera'
 
-/** Share of a wall's height left standing while cut away. ⏳ self-chosen */
-const LOW = 0.12
-/** Full height ↔ stub in 1/SPEED seconds */
-const SPEED = 6
-/** Chef sample heights: feet and chest, so a waist-high wall still counts */
 const SAMPLE_Y = [0.3, 1.2]
-
+interface Surface {
+  renderer: MeshRenderer
+  slot: number
+  original: Material
+  fade: Material
+  castShadow: number
+  color: Color
+  opaque: boolean | null
+}
 interface Wall {
   node: Node
-  /** Full-height box, read once: the lowered wall must not stop hiding and pop back up */
   box: Box3
-  sy: number
-  baseY: number
   k: number
+  surfaces: Surface[]
 }
 
-/**
- * Walls between the chef and the camera drop to a stub and rise again once clear.
- * Lowered rather than faded: fading needs a transparent pass per wall material and sorts badly.
- * Assumes the scene's wall convention — a centred 1m cube scaled to size under an unscaled parent.
- */
+/** Fade the complete wall assembly without changing geometry or collision. */
 export class WallCutaway {
   private walls: Wall[] = []
 
   constructor(roots: Node[]) {
-    for (const r of roots) {
-      for (const n of r.children) {
-        if (!n.name.startsWith('Wall_')) continue
-        const p = n.worldPosition
-        const s = n.worldScale
-        const hx = Math.abs(s.x) / 2
-        const hy = Math.abs(s.y) / 2
-        const hz = Math.abs(s.z) / 2
-        this.walls.push({
-          node: n,
-          box: { minX: p.x - hx, minY: p.y - hy, minZ: p.z - hz, maxX: p.x + hx, maxY: p.y + hy, maxZ: p.z + hz },
-          sy: n.scale.y,
-          baseY: n.position.y - n.scale.y / 2,
-          k: 1,
+    for (const r of roots) for (const n of r.children) {
+      if (!n.name.startsWith('Wall_')) continue
+      const p = n.worldPosition, s = n.worldScale
+      const hx = Math.abs(s.x) / 2, hy = Math.abs(s.y) / 2, hz = Math.abs(s.z) / 2
+      const surfaces: Surface[] = []
+      for (const renderer of n.getComponentsInChildren(MeshRenderer)) {
+        if (!renderer.enabled) continue
+        renderer.sharedMaterials.forEach((original, slot) => {
+          if (!original) return
+          const fade = new Material()
+          fade.copy(renderer.getRenderMaterial(slot) ?? original, { technique: 1 })
+          const color = new Color(255, 255, 255, 255)
+          const value = fade.getProperty('mainColor')
+          if (value instanceof Color) color.set(value)
+          if (n.name.startsWith('Wall_Store')) color.set(178, 205, 225, 255)
+          fade.setProperty('mainColor', color)
+          renderer.setSharedMaterial(fade, slot)
+          surfaces.push({ renderer, slot, original, fade, castShadow: renderer.shadowCastingMode, color, opaque: null })
         })
       }
+      this.walls.push({ node: n, box: { minX: p.x-hx, minY:p.y-hy, minZ:p.z-hz, maxX:p.x+hx, maxY:p.y+hy, maxZ:p.z+hz }, k:1, surfaces })
     }
   }
 
   update(x: number, z: number, dt: number): void {
     for (const w of this.walls) {
-      const hidden = SAMPLE_Y.some((y) => hidesPoint(w.box, x, y, z))
-      const target = hidden ? LOW : 1
-      if (w.k === target) continue
-      const step = dt * SPEED
-      w.k = w.k < target ? Math.min(target, w.k + step) : Math.max(target, w.k - step)
-      const sy = w.sy * w.k
-      const s = w.node.scale
-      const p = w.node.position
-      w.node.setScale(s.x, sy, s.z)
-      w.node.setPosition(p.x, w.baseY + sy / 2, p.z)
+      const hidden = SAMPLE_Y.some(y => hidesPoint(w.box, x, y, z))
+      w.k = stepWallOpacity(w.k, hidden, dt)
+      for (const surface of w.surfaces) {
+        const { renderer, slot, color } = surface
+        const material = renderer.getMaterialInstance(slot)
+        if (!material) continue
+        const current = material.getProperty('mainColor')
+        if (current instanceof Color) color.set(current)
+        color.a = Math.round(w.k * 255)
+        material.setProperty('mainColor', color)
+        if (surface.opaque !== (w.k === 1)) {
+          surface.opaque = w.k === 1
+          // Opaque walls write depth; fading surfaces keep depth testing and stop casting shadows.
+          const states = { depthStencilState: { depthWrite: w.k === 1 }, blendState: { targets: [{ blend: w.k < 1 }] } }
+          material.overridePipelineStates(states, 0)
+          renderer.shadowCastingMode = w.k === 1 ? surface.castShadow : 0
+        }
+      }
     }
+  }
+
+  destroy(): void {
+    for (const w of this.walls) for (const s of w.surfaces) {
+      if (s.renderer.isValid) s.renderer.setSharedMaterial(s.original, s.slot)
+      s.fade.destroy()
+    }
+    this.walls.length = 0
   }
 }

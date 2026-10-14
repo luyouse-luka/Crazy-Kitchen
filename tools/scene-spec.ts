@@ -1,103 +1,100 @@
-/**
- * 场景里那些「有定稿数值」的东西，单一真相。
- *
- * `scenedump.ts` 拿它做对比、`sceneapply.ts` 拿它做写入 —— 两边共用一份，
- * 否则改了一处忘了另一处，判据会开始说谎。
- * 数值出处：docs/m2-scene-guide.md §2.3（那套坐标是枚举 + `pnpm layout` 验过的）。
+/** Shared scene transforms for scene:apply, scene checks, and navigation.
+ * Layout source: docs/scene-layout-2026-10-14.md; cube scales are metres.
  */
-
 export interface NodeSpec {
   pos?: [number, number, number]
-  /** 只有确定几何体默认尺寸的才写。Capsule/Sphere/Plane 的默认尺寸不在工程里，留给编辑器量 */
+  yaw?: number
+  active?: boolean
+
   scale?: [number, number, number]
 }
 
-/** 场景里的旧名 → 定稿名。相机 yaw = −45（从西南看），背对镜头的是北和**东** */
 export const RENAMES: Record<string, string> = {
   Wall_W: 'Wall_E',
 }
 
 export const SPEC: Record<string, NodeSpec> = {
-  // Cube，scale 即米数
-  Floor: { pos: [0, -0.05, 0], scale: [8, 0.1, 6] },
-  /**
-   * 东翼：洗区、备餐打包台、库房。另起一块而不是把 Floor 拉宽 ——
-   * 四个核心工位的间距一动难度就崩（`pnpm layout`），所以主厨房原样不动，新东西只往这边放。
-   */
-  Floor_East: { pos: [7, -0.05, 0], scale: [6, 0.1, 6] },
-  /** 冷库：独立一间，接在东翼北半边外面 x ∈ [10, 13.5]、z ∈ [-3, 0]，门在西墙 */
-  Floor_Store: { pos: [11.75, -0.05, -1.5], scale: [3.5, 0.1, 3] },
-  Wall_N: { pos: [4.8, 1.25, -3.1], scale: [17.8, 2.5, 0.2] },
-  Wall_StoreBack: { pos: [13.6, 1.25, -1.5], scale: [0.2, 2.5, 3] },
-  /**
-   * 北墙一排台面，自西向东：打包台 → 制作台 → 放盘子 → 烤炉 ×2 → 薯条，中间不留缝；
-   * 冰箱在薯条东边隔 0.5m。烤炉两台对应两个烤位，所以工位是 2×1。
-   *
-   * 南边一整条前台，只在东头留 1m 出口：西头是点单台（电脑），顾客在它东边那段柜台点单、取餐；从东头进、西头出，
-   * 正对制作台那 2m 是取餐口，其余是 Block_Counter*。
-   */
-  Station_Fridge: { pos: [5, 0.45, -2.5], scale: [1, 0.9, 1] },
-  Station_Grill: { pos: [2, 0.45, -2.5], scale: [2, 0.9, 1] },
-  Station_Assembly: { pos: [-0.5, 0.45, -2.5], scale: [1, 0.9, 1] },
-  Station_Serve: { pos: [-0.5, 0.45, 2.5], scale: [2, 0.9, 1] },
-  Station_Order: { pos: [-3.5, 0.45, 2.5], scale: [1, 0.9, 1] },
-  /** 外卖取餐口：前台东段，出口西边紧挨着（2026-09-24）。骑手从东头出口进出 */
-  Station_Delivery: { pos: [2.5, 0.45, 2.5], scale: [1, 0.9, 1] },
-  /**
-   * 库房货架：进门左手边、贴北墙（2026-09-28）。原先压在门洞 z ∈ (-1.9, -0.5) 上，人进不去。
-   * 门外够不着，要跨进门一步。
-   */
-  Station_Storeroom: { pos: [10.9, 0.45, -2.5], scale: [1, 0.9, 1] },
 
-  /**
-   * `Kitchen/Blockers` 底下：只挡路、不能交互。Cube，scale 即米数。
-   * Wall_E 也在这里：地板边界延到库房东墙，东翼南半边那段墙得自己挡人。
-   * 库房的西墙（隔断）和南墙朝镜头，做成 1m 的剖切墙 —— 2.5m 的整墙会把库房里面整个挡住。
-   * 门洞在隔断 z ∈ (-1.9, -0.5)。Block_* 的渲染器关掉，外形由 `Kitchen/Props` 里的模型给。
-   */
-  Wall_E: { pos: [10.1, 1.25, 1.5], scale: [0.2, 2.5, 3] },
-  Wall_Store_W1: { pos: [10.1, 0.5, -2.45], scale: [0.2, 1, 1.1] },
-  Wall_Store_W2: { pos: [10.1, 0.5, -0.25], scale: [0.2, 1, 0.5] },
-  Wall_Store_S: { pos: [11.85, 0.5, 0], scale: [3.3, 1, 0.2] },
-  Block_Pack: { pos: [-1.5, 0.45, -2.5], scale: [1, 0.9, 1] },
-  Block_Plate: { pos: [0.5, 0.45, -2.5], scale: [1, 0.9, 1] },
-  Block_Fryer: { pos: [3.5, 0.45, -2.5], scale: [1, 0.9, 1] },
-  Block_CounterW: { pos: [-2.25, 0.45, 2.5], scale: [1.5, 0.9, 1] },
-  Block_CounterE: { pos: [1.25, 0.45, 2.5], scale: [1.5, 0.9, 1] },
-  /** 洗碗池：一个大池子，泡 → 按住刷 → 旁边架子晾（2026-09-24 由 Block_Sink 改成工位） */
-  Station_Sink: { pos: [8, 0.45, 2.5], scale: [2, 0.9, 1] },
-  Block_DishRack: { pos: [9.5, 0.45, 2.5], scale: [1, 0.9, 1] },
-  Block_Crates: { pos: [10.9, 0.45, -2.6], scale: [0.8, 0.9, 0.8] },
+  Floor: { pos: [0.5, -0.05, 0.3], scale: [9, 0.1, 6.6] },
 
-  /**
-   * 柜台外的顾客区。独立一块，**不并进 Floor** —— 玩家走不到这里（movement.ts 的 FLOOR_BOUNDS），
-   * 把两者合成一块会让「地板」同时指两个东西。
-   * z ∈ [3, 6]，与店内地板在 z=3 精确接边，不重叠所以不会共面闪烁。顾客站前 1m，后排放等候长凳。
-   * 顶面同样在 y=0（pos.y = -scale.y / 2）。
-   */
-  Floor_Customer: { pos: [0, -0.05, 4.5], scale: [8, 0.1, 3] },
+  Floor_East: { pos: [6.5, -0.05, 0.3], scale: [3, 0.1, 6.6] },
 
-  /**
-   * 厨房外面的地面。**纯装饰** —— 不参与碰撞、不进 movement 的 FLOOR_BOUNDS、
-   * 也不进 camcheck 的 CONTENT（那份决定相机跟随边界，把它算进去相机会跟到天边）。
-   *
-   * 它存在的唯一理由是把画面填满。正交投影没有地平线，视线全都以同一个俯角射向地面，
-   * 所以地面够大，每条视线都打在地上，画面就不会空。实测：场景本体只有 64㎡，
-   * 而半高 3 的画面在地面上铺开 136㎡ —— 差的那一倍就是这块补的。
-   * `pnpm cam` 的「视角对比」一节证明过：光调相机角度，覆盖率天花板只有 69%。
-   *
-   * 顶面 y=-0.05 压在 Floor 底面（-0.1）之下，不共面所以不闪；侧面看店内地板高出一档。
-   */
+  Floor_Store: { pos: [6.5, -0.05, -4.5], scale: [3, 0.1, 3] },
+  Wall_N: { pos: [0.5, 1.25, -3.1], scale: [9.2, 2.5, 0.2] },
+  Wall_StoreBack: { pos: [6.5, 1.25, -6.1], scale: [3.2, 2.5, 0.2] },
+
+  Station_Fridge: { pos: [4.5, 0.45, -0.5], scale: [1, 0.9, 1] },
+  Station_Grill: { pos: [0, 0.45, -2.5], scale: [2, 0.9, 1] },
+  Station_Assembly: { pos: [0, 0.45, 0], scale: [2, 0.9, 1] },
+  Station_Serve: { pos: [0, 0.45, 3.1], scale: [2, 0.9, 1] },
+  Station_Order: { pos: [-3.5, 0.45, 3.1], scale: [1, 0.9, 1] },
+
+  Station_Delivery: { pos: [3, 0.45, 3.1], scale: [1, 0.9, 1] },
+
+  Station_Storeroom: { pos: [6.5, 0.45, -5.5], scale: [1, 0.9, 1] },
+
+
+  Wall_E: { pos: [8.1, 1.25, -1.2], scale: [0.2, 2.5, 9.6] },
+  Wall_Store_W1: { pos: [4.9, 0.5, -4.5], scale: [0.2, 1, 3] },
+  Wall_Store_W2: { pos: [5.25, 0.5, -3.1], scale: [0.5, 1, 0.2] },
+  Wall_Store_S: { pos: [7.5, 0.5, -3.1], scale: [1, 1, 0.2] },
+  Wall_Utility: { pos: [5.1, 0.45, -1], scale: [0.2, 0.9, 4] },
+  Wall_Kitchen_W: { pos: [-4.1, 0.45, -1.25], scale: [0.2, 0.9, 3.5] },
+  Block_Pack: { pos: [-2.5, 0.45, 0], scale: [1, 0.9, 1] },
+  Block_Plate: { pos: [-1.5, 0.45, 0], scale: [1, 0.9, 1] },
+  Block_Fryer: { pos: [1.5, 0.45, -2.5], scale: [1, 0.9, 1] },
+  Block_CounterW: { pos: [-2, 0.45, 3.1], scale: [2, 0.9, 1] },
+  Block_CounterE: { pos: [1.75, 0.45, 3.1], scale: [1.5, 0.9, 1] },
+  Block_Return: { pos: [-3.5, 0.45, -1.25], scale: [1, 0.9, 3.5] },
+  Block_BackCounter: { pos: [-2, 0.45, -2.5], scale: [2, 0.9, 1] },
+  Block_BackCounterE: { pos: [2.5, 0.45, -2.5], scale: [1, 0.9, 1] },
+  Block_DrinkBase: { pos: [3.5, 0.45, -2.5], scale: [1, 0.9, 1] },
+
+  Block_VoidNorth: { pos: [0.5, 0.45, -4.5], scale: [9, 0.9, 3] },
+  Block_StoreShelves: { pos: [7.5, 0.45, -4.5], scale: [1, 0.9, 3] },
+
+  Station_Sink: { pos: [7.5, 0.45, 0.5], scale: [1, 0.9, 2] },
+  Block_DishRack: { pos: [7.5, 0.45, 2], scale: [1, 0.9, 1] },
+  Block_Crates: { pos: [6.5, 0.45, -5.5], scale: [0.8, 0.9, 0.8] },
+
+
+  Floor_Customer: { pos: [0.5, -0.05, 5.1], scale: [9, 0.1, 3] },
+
+
   Floor_Outer: { pos: [3, -0.1, 0], scale: [30, 0.1, 26] },
 
-  // 玩家：位置是定的，scale 取决于内置 Capsule/Sphere/Plane 的默认尺寸 —— 编辑器里量（§2.2 的 _Ruler）
-  Player: { pos: [0, 0, 0] },
+  Player: { pos: [0, 0, 1.55] },
   Body: { pos: [0, 0.6, 0] },
   Head: { pos: [0, 1.4, 0] },
   Anchor_Hand: { pos: [0, 1.75, 0] },
-  // Plane 的内置 mesh 默认边长 10m（实测确认：scale=1 时它盖住了整个 8×6 地板），
-  // 所以 0.08/0.06 出来是 0.8 × 0.6 米 —— 比玩家直径 0.7 略大一圈
-  Shadow: { pos: [0, 0.006, 0], scale: [0.08, 1, 0.06] },
+
+  Shadow: { pos: [0, 0.006, 0], scale: [0.08, 1, 0.06], active: true },
+  Prop_Fridge: { pos: [4.5, 0, -0.5], yaw: -90 },
+  Prop_Grill: { pos: [0, 0, -2.5] },
+  Prop_Assembly: { pos: [-0.5, 0, 0] },
+  Prop_AssemblyEast: { pos: [0.5, 0, 0] },
+  Prop_AssemblyPlate: { pos: [0, 1, 0] },
+  Prop_Pack: { pos: [-2.5, 0, 0] },
+  Prop_Plate: { pos: [-1.5, 0, 0] },
+  Prop_Fryer: { pos: [1.5, 0, -2.5] },
+  Prop_Sink_0: { pos: [7.5, 0, 0], yaw: 90, active: true },
+  Prop_Sink_1: { pos: [7.5, 0, 1], yaw: 90, active: true },
+  Prop_WashRack: { pos: [7.5, 0, 2], yaw: 90 },
+  Prop_Crates: { pos: [6.4, 0, -5.5] },
+  Prop_Shelf_0: { pos: [7.7, 0, -5.4], scale: [0.75, 0.65, 0.75] },
+  Prop_Shelf_1: { pos: [7.7, 0, -4.45], scale: [0.75, 0.65, 0.75] },
+  Prop_Shelf_2: { pos: [7.7, 0, -3.5], scale: [0.75, 0.65, 0.75] },
+  Prop_Waiting: { pos: [0.5, 0, 6.15] },
+  Prop_Serve: { pos: [0, 0, 3.1] },
+
+  Prop_ColdDoor: { pos: [6.25, 0, -3.1], active: false },
+  Prop_ReturnBack: { pos: [-3.5, 0, -2.5] },
+  Prop_ReturnSide: { pos: [-3.5, 0, -1.25], scale: [1.5, 1, 1], yaw: 90 },
+  Prop_ReturnFront: { pos: [-3.5, 0, 0] },
+  Prop_BackCounterW: { pos: [-2.5, 0, -2.5] },
+  Prop_BackCounterW2: { pos: [-1.5, 0, -2.5] },
+  Prop_BackCounterE: { pos: [2.5, 0, -2.5] },
+  Prop_DrinkBase: { pos: [3.5, 0, -2.5] },
 }
 
 // ─────────────────────────── 材质 ───────────────────────────
@@ -107,26 +104,20 @@ export interface MatSpec {
   mat: string
   /** mainColor, 0-255 */
   rgba: [number, number, number, number]
-  /** _techIdx on builtin-unlit: 0 opaque / 1 transparent */
+  /** _techIdx on the material effect: 0 opaque / 1 transparent */
   tech: number
 }
 
-/**
- * 全部用 `builtin-unlit`（属性名 `mainColor`；`builtin-standard` 那边叫 `albedo`）。
- * unlit 不吃光照，填什么色渲染出来就是什么色 —— 扁平卡通风要的正是这个，
- * 也省掉「场景里偏暗，是光的问题还是材质的问题」这类查不动的问题。
- *
- * Shadow 是唯一 tech=1 的：opaque 下 alpha 被忽略，出来是一块不透明纯黑片。
- */
+/** Scene colours stay editable; the standard effect receives the soft directional light. */
 export const MAT_SPEC: Record<string, MatSpec> = {
-  Floor: { mat: 'M_Floor', rgba: [200, 200, 200, 255], tech: 0 },
+  Floor: { mat: 'M_Floor', rgba: [246, 235, 216, 255], tech: 0 },
   // 比店内深一档，只为把柜台内外分开；⏳ 色相待定，别当定稿
-  Floor_Customer: { mat: 'M_FloorOut', rgba: [150, 150, 150, 255], tech: 0 },
+  Floor_Customer: { mat: 'M_FloorOut', rgba: [221, 211, 191, 255], tech: 0 },
   // 比店内暗两档、偏冷 —— 和 200/150 拉开三层，玩家一眼看得出哪边走不过去
-  Floor_Outer: { mat: 'M_FloorOuter', rgba: [85, 92, 105, 255], tech: 0 },
-  Wall_N: { mat: 'M_Wall', rgba: [230, 230, 230, 255], tech: 0 },
-  Wall_E: { mat: 'M_Wall', rgba: [230, 230, 230, 255], tech: 0 },
-  Floor_East: { mat: 'M_Floor', rgba: [200, 200, 200, 255], tech: 0 },
+  Floor_Outer: { mat: 'M_FloorOuter', rgba: [179, 193, 169, 255], tech: 0 },
+  Wall_N: { mat: 'M_Wall', rgba: [247, 235, 213, 255], tech: 0 },
+  Wall_E: { mat: 'M_Wall', rgba: [247, 235, 213, 255], tech: 0 },
+  Floor_East: { mat: 'M_Floor', rgba: [246, 235, 216, 255], tech: 0 },
   // ⏳ 冷库一眼要看出是冷的：地面冰蓝、墙浅冷灰蓝，色值待定
   Floor_Store: { mat: 'M_FloorStore', rgba: [200, 228, 245, 255], tech: 0 },
   Wall_StoreBack: { mat: 'M_ColdWall', rgba: [178, 205, 225, 255], tech: 0 },

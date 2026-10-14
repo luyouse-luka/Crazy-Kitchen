@@ -1,0 +1,176 @@
+{
+  "date": "2026-10-14",
+  "buildConfig": {
+    "buildPath": "project://build",
+    "outputName": "kitchen-chaos-wechat-optimized-20261014",
+    "startScene": "52c145e4-a2d4-4aa7-a69e-22a04d973d0b",
+    "debug": false,
+    "platform": "wechatgame",
+    "scenes": [
+      {
+        "uuid": "52c145e4-a2d4-4aa7-a69e-22a04d973d0b",
+        "url": "db://assets/main.scene"
+      }
+    ],
+    "packages": {
+      "wechatgame": {
+        "appid": "wx40db4a5ae317a9a5",
+        "orientation": "landscapeRight"
+      }
+    },
+    "mainBundleCompressionType": "subpackage",
+    "mainBundleIsRemote": false,
+    "startSceneAssetBundle": false
+  },
+  "buildFinished": "2026-10-14 18:32:19",
+  "before": {
+    "main": {
+      "bytes": 8642642,
+      "files": 152
+    },
+    "subpackages": [],
+    "totalBytes": 8642642,
+    "mainLimit": 4194304,
+    "safeLimit": 3984384,
+    "totalLimit": 31457280,
+    "withinBudget": false,
+    "withinSafetyMargin": false,
+    "orientation": "landscapeRight",
+    "launchScene": "db://assets/main.scene",
+    "remoteBundles": [],
+    "debug": false
+  },
+  "after": {
+    "main": {
+      "bytes": 2253521,
+      "files": 45
+    },
+    "subpackages": [
+      {
+        "name": "internal",
+        "root": "subpackages/internal",
+        "bytes": 405194,
+        "files": 20
+      },
+      {
+        "name": "main",
+        "root": "subpackages/main",
+        "bytes": 5986906,
+        "files": 105
+      }
+    ],
+    "totalBytes": 8645621,
+    "mainLimit": 4194304,
+    "safeLimit": 3984384,
+    "totalLimit": 31457280,
+    "withinBudget": true,
+    "withinSafetyMargin": true,
+    "orientation": "landscapeRight",
+    "launchScene": "db://assets/main.scene",
+    "remoteBundles": [],
+    "debug": false
+  },
+  "artifact": {
+    "preservedMainBundleFiles": 105,
+    "sceneModelsMaterialsAnimationsPreserved": true,
+    "engineAdapterAndStartupPreserved": true,
+    "beforeBudgetExit": 1,
+    "afterBudgetExit": 0,
+    "zip": "game/build/packages/kitchen-chaos-wechat-optimized-20261014.zip",
+    "zipBytes": 2515978,
+    "sha256": "83cfcc57e3288a9541aec8b916ee625624acc2ba1f6673f9bbe5ddc81b65361c",
+    "zipFiles": 170,
+    "zipCrcAndBytesMatch": true,
+    "startupFunctionMatchesFinalTemplate": true,
+    "changedFromPriorPackage": [
+      "game.js",
+      "wechat-system-info.js"
+    ]
+  },
+  "checks": {
+    "logicAndTypecheck": {
+      "tests": 515,
+      "files": 40,
+      "passed": true,
+      "verifiedAt": "2026-10-14 18:46:06"
+    },
+    "gitDiffCheck": true,
+    "packageRegression": {
+      "tests": 6,
+      "files": 1,
+      "passed": true,
+      "verifiedAt": "2026-10-14 18:16:24"
+    },
+    "libraryConfig": {
+      "expected": "3.17.2",
+      "templateBuildAndDesktopMatch": true
+    },
+    "startupRegression": {
+      "tests": 4,
+      "passed": true
+    },
+    "typecheckAfterStartupFix": true,
+    "packagedTextures": {
+      "count": 21,
+      "loadedWithGpuTextures": true,
+      "cleanupImageCache": false,
+      "environment": "Headless Web engine 3.8.8 with packaged WeChat texture data; not WeChat simulator."
+    },
+    "bootstrap": {
+      "bootstrapOrder": true,
+      "cleanupOverrideBeforeScene": true,
+      "otherMacrosPreserved": true,
+      "dynamicAtlasRemainsDisabled": true
+    }
+  },
+  "devtools": {
+    "version": "2.01.2601082 Nightly",
+    "loggedIn": true,
+    "runtimeVerified": false,
+    "status": "Startup fixes packaged; previous package rendered in simulator, current startup changes require WeChat simulator recompilation.",
+    "libraryVersion": "3.17.2",
+    "runtimeVerificationScope": "Current package verified by background bootstrap and texture probes only.",
+    "sceneStartupVerified": false,
+    "interactionVerified": false,
+    "blackScreenCause": "Library 3.17.3 download failed with EPERM rename and runtime HTTP 500.",
+    "remainingConsoleErrors": [
+      {
+        "code": "16352",
+        "asset": "4eba7db3-b8e1-47d9-ab18-c8b8ce5711ab@e39f7",
+        "source": "game/assets/art/restaurant/onion.glb.meta",
+        "message": "Cannot read property 'mipmapLevelDataSize' of null",
+        "blocksSceneStartup": false,
+        "fixed": false,
+        "fixApplied": true,
+        "verificationPending": true
+      },
+      {
+        "source": "WAGame.js",
+        "message": "[jsbridge] invoke getSystemInfo fail: jsbridge not ready",
+        "blocksSceneStartup": false,
+        "fixed": false,
+        "fixApplied": true,
+        "verificationPending": true
+      }
+    ],
+    "sceneStartupVerifiedBeforeRuntimeFix": true
+  },
+  "phoneTested": false,
+  "uploaded": false,
+  "published": false,
+  "references": [
+    "https://docs.cocos.com/creator/3.8/manual/en/editor/publish/subpackage.html",
+    "https://docs.cocos.com/creator/3.8/manual/en/editor/publish/publish-in-command-line.html",
+    "https://docs.cocos.com/creator/3.8/manual/en/editor/publish/custom-project-build-template.html"
+  ],
+  "desktopCopy": {
+    "path": "C:\\Users\\dell\\Desktop\\Kitchen-Chaos-WeChat-Optimized-20261014",
+    "filesMatchBuild": true,
+    "files": 170
+  },
+  "runtimeFix": {
+    "texture": "Retain shared image data by disabling CLEANUP_IMAGE_CACHE before macro initialization; actual WeChat error could not be reproduced in headless Web, simulator validation remains pending.",
+    "systemInfo": "Prefer getDeviceInfo/getAppBaseInfo/getWindowInfo for Cocos legacy synchronous adapter calls; preserve legacy fallback on old libraries. Does not modify WAGame.js internal bridge.",
+    "packaging": "Cocos build completed; final startup function was copied from the updated game.ejs after rendering, with default application.js restored from the previous package. Only game.js and the new helper differ."
+  }
+}

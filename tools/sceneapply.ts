@@ -57,10 +57,11 @@ function main(): void {
 
   const raw = readFileSync(file, 'utf8')
   const all = JSON.parse(raw) as Entry[]
+  const suffix = raw.endsWith('\n') ? '\n' : ''
 
   // 活性守卫：先证明「原样读进来再写出去」是逐字节无损的。
   // 不是的话，下面的 diff 会混进一堆无关的浮点/格式噪声，改动就不可复核了。
-  if (JSON.stringify(all, null, 2) !== raw) {
+  if (JSON.stringify(all, null, 2) + suffix !== raw) {
     console.log('✗ JSON 往返不是无损的 —— 这个脚本会引入无关 diff，中止。')
     process.exit(1)
     return
@@ -84,6 +85,20 @@ function main(): void {
     const spec = SPEC[str(e['_name'])]
     if (!spec) continue
     const name = str(e['_name'])
+    if (spec.active !== undefined && e['_active'] !== spec.active) {
+      changes.push(`Active ${name} → ${spec.active}`)
+      e['_active'] = spec.active
+    }
+    if (spec.yaw !== undefined) {
+      const angle = spec.yaw * Math.PI / 360
+      const q = e['_lrot'] as { x: number; y: number; z: number; w: number }
+      const euler = asVec(e['_euler'])
+      if (Math.abs(q.y - Math.sin(angle)) > 1e-9 || Math.abs(q.w - Math.cos(angle)) > 1e-9 || q.x !== 0 || q.z !== 0) {
+        changes.push(`Yaw   ${name} → ${spec.yaw}`)
+        Object.assign(q, { x: 0, y: Math.sin(angle), z: 0, w: Math.cos(angle) })
+        if (euler) setVec(euler, [0, spec.yaw, 0])
+      }
+    }
     if (spec.pos) {
       const p = asVec(e['_lpos'])
       if (p && !eq(p, spec.pos)) {
@@ -182,7 +197,7 @@ function main(): void {
     console.log('\n（dry-run。加 --write 落盘，先确认 Cocos 编辑器是关着的）')
     return
   }
-  writeFileSync(file, JSON.stringify(all, null, 2), 'utf8')
+  writeFileSync(file, JSON.stringify(all, null, 2) + suffix, 'utf8')
   console.log('\n已写入。编辑器里重新打开场景即可看到；跑 pnpm scene 复核。')
 }
 

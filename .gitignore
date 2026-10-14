@@ -15,6 +15,7 @@ game/local/
 node_modules/
 .pnpm-store/
 coverage/
+__pycache__/
 
 # ─── 内容管线产出（未验收的中间产物不进仓库）───
 # 验收通过后再手动拷进 game/assets/resources/

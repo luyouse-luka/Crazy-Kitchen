@@ -42,13 +42,13 @@ export interface Swatch {
 
 /** Index 0 = the scene's own material colour */
 export const WALL_COLORS: readonly Swatch[] = [
-  { name: '原色', rgb: [230, 230, 230] },
+  { name: '原色', rgb: [247, 235, 213] },
   { name: '奶黄', rgb: [240, 225, 190] },
   { name: '薄荷', rgb: [200, 230, 215] },
   { name: '樱粉', rgb: [240, 210, 210] },
 ]
 export const FLOOR_COLORS: readonly Swatch[] = [
-  { name: '原色', rgb: [200, 200, 200] },
+  { name: '原色', rgb: [246, 235, 216] },
   { name: '木色', rgb: [205, 170, 130] },
   { name: '浅蓝', rgb: [185, 205, 225] },
   { name: '暖灰', rgb: [190, 180, 170] },

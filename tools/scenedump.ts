@@ -352,6 +352,8 @@ function main(): void {
     seen.add(n.name)
     if (spec.pos && !same(n.pos, spec.pos)) diffs.push(`  ${n.name} Position ${fmt(n.pos)} ≠ 定稿 (${spec.pos.join(', ')})`)
     if (spec.scale && !same(n.scale, spec.scale)) diffs.push(`  ${n.name} Scale ${fmt(n.scale)} ≠ 定稿 (${spec.scale.join(', ')})`)
+    if (spec.active !== undefined && n.active !== spec.active) diffs.push(`  ${n.name} active ≠ ${spec.active}`)
+    if (spec.yaw !== undefined && Math.abs(n.euler.y - spec.yaw) > TOL) diffs.push(`  ${n.name} yaw ≠ ${spec.yaw}`)
   })
   walk(root, (n) => {
     const ui = UI_SPEC[n.name]

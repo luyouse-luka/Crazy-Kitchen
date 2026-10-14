@@ -17,10 +17,14 @@ declare const console: { log(...args: unknown[]): void }
 
 // @ts-expect-error Node builtin, typed locally — same stance as scenedump.ts.
 import * as nodeFs from 'node:fs'
-const { readFileSync } = nodeFs as { readFileSync(p: string, enc: 'utf8'): string }
+const { readFileSync, mkdirSync, writeFileSync } = nodeFs as {
+  readFileSync(p: string, enc: 'utf8'): string
+  mkdirSync(p: string, options: { recursive: boolean }): void
+  writeFileSync(p: string, data: string): void
+}
 
 import { SPEC } from './scene-spec'
-import { CHEF_RADIUS, FLOOR_BOUNDS } from '../game/assets/logic/movement'
+import { CHEF_RADIUS } from '../game/assets/logic/movement'
 import {
   CAMERA_OFFSET,
   CAMERA_RIGHT,
@@ -29,13 +33,12 @@ import {
   CORE_SPAN,
   ORTHO_HEIGHT,
   EDGE_MARGIN,
-  UK,
-  VK,
   effectiveOrthoHeight,
   focusBounds,
   focusForPlayer,
 } from '../game/assets/logic/camera'
 import type { FocusBounds } from '../game/assets/logic/camera'
+import { navigation } from './layout-navigation'
 
 // ─────────────────────────── 场景读数 ───────────────────────────
 
@@ -105,11 +108,9 @@ const specBox = (name: string): Box3 => {
 
 const STATIONS = ['Station_Fridge', 'Station_Grill', 'Station_Assembly', 'Station_Serve']
 /** 画面里「应该有东西」的部分 —— 跟随的边界 */
-const CONTENT = ['Floor', 'Floor_East', 'Floor_Store', 'Floor_Customer', 'Wall_N', 'Wall_E', 'Wall_StoreBack']
+const CONTENT = ['Floor', 'Floor_East', 'Floor_Store', 'Floor_Customer', 'Wall_N', 'Wall_E', 'Wall_StoreBack', 'Wall_Kitchen_W', 'Wall_Utility', 'Wall_Store_W1', 'Wall_Store_W2', 'Wall_Store_S']
 /** 主厨房 + 顾客区 —— 只决定窄屏拉不拉远（CORE_SPAN） */
 const CORE = ['Floor', 'Floor_Customer']
-/** 挡路但不能交互的，只用来排除不可达位置 */
-const BLOCKERS = Object.keys(SPEC).filter((k) => k === 'Wall_E' || k.startsWith('Block_') || k.startsWith('Wall_Store_'))
 /**
  * 唯一有计时压力的工位 —— 烤炉会糊。厨房加了东翼以后，人在库房时它必然出画面，
  * 所以这一项只报数不判红；火候靠贴边的烤炉气泡补（Bubble.follow 的 clamp）。
@@ -129,34 +130,7 @@ const playerBox = (x: number, z: number): Box3 => ({
 const STEP = 0.1
 
 function reachable(): Array<[number, number]> {
-  const boxes = [...STATIONS, 'Station_Storeroom', 'Station_Order', 'Station_Delivery', 'Station_Sink', ...BLOCKERS].map(specBox)
-  const r = CHEF_RADIUS
-  const nx = Math.floor((FLOOR_BOUNDS.xmax - FLOOR_BOUNDS.xmin - 2 * r) / STEP + 1e-9) + 1
-  const nz = Math.floor((FLOOR_BOUNDS.zmax - FLOOR_BOUNDS.zmin - 2 * r) / STEP + 1e-9) + 1
-  const at = (i: number, j: number): [number, number] => [FLOOR_BOUNDS.xmin + r + i * STEP, FLOOR_BOUNDS.zmin + r + j * STEP]
-  const free = (i: number, j: number): boolean => {
-    const [x, z] = at(i, j)
-    for (const b of boxes) {
-      const dx = Math.max(b.x0 - x, 0, x - b.x1)
-      const dz = Math.max(b.z0 - z, 0, z - b.z1)
-      if (dx * dx + dz * dz < r * r - 1e-9) return false
-    }
-    return true
-  }
-  // Flood from the spawn: the floor's bounding box has a walled-off corner south of the storeroom
-  const seen = new Set<number>()
-  const i0 = Math.round((0 - FLOOR_BOUNDS.xmin - r) / STEP)
-  const j0 = Math.round((0 - FLOOR_BOUNDS.zmin - r) / STEP)
-  const stack = [[i0, j0]]
-  const out: Array<[number, number]> = []
-  while (stack.length > 0) {
-    const [i, j] = stack.pop()!
-    if (i! < 0 || j! < 0 || i! >= nx || j! >= nz || seen.has(i! * nz + j!) || !free(i!, j!)) continue
-    seen.add(i! * nz + j!)
-    out.push(at(i!, j!))
-    stack.push([i! + 1, j!], [i! - 1, j!], [i!, j! + 1], [i!, j! - 1])
-  }
-  return out
+  return navigation().reachable.map(p => [p.x, p.z])
 }
 
 // ─────────────────────────── 扫描 ───────────────────────────
@@ -303,10 +277,9 @@ function sweepYaw(dist: number): void {
     const row = YAWS.map((yaw) => pct(coverage(camAt(yaw, pitch, dist), H, ASPECT_MAIN, boxes, 0, 1)).padStart(8))
     console.log(`   ${String(pitch).padStart(4)}°     ` + row.join(''))
   }
-  // 结论：光调角度最高只到 69%。真正填满画面的是厨房外面那块装饰地面
-  const now = camAt(-45, 35, dist)
+  const now = readCamera(SCENE)
   console.log(
-    `   现用角度 −45°/35°：${pct(coverage(now, H, ASPECT_MAIN, boxes, 0, 1))}` +
+    `   现用场景角度：${pct(coverage(now, H, ASPECT_MAIN, boxes, 0, 1))}` +
       ` → 铺上 Floor_Outer 后 ${pct(coverage(now, H, ASPECT_MAIN, withOuter, 0, 1))}`,
   )
 }
@@ -327,8 +300,7 @@ function main(): void {
     console.log(`   ${ok ? 'OK ' : '✗  '}${n.padEnd(7)} 场景 ${fmt(got)}  常量 ${fmt(want)}`)
     if (!ok) fails.push(`camera.ts 的 ${n} 与场景对不上 —— 场景里动过相机就要同步改常量`)
   }
-  if (!near(cam.right.y, 0, 1e-6)) fails.push('相机有 roll，u = (x+z)·UK 这条简化不成立')
-  if (!near(UK, CAMERA_RIGHT.x) || !near(VK, CAMERA_UP.x)) fails.push('UK/VK 与三轴对不上')
+  if (!near(cam.right.y, 0, 1e-6)) fails.push('相机有 roll，地面投影假设不成立')
 
   const spanOfAll = (names: string[]): FocusBounds => {
     let out: FocusBounds = { umin: Infinity, umax: -Infinity, vmin: Infinity, vmax: -Infinity }
@@ -355,6 +327,7 @@ function main(): void {
   sweepYaw(Math.hypot(cam.pos.x, cam.pos.y, cam.pos.z))
 
   const cells = reachable()
+  if (cells.length === 0) throw new Error('No reachable camera samples')
   console.log(`\n── 扫描 ${cells.length} 个可达位置（步长 ${STEP}m）· 19.5:9`)
   console.log('   半高  画面(米)     横向填充  人物占屏  玩家余量  丢烤炉  四工位全见')
   for (const H of [2.0, 2.6, 3.0, 3.2, 3.4, 3.6, 4.0, 5.0]) {
@@ -399,3 +372,7 @@ function main(): void {
 }
 
 main()
+if (process.argv.includes('--export-navigation')) {
+  mkdirSync('game/temp/art-direction', { recursive: true })
+  writeFileSync('game/temp/art-direction/navigation.json', JSON.stringify(navigation().reachable))
+}

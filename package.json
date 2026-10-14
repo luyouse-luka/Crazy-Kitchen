@@ -12,7 +12,7 @@
     "check": "pnpm run check:no-engine && pnpm run typecheck && pnpm run test",
     "presim": "node tools/ensure-cocos-tsconfig.mjs",
     "sim": "vite-node tools/sim-cli.ts --",
-    "size": "vite-node tools/pkgsize.ts --",
+    "size": "node tools/check-wechat-package.mjs",
     "prea7": "node tools/ensure-cocos-tsconfig.mjs",
     "a7": "vite-node tools/a7-expect.ts",
     "precam": "node tools/ensure-cocos-tsconfig.mjs",

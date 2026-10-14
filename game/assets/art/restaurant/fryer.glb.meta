@@ -1,0 +1,93 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "de54b59d-5763-4c80-bea8-618e17cea9a4",
+  "files": [],
+  "subMetas": {
+    "286b3": {
+      "importer": "gltf-mesh",
+      "uuid": "de54b59d-5763-4c80-bea8-618e17cea9a4@286b3",
+      "displayName": "",
+      "id": "286b3",
+      "name": "fryer.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 3060
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "a82b4": {
+      "importer": "gltf-material",
+      "uuid": "de54b59d-5763-4c80-bea8-618e17cea9a4@a82b4",
+      "displayName": "",
+      "id": "a82b4",
+      "name": "FryerMat.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f972a": {
+      "importer": "gltf-scene",
+      "uuid": "de54b59d-5763-4c80-bea8-618e17cea9a4@f972a",
+      "displayName": "",
+      "id": "f972a",
+      "name": "fryer.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "de54b59d-5763-4c80-bea8-618e17cea9a4@286b3"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "de54b59d-5763-4c80-bea8-618e17cea9a4@a82b4"
+      ],
+      "scenes": [
+        "de54b59d-5763-4c80-bea8-618e17cea9a4@f972a"
+      ]
+    }
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "checks": {
+    "idleHidden": true,
+    "grillAnimated": true,
+    "burnAndExtinguish": true,
+    "washStartHoldReleaseFinish": true,
+    "drinkFillReadyTakeSpillWipe": true,
+    "fryerBoilReadyBurntDiscard": true,
+    "simultaneousVertices": 2256,
+    "renderOverhead": {
+      "calls": 1,
+      "triangles": 2048
+    },
+    "resourceReuse": true,
+    "restartAndClosingClear": true,
+    "anchors": {
+      "sink": {
+        "x": 7.539179137920606,
+        "y": 0.948895857581362,
+        "z": 1.3497576785666671e-17
+      },
+      "basin": {
+        "x": 7.539179137920606,
+        "y": 0.767578177788745,
+        "z": 1.3497576785666671e-17
+      },
+      "grill": [
+        {
+          "x": -0.7388888991909265,
+          "y": 1.00833309292799,
+          "z": -2.2858256574053932
+        },
+        {
+          "x": 0.7388888991909265,
+          "y": 1.00833309292799,
+          "z": -2.2858256574053932
+        }
+      ],
+      "drinks": {
+        "x": 3.5,
+        "y": 1.5819999999999999,
+        "z": -2.645
+      },
+      "fryer": {
+        "x": 1.5,
+        "y": 1.02,
+        "z": -2.5
+      }
+    }
+  },
+  "errors": [],
+  "requests": [],
+  "restaurantRegression": {
+    "idle": {
+      "playing": true,
+      "time": 2.096700000286102
+    },
+    "walk": {
+      "playing": true,
+      "time": 0.5834000000953675
+    },
+    "clips": [
+      {
+        "name": "idle",
+        "duration": 1.0666667222976685
+      },
+      {
+        "name": "walk",
+        "duration": 1.0666667222976685
+      },
+      {
+        "name": "sit",
+        "duration": 1
+      }
+    ],
+    "seats": [
+      {
+        "active": true,
+        "clip": "sit"
+      },
+      {
+        "active": true,
+        "clip": "sit"
+      },
+      {
+        "active": true,
+        "clip": "sit"
+      },
+      {
+        "active": true,
+        "clip": "sit"
+      }
+    ],
+    "burger": {
+      "log": [
+        "orders@6",
+        "served@13"
+      ],
+      "taps": 15,
+      "error": null,
+      "served": true
+    },
+    "errors": [],
+    "failed": []
+  },
+  "validation": {
+    "pnpmCheck": {
+      "files": 38,
+      "tests": 504
+    },
+    "scene": "passed",
+    "webBuild": "Cocos Creator 3.8.8 / web-desktop / art-direction-web / completed"
+  }
+}

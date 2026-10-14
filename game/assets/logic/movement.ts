@@ -48,9 +48,9 @@ export interface Bounds {
 
 /**
  * 地板外接矩形。出处：scene-spec 的 `Floor` / `Floor_East` / `Floor_Store` 三块并起来。
- * 库房那块只有北半边，南半边空着的角靠 Blockers 里的墙挡住，走不进去。
+ * The rear cold room makes an L-shaped union; Block_VoidNorth excludes the missing corner.
  */
-export const FLOOR_BOUNDS: Bounds = { xmin: -4, xmax: 13.5, zmin: -3, zmax: 3 }
+export const FLOOR_BOUNDS: Bounds = { xmin: -4, xmax: 8, zmin: -6, zmax: 3.6 }
 
 /** 把圆心夹进边界，返回是否夹过。边界比半径还窄时取中点，不让 min 反超 max */
 function clampToBounds(out: Vec2, radius: number, b: Bounds): boolean {

@@ -1,0 +1,93 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "e888890b-3f87-4b2c-a975-bb209ff3312a",
+  "files": [],
+  "subMetas": {
+    "40280": {
+      "importer": "gltf-material",
+      "uuid": "e888890b-3f87-4b2c-a975-bb209ff3312a@40280",
+      "displayName": "",
+      "id": "40280",
+      "name": "SoftTilePalette.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "bcca5": {
+      "importer": "gltf-mesh",
+      "uuid": "e888890b-3f87-4b2c-a975-bb209ff3312a@bcca5",
+      "displayName": "",
+      "id": "bcca5",
+      "name": "UnnamedMesh.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 432
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "acc03": {
+      "importer": "gltf-scene",
+      "uuid": "e888890b-3f87-4b2c-a975-bb209ff3312a@acc03",
+      "displayName": "",
+      "id": "acc03",
+      "name": "floor-store.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "e888890b-3f87-4b2c-a975-bb209ff3312a@bcca5"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "e888890b-3f87-4b2c-a975-bb209ff3312a@40280"
+      ],
+      "scenes": [
+        "e888890b-3f87-4b2c-a975-bb209ff3312a@acc03"
+      ]
+    }
+  }
+}

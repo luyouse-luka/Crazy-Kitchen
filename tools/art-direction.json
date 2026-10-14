@@ -1,0 +1,29 @@
+{
+  "camera": {"yaw": -25, "pitch": -45, "distance": 20},
+  "lighting": {"pitch": -60, "yaw": -25, "illuminance": 1.15, "ambient": 0.65},
+  "floors": [
+    ["Floor", "floor-main"],
+    ["Floor_East", "floor-east"],
+    ["Floor_Store", "floor-store"],
+    ["Floor_Customer", "floor-customer"]
+  ],
+  "furniture": [
+    ["plant", -5.2, -0.1, -2.2, 0, 1.2],
+    ["plant-small", -5.2, -0.1, -0.4, 0, 1.6],
+    ["plant", -5.2, -0.1, 1.5, 0, 1.2],
+    ["plant", 9.3, -0.1, -3.3, 0, 1.2],
+    ["plant-small", 9.3, -0.1, -1.1, 0, 1.6],
+    ["plant", 9.3, -0.1, 1.3, 0, 1.2],
+    ["plant", -3, -0.1, -4.75, 0, 1.2],
+    ["plant-small", -0.9, -0.1, -4.75, 0, 1.6],
+    ["plant", 1.3, -0.1, -4.75, 0, 1.2],
+    ["plant", 3.4, -0.1, -4.75, 0, 1.2],
+    ["plant-small", -4.9, -0.35, 7.6, 0, 1.5],
+    ["plant-small", 6.2, -0.35, 7.6, 0, 1.5]
+  ],
+  "boundaries": [
+    {"name": "kitchen-west", "footprint": [-4.09, 2.05, 0.18, 3.1]},
+    {"name": "kitchen-front-east", "footprint": [5.75, 3.69, 4.5, 0.18]},
+    {"name": "public-front", "footprint": [0.75, 6.69, 13.3, 0.18]}
+  ]
+}

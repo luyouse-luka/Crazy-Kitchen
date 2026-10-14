@@ -1,0 +1,93 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "cfa53aee-9bcf-48a3-b777-9b549043847c",
+  "files": [],
+  "subMetas": {
+    "40280": {
+      "importer": "gltf-material",
+      "uuid": "cfa53aee-9bcf-48a3-b777-9b549043847c@40280",
+      "displayName": "",
+      "id": "40280",
+      "name": "SoftTilePalette.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "bcca5": {
+      "importer": "gltf-mesh",
+      "uuid": "cfa53aee-9bcf-48a3-b777-9b549043847c@bcca5",
+      "displayName": "",
+      "id": "bcca5",
+      "name": "UnnamedMesh.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 2592
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "7906d": {
+      "importer": "gltf-scene",
+      "uuid": "cfa53aee-9bcf-48a3-b777-9b549043847c@7906d",
+      "displayName": "",
+      "id": "7906d",
+      "name": "floor-main.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "cfa53aee-9bcf-48a3-b777-9b549043847c@bcca5"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "cfa53aee-9bcf-48a3-b777-9b549043847c@40280"
+      ],
+      "scenes": [
+        "cfa53aee-9bcf-48a3-b777-9b549043847c@7906d"
+      ]
+    }
+  }
+}

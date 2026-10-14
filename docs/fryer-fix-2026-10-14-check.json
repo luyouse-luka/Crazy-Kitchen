@@ -1,0 +1,150 @@
+{
+  "date": "2026-10-14",
+  "fix": "Dedicated fryer with oil well and separate serving tray; fries shown only when unlocked and ready.",
+  "tests": {
+    "pnpm check": {
+      "passed": true,
+      "tests": 505,
+      "files": 38
+    },
+    "pnpm scene": {
+      "passed": true
+    },
+    "pnpm layout": {
+      "passed": true,
+      "reachablePoints": 3821,
+      "stations": 13
+    }
+  },
+  "browser": {
+    "checks": {
+      "idleHidden": true,
+      "grillAnimated": true,
+      "burnAndExtinguish": true,
+      "washStartHoldReleaseFinish": true,
+      "drinkFillReadyTakeSpillWipe": true,
+      "fryerBoilReadyBurntDiscard": true,
+      "fryerTrayEmptyFryingReadyBurntTake": true,
+      "simultaneousVertices": 2256,
+      "renderOverhead": {
+        "calls": 1,
+        "triangles": 2048
+      },
+      "resourceReuse": true,
+      "restartAndClosingClear": true,
+      "anchors": {
+        "sink": {
+          "x": 7.539179137920606,
+          "y": 0.948895857581362,
+          "z": 1.3497576785666671e-17
+        },
+        "basin": {
+          "x": 7.539179137920606,
+          "y": 0.767578177788745,
+          "z": 1.3497576785666671e-17
+        },
+        "grill": [
+          {
+            "x": -0.7388888991909265,
+            "y": 1.00833309292799,
+            "z": -2.2858256574053932
+          },
+          {
+            "x": 0.7388888991909265,
+            "y": 1.00833309292799,
+            "z": -2.2858256574053932
+          }
+        ],
+        "drinks": {
+          "x": 3.5,
+          "y": 1.5819999999999999,
+          "z": -2.645
+        },
+        "fryer": {
+          "x": 1.35,
+          "y": 1.035,
+          "z": -2.535
+        }
+      }
+    },
+    "errors": [],
+    "requests": []
+  },
+  "builds": {
+    "engine": "Cocos Creator 3.8.8",
+    "web": {
+      "config": {
+        "buildPath": "project://build",
+        "outputName": "art-direction-web",
+        "startScene": "52c145e4-a2d4-4aa7-a69e-22a04d973d0b",
+        "debug": true,
+        "platform": "web-desktop",
+        "scenes": [
+          {
+            "uuid": "52c145e4-a2d4-4aa7-a69e-22a04d973d0b",
+            "url": "db://assets/main.scene"
+          }
+        ]
+      },
+      "finished": "2026-10-14 17:26:57"
+    },
+    "wechat": {
+      "config": {
+        "buildPath": "project://build",
+        "outputName": "kitchen-chaos-wechat-20261014",
+        "startScene": "52c145e4-a2d4-4aa7-a69e-22a04d973d0b",
+        "debug": false,
+        "platform": "wechatgame",
+        "scenes": [
+          {
+            "uuid": "52c145e4-a2d4-4aa7-a69e-22a04d973d0b",
+            "url": "db://assets/main.scene"
+          }
+        ],
+        "packages": {
+          "wechatgame": {
+            "appid": "wx40db4a5ae317a9a5",
+            "orientation": "landscapeRight"
+          }
+        }
+      },
+      "finished": "2026-10-14 17:31:37",
+      "verifiedOrientation": "landscapeRight",
+      "verifiedEntry": "db://assets/main.scene",
+      "mainPackageBytes": 8642642,
+      "projectBudgetBytes": 4194304,
+      "withinProjectBudget": false,
+      "subpackages": [],
+      "developerToolsRuntimeTested": false,
+      "phoneTested": false,
+      "uploadedOrPublished": false
+    }
+  },
+  "artifacts": [
+    {
+      "platform": "web",
+      "output": "game\\build\\art-direction-web",
+      "zip": "game\\build\\packages\\kitchen-chaos-web-20261014.zip",
+      "zipBytes": 2970024,
+      "sha256": "5183b69b276e857f99af4b9ece4a2fefb8986b5259a449965f190a8bc3d4f06f",
+      "fileCount": 148,
+      "uncompressedBytes": 12836435,
+      "crcAndContentMatch": true
+    },
+    {
+      "platform": "wechat",
+      "output": "game\\build\\kitchen-chaos-wechat-20261014",
+      "zip": "game\\build\\packages\\kitchen-chaos-wechat-20261014.zip",
+      "zipBytes": 2512926,
+      "sha256": "23f133d721a9bee5c368a9270011567a50431e57e2a8a1a893564403123dce6a",
+      "fileCount": 152,
+      "uncompressedBytes": 8642642,
+      "crcAndContentMatch": true
+    }
+  ],
+  "notes": [
+    "Web is a debug preview build.",
+    "WeChat output exceeds the project main-package budget and still needs resource splitting or optimization before release acceptance.",
+    "Existing unrelated edits and original tracked wechatgame build were preserved."
+  ]
+}

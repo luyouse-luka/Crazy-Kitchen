@@ -1,0 +1,123 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "73af139a-fd5a-4d66-858a-ecee7946e3e0",
+  "files": [],
+  "subMetas": {
+    "525fb": {
+      "importer": "gltf-mesh",
+      "uuid": "73af139a-fd5a-4d66-858a-ecee7946e3e0@525fb",
+      "displayName": "",
+      "id": "525fb",
+      "name": "Cylinder.154.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 880
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "e39f7": {
+      "importer": "texture",
+      "uuid": "73af139a-fd5a-4d66-858a-ecee7946e3e0@e39f7",
+      "displayName": "",
+      "id": "e39f7",
+      "name": "UnnamedTexture.texture",
+      "userData": {
+        "wrapModeS": "repeat",
+        "wrapModeT": "repeat",
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "linear",
+        "anisotropy": 0,
+        "isUuid": false,
+        "imageUuidOrDatabaseUri": "db://assets/art/restaurant/restaurantbits_texture.png"
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "da25f": {
+      "importer": "gltf-material",
+      "uuid": "73af139a-fd5a-4d66-858a-ecee7946e3e0@da25f",
+      "displayName": "",
+      "id": "da25f",
+      "name": "restaurant.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f150c": {
+      "importer": "gltf-scene",
+      "uuid": "73af139a-fd5a-4d66-858a-ecee7946e3e0@f150c",
+      "displayName": "",
+      "id": "f150c",
+      "name": "dishrack.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [
+      {
+        "name": "restaurantbits_texture",
+        "uri": "db://assets/art/restaurant/restaurantbits_texture.png"
+      }
+    ],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "73af139a-fd5a-4d66-858a-ecee7946e3e0@525fb"
+      ],
+      "skeletons": [],
+      "textures": [
+        "73af139a-fd5a-4d66-858a-ecee7946e3e0@e39f7"
+      ],
+      "materials": [
+        "73af139a-fd5a-4d66-858a-ecee7946e3e0@da25f"
+      ],
+      "scenes": [
+        "73af139a-fd5a-4d66-858a-ecee7946e3e0@f150c"
+      ]
+    }
+  }
+}

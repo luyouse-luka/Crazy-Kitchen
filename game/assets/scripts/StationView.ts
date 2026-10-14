@@ -86,6 +86,7 @@ import { COOK_LABEL, COOK_LEVELS, INGREDIENT_LABEL } from '../logic/types'
 import { Bubble } from './Bubble'
 import { Ring } from './Ring'
 import { WallCutaway } from './WallCutaway'
+import { WorkstationEffects } from './WorkstationEffects'
 import { ARGUE_TAPS, argueTap, createVent, endArgue, rantStars, ranting, rantsLeft, resetVent, startRant, stepVent, throwAt, vent, VENT_HOLD_SEC, ventSpeedFactor } from '../logic/vent'
 import type { Rant, VentSpot, VentState } from '../logic/vent'
 import { witnessMishap } from '../logic/witness'
@@ -112,6 +113,7 @@ import {
 } from '../logic/delivery'
 import type { Delivery, DeliveryDesk, DeskEvents } from '../logic/delivery'
 import { createMovement, stepMovement, teleport } from '../logic/movement'
+import { RUNTIME_SPOTS, DRINKS_BASE_Y } from '../logic/scene-layout'
 import type { MovementState } from '../logic/movement'
 import { DEFAULT_COOK } from '../logic/recipe'
 import { INGREDIENTS } from '../logic/types'
@@ -296,15 +298,12 @@ const WAIT_SPOTS: ReadonlyArray<readonly [number, number, boolean]> = [
   [3.3, -0.2, false], [2.5, -0.2, false],
 ]
 
-/** Bookcase slot on the empty stretch of north wall between the fridge and the cold-room door. ⏳ tune by eye */
-const WALL_N_SPOT = [7, -2.45] as const
+const WALL_N_SPOT = RUNTIME_SPOTS.decor
 
 const HUD_MARGIN = 12
 const SIDE_ICON: Record<Side, string> = { fries: '🍟', drink: '🥤' }
-/** Extinguisher on the north wall, east of the bookcase slot, west of the cold-room door. ⏳ tune by eye */
-const EXT_SPOT = [9.3, -2.8] as const
-/** Drink machine against the north wall just east of the fridge. ⏳ tune by eye */
-const DRINKS_SPOT = [5.9, -2.7] as const
+const EXT_SPOT = RUNTIME_SPOTS.extinguisher
+const DRINKS_SPOT = RUNTIME_SPOTS.drinks
 /** Fixed touch targets keep this far inside the safe area (ROADMAP M6) */
 const SAFE_GAP = 50
 
@@ -571,6 +570,7 @@ export class StationView extends Component {
   /** Result text above the money line, which changes as the shop spends */
   private resultHead = ''
   private fryerStation: Station | null = null
+  private fryerServing: Node | null = null
   private drinksStation: Station | null = null
   private drinksNode: Node | null = null
   private drinksRing!: Ring
@@ -593,6 +593,7 @@ export class StationView extends Component {
   private baseSpeed = 0
   private spawn = { x: 0, z: 0 }
   private cutaway: WallCutaway | null = null
+  private workstationEffects: WorkstationEffects | null = null
   private venting = createVent()
   private ledger = createLedger()
   private tasks: Task[] = []
@@ -741,7 +742,7 @@ export class StationView extends Component {
     // The fryer counter is scenery until bought: the kitchen offers nothing there without cfg.fryerSec
     this.fryerStation = this.toStation(fryerNode, 'fryer')
     stations.push(rack, shelf, this.fryerStation)
-    // Extinguisher on the north wall by the cold-room door; drink machine east of the fridge, shown once bought
+    // Utility-side extinguisher; the purchased drink machine sits on the back counter.
     const ext = this.colourBlock(kitchenRoot, 'Station_Extinguisher', EXT_SPOT[0], EXT_SPOT[1], 0.5, 0.5, utils.createMesh(primitives.cylinder(0.24, 0.24, 0.6)), 0.55, new Color(220, 40, 40, 255))
     if (ext && this.extinguisherModel) {
       const body = ext.getChildByName('Body')!
@@ -754,7 +755,7 @@ export class StationView extends Component {
       model.setPosition(0, 0.25, 0)
     }
     if (ext) stations.push(this.toStation(ext, 'extinguisher'))
-    this.drinksNode = this.colourBlock(kitchenRoot, 'Station_Drinks', DRINKS_SPOT[0], DRINKS_SPOT[1], 0.8, 0.6, utils.createMesh(primitives.box({ width: 1, height: 1.1, length: 1 })), 0.55, new Color(70, 170, 210, 255))
+    this.drinksNode = this.colourBlock(kitchenRoot, 'Station_Drinks', DRINKS_SPOT[0], DRINKS_SPOT[1], 0.8, 0.6, utils.createMesh(primitives.box({ width: 1, height: 1.1, length: 1 })), DRINKS_BASE_Y + 0.55, new Color(70, 170, 210, 255))
     if (this.drinksNode) {
       if (this.drinksModel) {
         const body = this.drinksNode.getChildByName('Body')!
@@ -764,6 +765,7 @@ export class StationView extends Component {
         this.drinksNode.addChild(model)
         // Preserve the station box and the art's metre scale independently.
         model.setScale(1 / 0.8, 1, 1 / 0.6)
+        model.setPosition(0, DRINKS_BASE_Y, 0)
       }
       this.drinksStation = this.toStation(this.drinksNode, 'drinks')
       stations.push(this.drinksStation)
@@ -869,9 +871,11 @@ export class StationView extends Component {
     this.buildResultButtons()
     this.menu = new ListPanel(this.node, DECOR_SLOTS.length + 3)
     this.buildDecor(kitchenRoot)
+    this.fryerServing = kitchenRoot.getChildByPath('Props/Prop_Fryer/fries')
+    this.workstationEffects = new WorkstationEffects(kitchenRoot)
     const blockers = this.need(NODES.blockers)
     this.cutaway = new WallCutaway(blockers ? [kitchenRoot, blockers] : [kitchenRoot])
-    this.movement = createMovement({ stations, boxes: blockers ? StationView.readBoxes(blockers) : [] })
+    this.movement = createMovement({ stations, boxes: blockers ? StationView.readBoxes(blockers) : [], x: player.worldPosition.x, z: player.worldPosition.z })
     this.baseSpeed = this.movement.cfg.speed
     this.spawn = { x: this.movement.pos.x, z: this.movement.pos.z }
     this.router = new TouchRouter(view.getVisibleSize().width / 2, undefined, DEFAULT_ACTION)
@@ -899,6 +903,8 @@ export class StationView extends Component {
   }
 
   override onDestroy(): void {
+    this.cutaway?.destroy()
+    this.workstationEffects?.destroy()
     input.off(Input.EventType.TOUCH_START, this.onTouchStart, this)
     input.off(Input.EventType.TOUCH_MOVE, this.onTouchMove, this)
     input.off(Input.EventType.TOUCH_END, this.onTouchEnd, this)
@@ -1334,6 +1340,12 @@ export class StationView extends Component {
       else this.tickPlay()
     }
     this.router.tick(dt)
+    this.workstationEffects?.update(
+      this.kitchen,
+      this.scrubbing && this.router.action.holding && !this.panelOpen && !this.reviewsOpen && !this.menuKind,
+      this.phase === 'open' && !this.resultOpen,
+      dt,
+    )
 
     // Accepted deliveries still count after the last diner leaves
     if (this.shift.over && !deskBusy(this.desk) && rantsLeft(this.venting) === 0 && !this.resultOpen) {
@@ -2422,8 +2434,11 @@ export class StationView extends Component {
     const wallMat = kitchenRoot.getChildByName('Wall_N')?.getComponent(MeshRenderer)?.sharedMaterial
     const floorMat = kitchenRoot.getChildByName('Floor')?.getComponent(MeshRenderer)?.sharedMaterial
     for (const mr of kitchenRoot.getComponentsInChildren(MeshRenderer)) {
-      if (wallMat && mr.sharedMaterial === wallMat) this.wallRenderers.push(mr)
-      else if (floorMat && mr.sharedMaterial === floorMat) this.floorRenderers.push(mr)
+      let ancestor: Node | null = mr.node
+      while (ancestor && ancestor.parent !== kitchenRoot) ancestor = ancestor.parent
+      const name = ancestor?.name ?? ''
+      if ((wallMat && mr.sharedMaterial === wallMat) || (name.startsWith('Wall_') && !name.startsWith('Wall_Store'))) this.wallRenderers.push(mr)
+      else if ((floorMat && mr.sharedMaterial === floorMat) || name === 'Floor' || name === 'Floor_East') this.floorRenderers.push(mr)
     }
     this.applyDecor()
   }
@@ -2743,6 +2758,7 @@ export class StationView extends Component {
     // The HUD stops syncing once the result is up; without this the last order card stays frozen behind it
     this.syncHud()
     this.resultOpen = true
+    this.workstationEffects?.hide()
     this.panelOpen = false
     if (this.reviewsOpen) this.closeReviews()
     this.toast.clear()
@@ -3011,6 +3027,7 @@ export class StationView extends Component {
     this.seenArrived = 0
     this.rackWasDrying = false
     this.scrubbing = false
+    this.workstationEffects?.hide()
     this.shakeLeft = 0
     this.nudged.fill(-1)
     this.urgedLate.fill(-1)
@@ -3028,6 +3045,7 @@ export class StationView extends Component {
   }
 
   private syncNodes(): void {
+    if (this.fryerServing) this.fryerServing.active = this.kitchen.cfg.fryerSec !== undefined && this.kitchen.fryer.stage === 'ready'
     const m = this.movement.pos
     this.playerNode.setPosition(m.x, this.playerNode.position.y, m.z)
     if (this.playerModel) {

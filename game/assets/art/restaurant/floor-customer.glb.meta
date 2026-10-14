@@ -1,0 +1,93 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "fad3ffd7-280a-4232-a60b-97baac70631a",
+  "files": [],
+  "subMetas": {
+    "40280": {
+      "importer": "gltf-material",
+      "uuid": "fad3ffd7-280a-4232-a60b-97baac70631a@40280",
+      "displayName": "",
+      "id": "40280",
+      "name": "SoftTilePalette.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "bcca5": {
+      "importer": "gltf-mesh",
+      "uuid": "fad3ffd7-280a-4232-a60b-97baac70631a@bcca5",
+      "displayName": "",
+      "id": "bcca5",
+      "name": "UnnamedMesh.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 1296
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "3dd0e": {
+      "importer": "gltf-scene",
+      "uuid": "fad3ffd7-280a-4232-a60b-97baac70631a@3dd0e",
+      "displayName": "",
+      "id": "3dd0e",
+      "name": "floor-customer.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "fad3ffd7-280a-4232-a60b-97baac70631a@bcca5"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "fad3ffd7-280a-4232-a60b-97baac70631a@40280"
+      ],
+      "scenes": [
+        "fad3ffd7-280a-4232-a60b-97baac70631a@3dd0e"
+      ]
+    }
+  }
+}

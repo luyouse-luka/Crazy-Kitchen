@@ -1,0 +1,22 @@
+{
+  "buildPath": "project://build",
+  "outputName": "kitchen-chaos-wechat-optimized-20261014",
+  "startScene": "52c145e4-a2d4-4aa7-a69e-22a04d973d0b",
+  "debug": false,
+  "platform": "wechatgame",
+  "scenes": [
+    {
+      "uuid": "52c145e4-a2d4-4aa7-a69e-22a04d973d0b",
+      "url": "db://assets/main.scene"
+    }
+  ],
+  "packages": {
+    "wechatgame": {
+      "appid": "wx40db4a5ae317a9a5",
+      "orientation": "landscapeRight"
+    }
+  },
+  "mainBundleCompressionType": "subpackage",
+  "mainBundleIsRemote": false,
+  "startSceneAssetBundle": false
+}

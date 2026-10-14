@@ -1,7 +1,7 @@
 /**
  * 相机跟随：玩家世界坐标 → 相机注视点。零 Cocos 依赖（铁律①）。
  *
- * 钳制发生在**相机视图坐标** (u, v) 里，不是世界 (x, z) 里。相机 yaw −45，
+ * 钳制发生在**相机视图坐标** (u, v) 里，不是世界 (x, z) 里。相机无 roll，
  * 画面的水平/垂直两条轴在世界里是斜的，用世界 AABB 夹 focus 表达不了
  * 「这一维装得下所以别动、那一维装不下所以跟住」—— 而这正是这套场景需要的。
  *
@@ -11,15 +11,11 @@
 import type { Vec2 } from './vec2'
 
 /** 相机相对 focus 的位置偏移，米。出处：main.scene 的 Main Camera _lpos（focus 在原点） */
-export const CAMERA_OFFSET = { x: -10.447, y: 10.505, z: 10.391 }
+export const CAMERA_OFFSET = { x: -5.9767247746, y: 14.1421356237, z: 12.8171276411 }
 
 /** 画面右 / 画面上，世界单位向量。由 Main Camera 的 _lrot 算出，`pnpm cam` 会复算比对 */
-export const CAMERA_RIGHT = { x: 0.707107, y: 0, z: 0.707107 }
-export const CAMERA_UP = { x: 0.40558, y: 0.819152, z: -0.40558 }
-
-/** 世界 (x,z) → 视图 (u,v)。u = (x+z)·UK，v = (x−z)·VK —— 成立的前提是相机 roll = 0 */
-export const UK = CAMERA_RIGHT.x
-export const VK = CAMERA_UP.x
+export const CAMERA_RIGHT = { x: 0.9063077870, y: 0.0000000000, z: 0.4226182617 }
+export const CAMERA_UP = { x: 0.2988362387, y: 0.7071067812, z: -0.6408563821 }
 
 /** 正交半高，米。`pnpm cam` 的产物 */
 export const ORTHO_HEIGHT = 3.0
@@ -36,10 +32,10 @@ export interface FocusBounds {
  * 常量而非现算：logic/ 读不到场景。`pnpm cam` 从 scene-spec 复算并比对，改了场景这里会红。
  */
 export const CONTENT_SPAN: FocusBounds = {
-  umin: -5.1619,
-  umax: 9.6874,
-  vmin: -4.1377,
-  vmax: 8.9022,
+  umin: -5.0743474908,
+  umax: 8.9531495960,
+  vmin: -5.4957077546,
+  vmax: 8.1616500554,
 }
 
 /**
@@ -47,10 +43,10 @@ export const CONTENT_SPAN: FocusBounds = {
  * 按整个场景算的话，东翼一加宽，普通手机也会被拉远。
  */
 export const CORE_SPAN: FocusBounds = {
-  umin: -4.9497,
-  umax: 7.0711,
-  vmin: -4.1377,
-  vmax: 2.8391,
+  umin: -4.8930859334,
+  umax: 7.3208194627,
+  vmin: -5.4957077546,
+  vmax: 3.4167503398,
 }
 
 const clamp = (x: number, lo: number, hi: number): number => (x < lo ? lo : x > hi ? hi : x)
@@ -99,10 +95,12 @@ export function focusBounds(orthoHeight: number, aspect: number, content = CONTE
  * 不分配（铁律②）。
  */
 export function focusForPlayer(out: Vec2, p: Vec2, b: FocusBounds): void {
-  const u = clamp((p.x + p.z) * UK, b.umin, b.umax) / UK
-  const v = clamp((p.x - p.z) * VK, b.vmin, b.vmax) / VK
-  out.x = (u + v) / 2
-  out.z = (u - v) / 2
+  const r = CAMERA_RIGHT, a = CAMERA_UP
+  const u = clamp(p.x * r.x + p.z * r.z, b.umin, b.umax)
+  const v = clamp(p.x * a.x + p.z * a.z, b.vmin, b.vmax)
+  const det = r.x * a.z - r.z * a.x
+  out.x = (u * a.z - r.z * v) / det
+  out.z = (r.x * v - u * a.x) / det
 }
 
 /** World-space box, metres */
@@ -139,4 +137,12 @@ export function hidesPoint(b: Box3, x: number, y: number, z: number, dir = CAMER
     if (t0 > t1) return false
   }
   return true
+}
+
+/** Art-direction values: 22% opacity; a full fade takes about 0.2 seconds. */
+export const WALL_FADE_OPACITY = 0.22
+export function stepWallOpacity(current: number, hidden: boolean, dt: number): number {
+  const target = hidden ? WALL_FADE_OPACITY : 1
+  const step = Math.max(0, dt) * 4
+  return current < target ? Math.min(target, current + step) : Math.max(target, current - step)
 }

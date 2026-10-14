@@ -1,0 +1,454 @@
+{
+  "assets": [
+    {
+      "name": "fridge",
+      "collection": "restaurant",
+      "source": "fridge_A",
+      "size": [
+        2,
+        2.500000774860382,
+        2.2400325536727905
+      ]
+    },
+    {
+      "name": "counter",
+      "collection": "restaurant",
+      "source": "kitchencounter_straight_A",
+      "size": [
+        2,
+        1,
+        2.041903018951416
+      ]
+    },
+    {
+      "name": "drawer",
+      "collection": "restaurant",
+      "source": "kitchencounter_straight_B",
+      "size": [
+        2,
+        1,
+        2.041903018951416
+      ]
+    },
+    {
+      "name": "stove",
+      "collection": "restaurant",
+      "source": "stove_multi",
+      "size": [
+        2.0,
+        1.200000286102295,
+        2.2878557443618774
+      ]
+    },
+    {
+      "name": "hotplate",
+      "collection": "restaurant",
+      "source": "stove_single",
+      "size": [
+        2.0,
+        1.2076882123947144,
+        2.2878557443618774
+      ]
+    },
+    {
+      "name": "sink",
+      "collection": "restaurant",
+      "source": "kitchencounter_sink",
+      "size": [
+        2,
+        1.8016260862350464,
+        2.041903018951416
+      ]
+    },
+    {
+      "name": "crate",
+      "collection": "restaurant",
+      "source": "crate",
+      "size": [
+        2.000000238418579,
+        0.800000011920929,
+        2.0000046491622925
+      ]
+    },
+    {
+      "name": "crate-open",
+      "collection": "restaurant",
+      "source": "crate",
+      "size": [
+        2.000000238418579,
+        0.800000011920929,
+        2.0000046491622925
+      ]
+    },
+    {
+      "name": "plate",
+      "collection": "restaurant",
+      "source": "plate",
+      "size": [
+        0.9500000178813934,
+        0.09999999776482582,
+        0.949999988079071
+      ]
+    },
+    {
+      "name": "pot",
+      "collection": "restaurant",
+      "source": "pot_A",
+      "size": [
+        1.399999976158142,
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "name": "bun",
+      "collection": "restaurant",
+      "source": "food_ingredient_bun",
+      "size": [
+        0.699999988079071,
+        0.5071991682198131,
+        0.699999988079071
+      ]
+    },
+    {
+      "name": "patty",
+      "collection": "restaurant",
+      "source": "food_ingredient_burger_uncooked",
+      "size": [
+        0.699999988079071,
+        0.19999999552965164,
+        0.699999988079071
+      ]
+    },
+    {
+      "name": "cheese",
+      "collection": "restaurant",
+      "source": "food_ingredient_cheese_slice",
+      "size": [
+        0.8243364095687866,
+        0.1054934412240982,
+        0.8243367075920105
+      ]
+    },
+    {
+      "name": "lettuce",
+      "collection": "restaurant",
+      "source": "food_ingredient_lettuce_slice",
+      "size": [
+        0.8068985641002655,
+        0.08817249536514282,
+        0.806899756193161
+      ]
+    },
+    {
+      "name": "tomato",
+      "collection": "restaurant",
+      "source": "food_ingredient_tomato_slice",
+      "size": [
+        0.6499999761581421,
+        0.09996962547302246,
+        0.6500000059604645
+      ]
+    },
+    {
+      "name": "burger",
+      "collection": "restaurant",
+      "source": "food_burger",
+      "size": [
+        0.9500000178813934,
+        0.8571995534002781,
+        0.949999988079071
+      ]
+    },
+    {
+      "name": "onion",
+      "collection": "restaurant",
+      "source": "food_ingredient_onion_rings",
+      "size": [
+        0.7757591903209686,
+        0.10636076331138611,
+        0.7296071648597717
+      ]
+    },
+    {
+      "name": "cuttingboard",
+      "collection": "restaurant",
+      "source": "cuttingboard",
+      "size": [
+        1.5,
+        0.1499999612569809,
+        1.0
+      ]
+    },
+    {
+      "name": "dishrack",
+      "collection": "restaurant",
+      "source": "dishrack_plates",
+      "size": [
+        1.2000000476837158,
+        1.0951485633850098,
+        1.2000000476837158
+      ]
+    },
+    {
+      "name": "wall-panel",
+      "collection": "restaurant",
+      "source": "wall",
+      "size": [
+        4.000000357627869,
+        4.0,
+        0.5000004470348358
+      ]
+    },
+    {
+      "name": "wall-window",
+      "collection": "restaurant",
+      "source": "wall_window_closed",
+      "size": [
+        4.000000357627869,
+        4.0,
+        0.5000004470348358
+      ]
+    },
+    {
+      "name": "terrace-table",
+      "collection": "restaurant",
+      "source": "table_round_A_small_decorated",
+      "size": [
+        1.5,
+        1.800000011920929,
+        1.5
+      ]
+    },
+    {
+      "name": "terrace-chair",
+      "collection": "restaurant",
+      "source": "chair_A",
+      "size": [
+        0.7500076293945312,
+        1.2080345451831818,
+        0.7962341904640198
+      ]
+    },
+    {
+      "name": "shelf",
+      "collection": "furniture",
+      "source": "shelf_A_big",
+      "size": [
+        2.0,
+        0.3999999985098839,
+        0.5000000447034836
+      ]
+    },
+    {
+      "name": "seat",
+      "collection": "furniture",
+      "source": "chair_A",
+      "size": [
+        0.75,
+        1.2583259418606758,
+        0.8451285362243652
+      ]
+    },
+    {
+      "name": "plant",
+      "collection": "furniture",
+      "source": "cactus_medium_A",
+      "size": [
+        0.8799095451831818,
+        0.8272461043670774,
+        0.8368438184261322
+      ]
+    },
+    {
+      "name": "plant-small",
+      "collection": "furniture",
+      "source": "cactus_small_A",
+      "size": [
+        0.5000000149011612,
+        0.5516007065773181,
+        0.5
+      ]
+    },
+    {
+      "name": "floor-main",
+      "collection": "restaurant",
+      "source": "floor_kitchen",
+      "size": [
+        9,
+        0.04,
+        6.6
+      ],
+      "modules": 54
+    },
+    {
+      "name": "floor-east",
+      "collection": "restaurant",
+      "source": "floor_kitchen",
+      "size": [
+        3,
+        0.04,
+        6.6
+      ],
+      "modules": 18
+    },
+    {
+      "name": "floor-store",
+      "collection": "restaurant",
+      "source": "floor_kitchen",
+      "size": [
+        3,
+        0.04,
+        3
+      ],
+      "modules": 9
+    },
+    {
+      "name": "floor-customer",
+      "collection": "restaurant",
+      "source": "floor_kitchen",
+      "size": [
+        9,
+        0.04,
+        3
+      ],
+      "modules": 27
+    },
+    {
+      "name": "floor-terrace",
+      "collection": "project",
+      "source": "procedural recessed garden and floor-aligned platform edging",
+      "groundY": -0.38,
+      "barriers": []
+    },
+    {
+      "name": "site-boundaries",
+      "collection": "project",
+      "source": "procedural recessed garden and floor-aligned platform edging",
+      "groundY": -0.38,
+      "barriers": [
+        {
+          "name": "kitchen-west",
+          "footprint": [
+            -4.09,
+            2.05,
+            0.18,
+            3.1
+          ]
+        },
+        {
+          "name": "kitchen-front-east",
+          "footprint": [
+            5.75,
+            3.69,
+            4.5,
+            0.18
+          ]
+        },
+        {
+          "name": "public-front",
+          "footprint": [
+            0.75,
+            6.69,
+            13.3,
+            0.18
+          ]
+        }
+      ]
+    },
+    {
+      "name": "contact-shadows",
+      "collection": "project",
+      "source": "procedural feathered contact ellipses",
+      "ellipses": 32
+    },
+    {
+      "name": "actor-shadow",
+      "collection": "project",
+      "source": "procedural feathered contact ellipses",
+      "ellipses": 1
+    },
+    {
+      "name": "fryer",
+      "collection": "original",
+      "source": "tools/build-fryer.py",
+      "size": [
+        0.96,
+        1.235,
+        0.9635
+      ]
+    }
+  ],
+  "characters": [
+    {
+      "name": "chef",
+      "source": "Rogue",
+      "collection": "KayKit Adventurers Free 2.0",
+      "url": "https://kaylousberg.itch.io/kaykit-adventurers",
+      "archiveSha256": "abe48f4763fba0896bab486ee9e6d08ca6b5b3884b9601f235c8847ae94dc479",
+      "height": 0.8749999999999999,
+      "animations": {
+        "idle": "Idle_A",
+        "walk": "Walking_A",
+        "sit": "Project-authored seated pose"
+      },
+      "adaptation": "White tunic, removed cape and project-authored chef hat"
+    },
+    {
+      "name": "barbarian",
+      "source": "Barbarian",
+      "collection": "KayKit Adventurers Free 2.0",
+      "url": "https://kaylousberg.itch.io/kaykit-adventurers",
+      "archiveSha256": "abe48f4763fba0896bab486ee9e6d08ca6b5b3884b9601f235c8847ae94dc479",
+      "height": 0.9631482668041556,
+      "animations": {
+        "idle": "Idle_A",
+        "walk": "Walking_A",
+        "sit": "Project-authored seated pose"
+      },
+      "adaptation": "Original costume"
+    },
+    {
+      "name": "knight",
+      "source": "Knight",
+      "collection": "KayKit Adventurers Free 2.0",
+      "url": "https://kaylousberg.itch.io/kaykit-adventurers",
+      "archiveSha256": "abe48f4763fba0896bab486ee9e6d08ca6b5b3884b9601f235c8847ae94dc479",
+      "height": 1.0215248175237437,
+      "animations": {
+        "idle": "Idle_A",
+        "walk": "Walking_A",
+        "sit": "Project-authored seated pose"
+      },
+      "adaptation": "Original costume"
+    },
+    {
+      "name": "mage",
+      "source": "Mage",
+      "collection": "KayKit Adventurers Free 2.0",
+      "url": "https://kaylousberg.itch.io/kaykit-adventurers",
+      "archiveSha256": "abe48f4763fba0896bab486ee9e6d08ca6b5b3884b9601f235c8847ae94dc479",
+      "height": 1.0663493704265823,
+      "animations": {
+        "idle": "Idle_A",
+        "walk": "Walking_A",
+        "sit": "Project-authored seated pose"
+      },
+      "adaptation": "Original costume"
+    },
+    {
+      "name": "ranger",
+      "source": "Ranger",
+      "collection": "KayKit Adventurers Free 2.0",
+      "url": "https://kaylousberg.itch.io/kaykit-adventurers",
+      "archiveSha256": "abe48f4763fba0896bab486ee9e6d08ca6b5b3884b9601f235c8847ae94dc479",
+      "height": 0.9138119849526024,
+      "animations": {
+        "idle": "Idle_A",
+        "walk": "Walking_A",
+        "sit": "Project-authored seated pose"
+      },
+      "adaptation": "Removed quiver"
+    }
+  ]
+}

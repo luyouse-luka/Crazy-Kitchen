@@ -50,6 +50,8 @@ export interface KitchenLayout {
   serve: Vec2
   /** 整体缩放工位间距。1 = 基准布局。这是 M3「工位间距离」那个旋钮 */
   spread: number
+  /** Optional centre-to-centre route costs, including detours around fixtures. */
+  routeDistances?: readonly number[]
 }
 
 export interface ChefParams {
@@ -242,7 +244,7 @@ function resetState(st: InternalState, cfg: SimConfig): void {
   // 距离矩阵：预计算，决策里不再开方
   for (let a = 0; a < 4; a++) {
     for (let b = 0; b < 4; b++) {
-      st.distance[a * 4 + b] = dist(stationVec(cfg.layout, a), stationVec(cfg.layout, b)) * cfg.layout.spread
+      st.distance[a * 4 + b] = (cfg.layout.routeDistances?.[a * 4 + b] ?? dist(stationVec(cfg.layout, a), stationVec(cfg.layout, b))) * cfg.layout.spread
     }
   }
 

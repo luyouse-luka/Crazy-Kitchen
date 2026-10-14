@@ -4,8 +4,8 @@ import {
   CORE_SPAN,
   EDGE_MARGIN,
   ORTHO_HEIGHT,
-  UK,
-  VK,
+  CAMERA_RIGHT,
+  CAMERA_UP,
   effectiveOrthoHeight,
   focusBounds,
   focusForPlayer,
@@ -13,7 +13,7 @@ import {
 import { CHEF_RADIUS, FLOOR_BOUNDS } from '../game/assets/logic/movement'
 
 const WIDE = 2532 / 1170
-const toView = (p: { x: number; z: number }) => ({ u: (p.x + p.z) * UK, v: (p.x - p.z) * VK })
+const toView = (p: { x: number; z: number }) => ({ u: p.x * CAMERA_RIGHT.x + p.z * CAMERA_RIGHT.z, v: p.x * CAMERA_UP.x + p.z * CAMERA_UP.z })
 const clamp = (x: number, lo: number, hi: number) => (x < lo ? lo : x > hi ? hi : x)
 
 /** 玩家能站到的四个角 + 中心。钳制只在角上才生效，中间测不出任何东西 */
@@ -77,7 +77,7 @@ describe('focusBounds', () => {
 
 describe('effectiveOrthoHeight', () => {
   it('宽屏用定稿值，窄屏抬高到装得下整个场景宽', () => {
-    expect(effectiveOrthoHeight(WIDE)).toBe(ORTHO_HEIGHT)
+    expect(effectiveOrthoHeight(24 / 9)).toBe(ORTHO_HEIGHT)
     expect(effectiveOrthoHeight(4 / 3)).toBeGreaterThan(ORTHO_HEIGHT)
   })
 
@@ -91,7 +91,7 @@ describe('effectiveOrthoHeight', () => {
 })
 
 describe('视图坐标系', () => {
-  it('UK/VK 与 CONTENT_SPAN 自洽：场景四角投影落在跨度里', () => {
+  it('视图基向量与 CONTENT_SPAN 自洽：场景四角投影落在跨度里', () => {
     for (const x of [-4, 4]) {
       for (const z of [-3, 5]) {
         const { u, v } = toView({ x, z })

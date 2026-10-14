@@ -1,0 +1,465 @@
+{
+  "visual": {
+    "normal": {
+      "drawCalls": 95,
+      "triangles": 37051,
+      "shadows": false
+    },
+    "boundaries": {
+      "railMeshes": 1,
+      "gardenTop": -0.3499999940395355,
+      "oldGroundEnabled": false
+    },
+    "fade": {
+      "point": {
+        "x": 5.75,
+        "z": -3.5500000000000003
+      },
+      "before": [
+        {
+          "name": "Wall_N",
+          "position": [
+            0.5,
+            1.25,
+            -3.1
+          ],
+          "scale": [
+            9.2,
+            2.5,
+            0.2
+          ]
+        },
+        {
+          "name": "Wall_StoreBack",
+          "position": [
+            6.5,
+            1.25,
+            -6.1
+          ],
+          "scale": [
+            3.2,
+            2.5,
+            0.2
+          ]
+        },
+        {
+          "name": "Wall_Store_W1",
+          "position": [
+            4.9,
+            0.5,
+            -4.5
+          ],
+          "scale": [
+            0.2,
+            1,
+            3
+          ]
+        },
+        {
+          "name": "Wall_Store_S",
+          "position": [
+            7.5,
+            0.5,
+            -3.1
+          ],
+          "scale": [
+            1,
+            1,
+            0.2
+          ]
+        },
+        {
+          "name": "Wall_E",
+          "position": [
+            8.1,
+            1.25,
+            -1.2
+          ],
+          "scale": [
+            0.2,
+            2.5,
+            9.6
+          ]
+        },
+        {
+          "name": "Wall_Store_W2",
+          "position": [
+            5.25,
+            0.5,
+            -3.1
+          ],
+          "scale": [
+            0.5,
+            1,
+            0.2
+          ]
+        },
+        {
+          "name": "Wall_Utility",
+          "position": [
+            5.1,
+            0.45,
+            -1
+          ],
+          "scale": [
+            0.2,
+            0.9,
+            4
+          ]
+        },
+        {
+          "name": "Wall_Kitchen_W",
+          "position": [
+            -4.1,
+            0.45,
+            -1.25
+          ],
+          "scale": [
+            0.2,
+            0.9,
+            3.5
+          ]
+        }
+      ],
+      "after": [
+        {
+          "name": "Wall_N",
+          "position": [
+            0.5,
+            1.25,
+            -3.1
+          ],
+          "scale": [
+            9.2,
+            2.5,
+            0.2
+          ]
+        },
+        {
+          "name": "Wall_StoreBack",
+          "position": [
+            6.5,
+            1.25,
+            -6.1
+          ],
+          "scale": [
+            3.2,
+            2.5,
+            0.2
+          ]
+        },
+        {
+          "name": "Wall_Store_W1",
+          "position": [
+            4.9,
+            0.5,
+            -4.5
+          ],
+          "scale": [
+            0.2,
+            1,
+            3
+          ]
+        },
+        {
+          "name": "Wall_Store_S",
+          "position": [
+            7.5,
+            0.5,
+            -3.1
+          ],
+          "scale": [
+            1,
+            1,
+            0.2
+          ]
+        },
+        {
+          "name": "Wall_E",
+          "position": [
+            8.1,
+            1.25,
+            -1.2
+          ],
+          "scale": [
+            0.2,
+            2.5,
+            9.6
+          ]
+        },
+        {
+          "name": "Wall_Store_W2",
+          "position": [
+            5.25,
+            0.5,
+            -3.1
+          ],
+          "scale": [
+            0.5,
+            1,
+            0.2
+          ]
+        },
+        {
+          "name": "Wall_Utility",
+          "position": [
+            5.1,
+            0.45,
+            -1
+          ],
+          "scale": [
+            0.2,
+            0.9,
+            4
+          ]
+        },
+        {
+          "name": "Wall_Kitchen_W",
+          "position": [
+            -4.1,
+            0.45,
+            -1.25
+          ],
+          "scale": [
+            0.2,
+            0.9,
+            3.5
+          ]
+        }
+      ],
+      "faded": [
+        {
+          "name": "Wall_Store_W2",
+          "opacity": 0.22,
+          "surfaces": [
+            {
+              "alpha": 56,
+              "depthWrite": false
+            }
+          ]
+        }
+      ]
+    },
+    "restored": [
+      {
+        "name": "Wall_N",
+        "k": 1,
+        "alpha": [
+          255,
+          255,
+          255
+        ]
+      },
+      {
+        "name": "Wall_StoreBack",
+        "k": 1,
+        "alpha": [
+          255
+        ]
+      },
+      {
+        "name": "Wall_Store_W1",
+        "k": 1,
+        "alpha": [
+          255
+        ]
+      },
+      {
+        "name": "Wall_Store_S",
+        "k": 1,
+        "alpha": [
+          255
+        ]
+      },
+      {
+        "name": "Wall_E",
+        "k": 1,
+        "alpha": [
+          255,
+          255,
+          255
+        ]
+      },
+      {
+        "name": "Wall_Store_W2",
+        "k": 1,
+        "alpha": [
+          255
+        ]
+      },
+      {
+        "name": "Wall_Utility",
+        "k": 1,
+        "alpha": [
+          255
+        ]
+      },
+      {
+        "name": "Wall_Kitchen_W",
+        "k": 1,
+        "alpha": [
+          255
+        ]
+      }
+    ],
+    "recolor": {
+      "wall": [
+        "c8e6d7",
+        "c8e6d7",
+        "c8e6d7"
+      ],
+      "floor": [
+        "b9cde1",
+        "b9cde1"
+      ]
+    },
+    "aspects": [
+      {
+        "aspect": 1.3333333333333333,
+        "height": 4.8052145235375
+      },
+      {
+        "aspect": 2.1666666666666665,
+        "height": 3
+      }
+    ],
+    "errors": [],
+    "failed": []
+  },
+  "gameplay": {
+    "idle": {
+      "playing": true,
+      "time": 2.0896999998092647
+    },
+    "walk": {
+      "playing": true,
+      "time": 0.5996999998092651
+    },
+    "clips": [
+      {
+        "name": "idle",
+        "duration": 1.0666667222976685
+      },
+      {
+        "name": "walk",
+        "duration": 1.0666667222976685
+      },
+      {
+        "name": "sit",
+        "duration": 1
+      }
+    ],
+    "seats": [
+      {
+        "active": true,
+        "clip": "sit"
+      },
+      {
+        "active": true,
+        "clip": "sit"
+      },
+      {
+        "active": true,
+        "clip": "sit"
+      },
+      {
+        "active": true,
+        "clip": "sit"
+      }
+    ],
+    "burger": {
+      "log": [
+        "orders@6",
+        "served@13"
+      ],
+      "taps": 15,
+      "error": null,
+      "served": true
+    },
+    "errors": [],
+    "failed": []
+  },
+  "reproducibility": {
+    "assetFiles": 92,
+    "assetBytes": 4561456,
+    "assetsRegeneratedIdentically": true,
+    "sceneReappliedIdentically": true,
+    "charactersUnchanged": true,
+    "existingAssetFilesChanged": [
+      "game/assets/art/restaurant/contact-shadows.glb",
+      "game/assets/art/restaurant/floor-terrace.glb",
+      "game/assets/art/restaurant/floor-terrace.glb.meta",
+      "game/assets/art/restaurant/manifest.json"
+    ]
+  },
+  "layout": {
+    "retainedNodesExcludingGeneratedArtBranches": 286,
+    "identicalTransformsAndIds": true
+  },
+  "walkableBoundary": {
+    "checks": {
+      "pnpmCheck": {
+        "tests": 504,
+        "files": 38,
+        "passed": true
+      },
+      "pnpmScene": true,
+      "pnpmLayout": true,
+      "pnpmCam": true,
+      "pnpmA7": true,
+      "cocosWebBuild": true
+    },
+    "retained": {
+      "retainedNodesExcludingGeneratedArtBranches": 286,
+      "identicalTransformsAndIds": true
+    },
+    "reproducibility": {
+      "assetFiles": 92,
+      "assetBytes": 4561456,
+      "assetsRegeneratedIdentically": true,
+      "sceneReappliedIdentically": true,
+      "charactersUnchanged": true,
+      "existingAssetFilesChanged": [
+        "game/assets/art/restaurant/contact-shadows.glb",
+        "game/assets/art/restaurant/floor-terrace.glb",
+        "game/assets/art/restaurant/floor-terrace.glb.meta",
+        "game/assets/art/restaurant/manifest.json"
+      ]
+    },
+    "firstBrowserAttempt": {
+      "errors": [
+        "net::ERR_NO_BUFFER_SPACE on one legacy PNG"
+      ],
+      "followup": "PNG exists; direct HTTP fetch returned 200 / 1633 bytes; a fresh complete browser run passed with no errors or failed requests."
+    }
+  },
+  "previousArtDirection": {
+    "reproducibility": {
+      "changed": [],
+      "sceneIdentical": true,
+      "assetFiles": 90,
+      "assetBytes": 5158369
+    },
+    "layout": {
+      "beforeNodes": 335,
+      "matchedNodes": 335,
+      "removedPaths": [],
+      "transformChanges": [
+        {
+          "path": "main/Main Light",
+          "fields": [
+            "_lpos",
+            "_lrot"
+          ]
+        },
+        {
+          "path": "main/Main Camera",
+          "fields": [
+            "_lpos",
+            "_lrot"
+          ]
+        }
+      ]
+    }
+  }
+}

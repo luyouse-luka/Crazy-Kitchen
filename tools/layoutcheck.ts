@@ -13,161 +13,62 @@ import { runDay, defaultSimConfig } from '../game/assets/logic/sim'
 import type { DayResult, KitchenLayout, SimConfig } from '../game/assets/logic/sim'
 import { difficultyForDay, LAST_DAY } from '../game/assets/logic/difficulty'
 import { SPEC } from './scene-spec'
+import { navigation, specBox } from './layout-navigation'
+import { CHEF_RADIUS } from '../game/assets/logic/movement'
 
 declare const process: { exit(code?: number): void }
 declare const console: { log(...args: unknown[]): void }
 
 // ─────────────────────────── 待验摆位 ───────────────────────────
 
-/** 地板外接矩形（Floor + Floor_East + Floor_Store）。工位 AABB 必须落在里面 */
-const FLOOR = { xmin: -4, xmax: 13.5, zmin: -3, zmax: 3 }
-/** 通道下限（m2-scene-guide §7）。玩家直径 0.7，1.5 是约两倍 */
+const nav = navigation()
 const AISLE = 1.5
-
-interface Placed { name: string; x: number; z: number; w: number; d: number }
-
-/** docs/m2-scene-guide.md §2.3 的定稿。场景里挪了工位就同步改这里 */
-const PLACED: Placed[] = [
-  { name: 'Station_Fridge', x: 5, z: -2.5, w: 1, d: 1 },
-  { name: 'Station_Grill', x: 2, z: -2.5, w: 2, d: 1 },
-  { name: 'Station_Assembly', x: -0.5, z: -2.5, w: 1, d: 1 },
-  { name: 'Station_Serve', x: -0.5, z: 2.5, w: 2, d: 1 },
-]
-
-/**
- * 不进 sim 的：库房、挡路的家具与矮墙。只查出界和「核心动线别被它们挡住」，
- * 不查通道宽 —— 一排柜子本来就是贴着摆的。
- */
-const EXTRA: Placed[] = Object.entries(SPEC)
-  .filter(([k]) => k === 'Station_Storeroom' || k === 'Station_Order' || k === 'Station_Delivery' || k === 'Station_Sink' || k.startsWith('Block_') || k.startsWith('Wall_Store_'))
-  .map(([name, v]) => ({ name, x: v.pos![0], z: v.pos![2], w: v.scale![0], d: v.scale![2] }))
-
-/** M1 标定曲线时用的那套坐标 —— 难度基线的来源，不要改 */
 const BASELINE: KitchenLayout = defaultSimConfig().layout
-
-// ─────────────────────────── 几何 ───────────────────────────
-
-interface Box { x0: number; x1: number; z0: number; z1: number }
-const toBox = (p: Placed): Box => ({ x0: p.x - p.w / 2, x1: p.x + p.w / 2, z0: p.z - p.d / 2, z1: p.z + p.d / 2 })
-
-/** Euclidean gap, so diagonal slots count too — projected-only checks miss them */
-function gapBetween(a: Box, b: Box): number {
-  const dx = Math.max(a.x0 - b.x1, b.x0 - a.x1, 0)
-  const dz = Math.max(a.z0 - b.z1, b.z0 - a.z1, 0)
-  return Math.hypot(dx, dz)
-}
-
-/** Segment vs AABB, slab method. The sim's chef walks straight lines; a real player cannot walk through a bench. */
-function segmentHitsBox(px: number, pz: number, qx: number, qz: number, b: Box): boolean {
-  let t0 = 0
-  let t1 = 1
-  const seg = [qx - px, qz - pz]
-  const lo = [b.x0, b.z0]
-  const hi = [b.x1, b.z1]
-  const org = [px, pz]
-  for (let i = 0; i < 2; i++) {
-    if (Math.abs(seg[i]!) < 1e-9) {
-      if (org[i]! < lo[i]! || org[i]! > hi[i]!) return false
-      continue
-    }
-    let a = (lo[i]! - org[i]!) / seg[i]!
-    let c = (hi[i]! - org[i]!) / seg[i]!
-    if (a > c) {
-      const t = a
-      a = c
-      c = t
-    }
-    t0 = Math.max(t0, a)
-    t1 = Math.min(t1, c)
-    if (t0 > t1) return false
-  }
-  return true
-}
-
 interface Failure { rule: string; detail: string }
-
 function checkGeometry(): Failure[] {
   const bad: Failure[] = []
-  const boxes = PLACED.map(toBox)
-
-  PLACED.forEach((p, i) => {
-    const b = boxes[i]!
-    const edges: Array<[string, number]> = [
-      ['西', b.x0 - FLOOR.xmin], ['东', FLOOR.xmax - b.x1],
-      ['北', b.z0 - FLOOR.zmin], ['南', FLOOR.zmax - b.z1],
-    ]
-    for (const [side, g] of edges) {
-      if (g < -1e-9) bad.push({ rule: '出界', detail: `${p.name} ${side}侧越出地板 ${(-g).toFixed(2)}m` })
-      // 贴死(0) 或 ≥1.5，中间那档是玩家会卡进去的死角
-      else if (g > 1e-9 && g < AISLE) {
-        bad.push({ rule: '死角', detail: `${p.name} 与${side}边界隔 ${g.toFixed(2)}m —— 贴死或留够 ${AISLE}m` })
-      }
-    }
-  })
-
-  const extras = EXTRA.map(toBox)
-  const touches = (a: Box, b: Box): boolean => gapBetween(a, b) < 1e-9
-  // Stations joined by counter pieces are one worktop, not an aisle; the player walks along its front
-  const sameRun = (i: number, j: number): boolean => extras.some((e) => touches(e, boxes[i]!) && touches(e, boxes[j]!))
-  // Everything on one wall row: the straight centre line runs through the counters, the real walk runs along their front
-  const sameRow = (...bs: Box[]): boolean => bs.every((b) => Math.abs(b.z0 - bs[0]!.z0) < 1e-9 && Math.abs(b.z1 - bs[0]!.z1) < 1e-9)
-
-  for (let i = 0; i < PLACED.length; i++) {
-    for (let j = i + 1; j < PLACED.length; j++) {
-      const g = gapBetween(boxes[i]!, boxes[j]!)
-      if (g < AISLE - 1e-9 && !sameRun(i, j)) {
-        bad.push({ rule: '通道窄', detail: `${PLACED[i]!.name} ↔ ${PLACED[j]!.name} 只有 ${g.toFixed(2)}m` })
-      }
-    }
+  const require = (ok: boolean, detail: string) => { if (!ok) bad.push({ rule: '布局', detail }) }
+  const edge = (name: string, axis: 'x' | 'z', side: -1 | 1) => {
+    const b = specBox(name)
+    return b.center[axis] + side * (axis === 'x' ? b.halfX : b.halfZ)
   }
-
-  for (let i = 0; i < PLACED.length; i++) {
-    for (let j = i + 1; j < PLACED.length; j++) {
-      for (let k = 0; k < PLACED.length; k++) {
-        if (k === i || k === j) continue
-        const a = PLACED[i]!
-        const b = PLACED[j]!
-        if (sameRow(boxes[i]!, boxes[j]!, boxes[k]!)) continue
-        if (segmentHitsBox(a.x, a.z, b.x, b.z, boxes[k]!)) {
-          bad.push({ rule: '动线穿模', detail: `${a.name} → ${b.name} 的直线穿过 ${PLACED[k]!.name}` })
-        }
-      }
-      for (let k = 0; k < EXTRA.length; k++) {
-        const e = EXTRA[k]!
-        const a = PLACED[i]!
-        const b = PLACED[j]!
-        if (touches(extras[k]!, boxes[i]!) || touches(extras[k]!, boxes[j]!)) continue
-        if (sameRow(boxes[i]!, boxes[j]!, extras[k]!)) continue
-        if (segmentHitsBox(a.x, a.z, b.x, b.z, extras[k]!)) {
-          bad.push({ rule: '动线穿模', detail: `${a.name} → ${b.name} 的直线穿过 ${e.name}` })
-        }
-      }
-    }
+  const passages: Array<[string, number]> = [
+    ['烤炉 ↔ 半岛', edge('Station_Assembly', 'z', -1) - edge('Station_Grill', 'z', 1)],
+    ['半岛 ↔ 前台', edge('Station_Serve', 'z', -1) - edge('Station_Assembly', 'z', 1)],
+    ['半岛东端绕行', edge('Station_Fridge', 'x', -1) - edge('Station_Assembly', 'x', 1)],
+    ['洗区主通道', edge('Station_Sink', 'x', -1) - edge('Wall_Utility', 'x', 1)],
+    ['冷库门洞', edge('Wall_Store_S', 'x', -1) - edge('Wall_Store_W2', 'x', 1)],
+    ['厨房前台东端', edge('Floor', 'x', 1) - edge('Station_Delivery', 'x', 1)],
+  ]
+  for (const [name, width] of passages) {
+    console.log(`   ${name}: ${width.toFixed(2)}m`)
+    require(width >= AISLE - 1e-9, `${name} 小于 ${AISLE}m`)
   }
-  for (const e of EXTRA) {
-    const b = toBox(e)
-    if (b.x0 < FLOOR.xmin - 1e-9 || b.x1 > FLOOR.xmax + 1e-9 || b.z0 < FLOOR.zmin - 1e-9 || b.z1 > FLOOR.zmax + 1e-9) {
-      bad.push({ rule: '出界', detail: `${e.name} 越出地板` })
-    }
-    for (let i = 0; i < PLACED.length; i++) {
-      const o = boxes[i]!
-      const ox = Math.min(b.x1, o.x1) - Math.max(b.x0, o.x0)
-      const oz = Math.min(b.z1, o.z1) - Math.max(b.z0, o.z0)
-      if (ox > 1e-9 && oz > 1e-9) bad.push({ rule: '压工位', detail: `${e.name} 压住 ${PLACED[i]!.name}` })
-    }
+  require(passages[1]![1] >= 3 * 2 * CHEF_RADIUS - 1e-9, '半岛与前台净宽不足三个身位')
+  for (const s of nav.stations) require(nav.access(s).length > 0, `${s.name} 没有可达交互点`)
+  for (const [name, x, z] of [['半岛北侧', 0, -1.25], ['半岛南侧', 0, 1.25], ['半岛绕行', 1.8, 0], ['后场入口', 6.1, 1.5], ['冷库入口', 6.25, -3.1], ['冷库取货', 6.5, -4.5]] as const) require(nav.canReach(x, z), `${name} 不可达`)
+  const floors = ['Floor', 'Floor_East', 'Floor_Store'].map(n => specBox(n))
+  require(nav.reachable.every(p => floors.some(b => Math.abs(p.x - b.center.x) <= b.halfX && Math.abs(p.z - b.center.z) <= b.halfZ)), '角色可以走到地板外')
+  for (const s of nav.stations) require(floors.some(b => Math.abs(s.center.x - b.center.x) + s.halfX <= b.halfX + 1e-9 && Math.abs(s.center.z - b.center.z) + s.halfZ <= b.halfZ + 1e-9), `${s.name} 越出地板`)
+  for (let i = 0; i < nav.stations.length; i++) for (let j = i + 1; j < nav.stations.length; j++) {
+    const a = nav.stations[i]!, b = nav.stations[j]!
+    require(Math.abs(a.center.x - b.center.x) >= a.halfX + b.halfX - 1e-9 || Math.abs(a.center.z - b.center.z) >= a.halfZ + b.halfZ - 1e-9, `${a.name} 与 ${b.name} 重叠`)
   }
+  console.log(`   ${nav.reachable.length} 个可达采样点，${nav.stations.length} 个交互工位`)
   return bad
 }
+const routes = nav.distances()
+if (!routes.every(Number.isFinite)) throw new Error('Core stations are disconnected')
 
 // ─────────────────────────── 难度 ───────────────────────────
 
 function asLayout(): KitchenLayout {
   const at = (n: string): { x: number; z: number } => {
-    const p = PLACED.find((q) => q.name === n)
-    if (!p) throw new Error(`PLACED 里缺 ${n}`)
-    return { x: p.x, z: p.z }
+    const p = SPEC[n]?.pos
+    if (!p) throw new Error(`SPEC missing ${n}`)
+    return { x: p[0], z: p[2] }
   }
-  return { fridge: at('Station_Fridge'), grill: at('Station_Grill'), assembly: at('Station_Assembly'), serve: at('Station_Serve'), spread: 1 }
+  return { fridge: at('Station_Fridge'), grill: at('Station_Grill'), assembly: at('Station_Assembly'), serve: at('Station_Serve'), spread: 1, routeDistances: routes }
 }
 
 interface Curve { completion: number; late: number; idle: number; outOfBand: number }

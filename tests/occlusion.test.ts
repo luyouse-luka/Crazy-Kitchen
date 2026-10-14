@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { hidesPoint } from '../game/assets/logic/camera'
+import { hidesPoint as rayHidesPoint } from '../game/assets/logic/camera'
 import type { Box3 } from '../game/assets/logic/camera'
 
-/** main.scene Blockers/Wall_E: centre (10.1, 1.25, 1.5), scale (0.2, 2.5, 3) */
+/** Legacy-layout fixture retained to exercise ray intersections independently of scene changes. */
+const hidesPoint = (b: Box3, x: number, y: number, z: number) => rayHidesPoint(b, x, y, z, { x: -10.447, y: 10.505, z: 10.391 })
 const WALL_E: Box3 = { minX: 10, minY: 0, minZ: 0, maxX: 10.2, maxY: 2.5, maxZ: 3 }
 /** Kitchen/Wall_N, the back wall */
 const WALL_N: Box3 = { minX: -4.1, minY: 0, minZ: -3.2, maxX: 13.7, maxY: 2.5, maxZ: -3 }
@@ -27,5 +28,17 @@ describe('墙挡不挡住厨师（正交相机，视线平行于 CAMERA_OFFSET�
 
   it('点本身在墙里算挡住', () => {
     expect(hidesPoint(WALL_E, 10.1, 1, 1)).toBe(true)
+  })
+})
+
+describe('wall fade timing', () => {
+  it('stays clamped and reverses smoothly during rapid occlusion changes', async () => {
+    const { stepWallOpacity, WALL_FADE_OPACITY } = await import('../game/assets/logic/camera')
+    const partial = stepWallOpacity(1, true, .05)
+    expect(partial).toBeCloseTo(.8)
+    expect(stepWallOpacity(partial, false, .025)).toBeCloseTo(.9)
+    expect(stepWallOpacity(partial, true, 3)).toBe(WALL_FADE_OPACITY)
+    expect(stepWallOpacity(partial, false, 3)).toBe(1)
+    expect(stepWallOpacity(partial, true, -1)).toBe(partial)
   })
 })

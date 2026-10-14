@@ -1,0 +1,93 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "344e66dd-2f50-440d-847b-6ad05a8c8115",
+  "files": [],
+  "subMetas": {
+    "21808": {
+      "importer": "gltf-scene",
+      "uuid": "344e66dd-2f50-440d-847b-6ad05a8c8115@21808",
+      "displayName": "",
+      "id": "21808",
+      "name": "contact-shadows.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "bcca5": {
+      "importer": "gltf-mesh",
+      "uuid": "344e66dd-2f50-440d-847b-6ad05a8c8115@bcca5",
+      "displayName": "",
+      "id": "bcca5",
+      "name": "UnnamedMesh.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 3072
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "8d7fb": {
+      "importer": "gltf-material",
+      "uuid": "344e66dd-2f50-440d-847b-6ad05a8c8115@8d7fb",
+      "displayName": "",
+      "id": "8d7fb",
+      "name": "ContactShadow.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "344e66dd-2f50-440d-847b-6ad05a8c8115@bcca5"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "344e66dd-2f50-440d-847b-6ad05a8c8115@8d7fb"
+      ],
+      "scenes": [
+        "344e66dd-2f50-440d-847b-6ad05a8c8115@21808"
+      ]
+    }
+  }
+}

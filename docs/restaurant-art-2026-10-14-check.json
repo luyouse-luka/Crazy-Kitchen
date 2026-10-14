@@ -1,0 +1,53 @@
+{
+  "idle": {
+    "playing": true,
+    "time": 1.995400000095368
+  },
+  "walk": {
+    "playing": true,
+    "time": 0.6000999999046326
+  },
+  "clips": [
+    {
+      "name": "idle",
+      "duration": 1.6666666269302368
+    },
+    {
+      "name": "walk",
+      "duration": 1.3333333730697632
+    },
+    {
+      "name": "sit",
+      "duration": 1
+    }
+  ],
+  "seats": [
+    {
+      "active": true,
+      "clip": "sit"
+    },
+    {
+      "active": true,
+      "clip": "sit"
+    },
+    {
+      "active": true,
+      "clip": "sit"
+    },
+    {
+      "active": true,
+      "clip": "sit"
+    }
+  ],
+  "burger": {
+    "log": [
+      "orders@5",
+      "served@16"
+    ],
+    "taps": 15,
+    "error": null,
+    "served": true
+  },
+  "errors": [],
+  "failed": []
+}
