@@ -29,7 +29,7 @@ function patch(file, edit) {
   changes.push({ path: `game/${file}`, sha256: crypto.createHash('sha256').update(fs.readFileSync(original)).digest('hex') })
   const diff = spawnSync('git', ['-c', 'core.autocrlf=false', 'diff', '--no-index', '--ignore-space-at-eol', '--', original, target], { encoding: 'utf8' })
   if (![0, 1].includes(diff.status)) throw Error(diff.stderr)
-  const lines = diff.stdout.replaceAll('\r\n', '\n').split('\n')
+  const lines = diff.stdout.replaceAll('\r\n', '\n').replace(/^ $/gm, '').split('\n')
   const first = lines.findIndex(l => l.startsWith('@@'))
   return `diff --git a/game/${file} b/game/${file}\n--- a/game/${file}\n+++ b/game/${file}\n` + lines.slice(first).join('\n')
 }

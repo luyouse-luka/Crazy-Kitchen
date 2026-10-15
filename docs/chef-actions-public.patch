@@ -28,7 +28,7 @@ diff --git a/game/assets/scripts/StationView.ts b/game/assets/scripts/StationVie
      input.off(Input.EventType.TOUCH_END, this.onTouchEnd, this)
 @@ -1199,6 +1203,7 @@ export class StationView extends Component {
    }
- 
+
    private onTouchCancel(): void {
 +    this.chefActions?.reset()
      this.mouseDown = false
@@ -77,12 +77,12 @@ diff --git a/game/assets/scripts/StationView.ts b/game/assets/scripts/StationVie
 -    this.act(interact(this.kitchen, this.movement.pos, station))
 +    this.act(this.interactAt(station))
    }
- 
+
    /** Holding the action key at the sink: scrub, with a brush sound every so often and a cheer when done */
 @@ -1597,8 +1602,27 @@ export class StationView extends Component {
      this.floaters.spawn(this.cameraComp, station.pos.x, BUBBLE_Y.grill, station.pos.z, text, ok && !late ? GOOD_COLOR : BAD_COLOR, 34)
    }
- 
+
 +  private interactAt(station: Station, options?: Parameters<typeof interact>[3]): InteractResult {
 +    const k = this.kitchen
 +    const result = interact(k, this.movement.pos, station, options)
@@ -167,7 +167,7 @@ diff --git a/game/assets/scripts/StationView.ts b/game/assets/scripts/StationVie
 @@ -3075,6 +3111,14 @@ export class StationView extends Component {
        this.camFocus.z + this.camOffset.z + sz,
      )
- 
+
 +    const frame = this.chefFrame
 +    frame.running = this.phase === 'open' && !this.resultOpen
 +    frame.moving = this.movement.moving
@@ -178,7 +178,7 @@ diff --git a/game/assets/scripts/StationView.ts b/game/assets/scripts/StationVie
 +    this.chefActions?.sync(this.kitchen, frame, game.deltaTime, this.workstationEffects?.actionTarget('sink') ?? null)
      this.syncBubbles()
      this.syncCustomers()
- 
+
 diff --git a/game/assets/scripts/WorkstationEffects.ts b/game/assets/scripts/WorkstationEffects.ts
 --- a/game/assets/scripts/WorkstationEffects.ts
 +++ b/game/assets/scripts/WorkstationEffects.ts
@@ -232,7 +232,7 @@ diff --git a/game/assets/scripts/WorkstationEffects.ts b/game/assets/scripts/Wor
 @@ -84,7 +91,16 @@ export class WorkstationEffects {
      this.hide()
    }
- 
+
 -  hide(): void { this.node.active = false }
 +  hide(): void {
 +    this.node.active = false
@@ -244,7 +244,7 @@ diff --git a/game/assets/scripts/WorkstationEffects.ts b/game/assets/scripts/Wor
 +    const p = kind === 'grill' ? this.grill[slot] : kind === 'drinks' ? this.drinks : kind === 'fryer' ? this.fryer : kind === 'rack' ? this.rack : null
 +    return p ? new Vec3(p.x, p.y + (kind === 'grill' ? .065 : 0), p.z) : null
 +  }
- 
+
    update(k: KitchenState, scrubbing: boolean, running: boolean, dt: number): void {
      this.used = 0
 @@ -93,6 +109,9 @@ export class WorkstationEffects {
@@ -280,7 +280,7 @@ diff --git a/game/assets/scripts/WorkstationEffects.ts b/game/assets/scripts/Wor
        }
      }
 @@ -237,6 +252,7 @@ export class WorkstationEffects {
- 
+
    destroy(): void {
      for (const pan of this.pans) pan.destroy()
 +    for (const patty of this.patties) patty.node.destroy()
