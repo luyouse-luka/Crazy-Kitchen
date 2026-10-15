@@ -1,0 +1,389 @@
+{
+  "baseline": "be80cc6e1a5ffc4afa8bcbd7b803c9c9c5884efc",
+  "webEntrySha256": "151e30298167562ccfadfa013145075c524f1467d1fc40997273b5941c9d8eb0",
+  "uiBundleSha256": "3efc0ffe184241b29217c425aadc58dc21eaa347a718ad7d9b6938cff08cc078",
+  "mode": "Exact UI source bundle injected into baseline Cocos Web scene; production wiring pending",
+  "moves": [
+    {
+      "start": {
+        "x": 0,
+        "z": 1.55
+      },
+      "target": {
+        "x": -3.4,
+        "z": 2.1
+      },
+      "end": {
+        "x": -3.345040532457223,
+        "z": 2.085530978441769
+      }
+    },
+    {
+      "start": {
+        "x": -3.345040532457223,
+        "z": 2.085530978441769
+      },
+      "target": {
+        "x": -2.5,
+        "z": 0
+      },
+      "end": {
+        "x": -2.502707038286783,
+        "z": 0.02224326417310005
+      }
+    },
+    {
+      "start": {
+        "x": -2.502707038286783,
+        "z": 0.02224326417310005
+      },
+      "target": {
+        "x": 0,
+        "z": -1.55
+      },
+      "end": {
+        "x": -0.04140183510451382,
+        "z": -1.5276873002096005
+      }
+    },
+    {
+      "start": {
+        "x": -0.04140183510451382,
+        "z": -1.5276873002096005
+      },
+      "target": {
+        "x": -2.5,
+        "z": -1.5
+      },
+      "end": {
+        "x": -2.4703401374747953,
+        "z": -1.5024448514026125
+      }
+    },
+    {
+      "start": {
+        "x": -2.4703401374747953,
+        "z": -1.5024448514026125
+      },
+      "target": {
+        "x": -2.5,
+        "z": 0
+      },
+      "end": {
+        "x": -2.4994181645122304,
+        "z": -0.04594188102478752
+      }
+    },
+    {
+      "start": {
+        "x": -2.4994181645122304,
+        "z": -0.04594188102478752
+      },
+      "target": {
+        "x": -2.5,
+        "z": -1.5
+      },
+      "end": {
+        "x": -2.499137560390146,
+        "z": -1.5010635262573155
+      }
+    },
+    {
+      "start": {
+        "x": -2.499137560390146,
+        "z": -1.5010635262573155
+      },
+      "target": {
+        "x": -1,
+        "z": 2.1
+      },
+      "end": {
+        "x": -1.0141629578359217,
+        "z": 2.0613853562610576
+      }
+    },
+    {
+      "start": {
+        "x": -1.0141629578359217,
+        "z": 2.0613853562610576
+      },
+      "target": {
+        "x": -2.5,
+        "z": 0
+      },
+      "end": {
+        "x": -2.4652856218559593,
+        "z": 0.0466419870632494
+      }
+    },
+    {
+      "start": {
+        "x": -2.4652856218559593,
+        "z": 0.0466419870632494
+      },
+      "target": {
+        "x": 0,
+        "z": 1.55
+      },
+      "end": {
+        "x": -0.026570871002235354,
+        "z": 1.532628275277785
+      }
+    },
+    {
+      "start": {
+        "x": -0.026570871002235354,
+        "z": 1.532628275277785
+      },
+      "target": {
+        "x": 6.4,
+        "z": 0.5
+      },
+      "end": {
+        "x": 6.344012150369991,
+        "z": 0.5038929535685764
+      }
+    }
+  ],
+  "stages": [
+    {
+      "name": "01-first-entry",
+      "status": "active",
+      "step": "move",
+      "title": "先走到前台",
+      "target": "register",
+      "action": "",
+      "pos": {
+        "x": 0,
+        "z": 1.55
+      }
+    },
+    {
+      "name": "02-order-accepted",
+      "status": "active",
+      "step": "ingredients",
+      "title": "去冰箱取肉饼",
+      "target": "fridge",
+      "action": "接单",
+      "pos": {
+        "x": -3.345040532457223,
+        "z": 2.085530978441769
+      }
+    },
+    {
+      "name": "03-inventory",
+      "status": "active",
+      "step": "ingredients",
+      "title": "去冰箱取肉饼",
+      "target": "fridge",
+      "action": "取料",
+      "pos": {
+        "x": -2.502707038286783,
+        "z": 0.02224326417310005
+      }
+    },
+    {
+      "name": "04-cooking",
+      "status": "active",
+      "step": "cook",
+      "title": "等肉饼烤到三分",
+      "target": "grill",
+      "action": "取肉",
+      "pos": {
+        "x": -0.04140183510451382,
+        "z": -1.5276873002096005
+      }
+    },
+    {
+      "name": "05-cooked-patty",
+      "status": "active",
+      "step": "assemble",
+      "title": "把熟肉放上制作台",
+      "target": "assembly",
+      "action": "取肉",
+      "pos": {
+        "x": -0.04140183510451382,
+        "z": -1.5276873002096005
+      }
+    },
+    {
+      "name": "06-ready-to-deliver",
+      "status": "active",
+      "step": "deliver",
+      "title": "把汉堡送到出餐口",
+      "target": "serve",
+      "action": "放下",
+      "pos": {
+        "x": -2.499137560390146,
+        "z": -1.5010635262573155
+      }
+    },
+    {
+      "name": "07-first-order-complete",
+      "status": "done",
+      "step": "accept",
+      "title": "接下第一张订单",
+      "target": "register",
+      "action": "上菜",
+      "pos": {
+        "x": -1.0141629578359217,
+        "z": 2.0613853562610576
+      }
+    }
+  ],
+  "layouts": [
+    {
+      "width": 1024,
+      "height": 768,
+      "visible": true,
+      "guide": {
+        "x": 340,
+        "y": 18,
+        "width": 560,
+        "height": 148
+      },
+      "zones": [
+        {
+          "id": "guide-skip",
+          "x": 624,
+          "y": 38.39999999999996,
+          "w": 80,
+          "h": 70.4
+        },
+        {
+          "id": "guide-body",
+          "x": 272,
+          "y": 14.399999999999963,
+          "w": 448,
+          "h": 118.4
+        }
+      ],
+      "station": {
+        "x": -3.5,
+        "z": 0
+      }
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "visible": true,
+      "guide": {
+        "x": 340,
+        "y": 18,
+        "width": 560,
+        "height": 148
+      },
+      "zones": [
+        {
+          "id": "guide-skip",
+          "x": 780,
+          "y": 48,
+          "w": 100,
+          "h": 88
+        },
+        {
+          "id": "guide-body",
+          "x": 340,
+          "y": 18,
+          "w": 560,
+          "h": 148
+        }
+      ],
+      "station": {
+        "x": -3.5,
+        "z": 0
+      }
+    },
+    {
+      "width": 1680,
+      "height": 720,
+      "visible": true,
+      "guide": {
+        "x": 540,
+        "y": 18,
+        "width": 560,
+        "height": 148
+      },
+      "zones": [
+        {
+          "id": "guide-skip",
+          "x": 980,
+          "y": 48,
+          "w": 100,
+          "h": 88
+        },
+        {
+          "id": "guide-body",
+          "x": 540,
+          "y": 18,
+          "w": 560,
+          "h": 148
+        }
+      ],
+      "station": {
+        "x": -3.5,
+        "z": 0
+      }
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "visible": true,
+      "guide": {
+        "x": 479.0769230769231,
+        "y": 18,
+        "width": 560,
+        "height": 148
+      },
+      "zones": [
+        {
+          "id": "guide-skip",
+          "x": 497.8333333333333,
+          "y": 26.00000000000001,
+          "w": 54.166666666666664,
+          "h": 47.666666666666664
+        },
+        {
+          "id": "guide-body",
+          "x": 259.5,
+          "y": 9.750000000000014,
+          "w": 303.3333333333333,
+          "h": 80.16666666666666
+        }
+      ],
+      "station": {
+        "x": -3.5,
+        "z": 0
+      }
+    }
+  ],
+  "phases": [
+    "move",
+    "accept",
+    "ingredients",
+    "cook",
+    "assemble",
+    "ingredients",
+    "assemble",
+    "deliver",
+    "accept"
+  ],
+  "errors": [],
+  "failed": [],
+  "rulesChanged": false,
+  "completeBurger": true,
+  "skipDoesNotLeakInput": true,
+  "holdDiscardAndScrub": true,
+  "restartAndReload": true,
+  "validation": {
+    "baselineTests": 519,
+    "totalTests": 544,
+    "newTests": 25,
+    "testFiles": 41,
+    "typecheck": "passed",
+    "noEngine": "passed",
+    "independentReview": "approved after recovery fixes",
+    "productionWiring": "pending owner integration",
+    "firstTimeHumanPlaytest": "pending"
+  }
+}

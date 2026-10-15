@@ -1,141 +1,105 @@
-import { Color, Graphics, Label, Node, Sprite, SpriteFrame, UITransform } from 'cc'
+import { Graphics, Label, Node, Sprite, SpriteFrame } from 'cc'
 import { pop, pressTo } from './Feel'
+import { actionPresentation, GESTURE_LABEL } from './ui/UiModel'
+import type { ActionPresentation } from './ui/UiModel'
+import { UI_THEME, uiColor, uiLabel, uiNode, uiSurface } from './ui/UiTheme'
 
-const STICK_R = 90
-const KNOB_R = 36
 const KNOB_TRAVEL = 54
-const ACTION_R = 78
-const DISCARD_R = 58
-// Inside the action key's upper half: the discard key sits right above it
-const HAND_R = 24
-const HAND_GAP = 28
-const HAND_Y = 28
-const VERB_Y = -24
 
-function art(host: Node): Graphics {
-  // A node can hold one renderer, and the host already has its placeholder Sprite
-  host.getComponent(Sprite)!.enabled = false
-  const n = new Node('Art')
-  n.layer = host.layer
-  host.addChild(n)
-  n.addComponent(UITransform)
-  return n.addComponent(Graphics)
-}
-
-function label(host: Node, size: number, y = 0): Label {
-  const n = new Node('Glyph')
-  n.layer = host.layer
-  host.addChild(n)
-  n.setPosition(0, y, 0)
-  const l = n.addComponent(Label)
-  l.fontSize = size
-  l.lineHeight = size + 4
-  l.enableOutline = true
-  l.outlineWidth = 2
-  l.outlineColor = new Color(0, 0, 0, 160)
-  return l
-}
-
-/** Draws the on-screen controls over the scene's placeholder nodes; layout stays with the scene's Widgets */
 export class Controls {
   private knob: Node
-  private actionNode: Node
   private actionText: Label
-  private actionShown = '\u0000'
+  private targetText: Label
+  private gestureText: Label
+  private actionArt: Graphics
+  private actionShown = ''
+  private legacyShown = '\u0000'
   private pressed = false
   private hands: Sprite[] = []
+  private emptyHands: Label[] = []
   private handShown: (SpriteFrame | null)[] = [null, null]
+  private discardTarget: Label
+  private discardRing: Graphics
+  private discardProgress = -1
 
-  constructor(joystick: Node, action: Node, discard: Node) {
-    const g = art(joystick)
-    g.fillColor = new Color(0, 0, 0, 80)
-    g.circle(0, 0, STICK_R)
-    g.fill()
-    g.lineWidth = 4
-    g.strokeColor = new Color(255, 255, 255, 120)
-    g.circle(0, 0, STICK_R - 2)
-    g.stroke()
-    this.knob = new Node('Knob')
-    this.knob.layer = joystick.layer
-    joystick.addChild(this.knob)
-    this.knob.addComponent(UITransform)
-    const k = this.knob.addComponent(Graphics)
-    k.fillColor = new Color(255, 255, 255, 210)
-    k.circle(0, 0, KNOB_R)
-    k.fill()
+  constructor(joystick: Node, private actionNode: Node, discard: Node) {
+    const stick = uiSurface(joystick)
+    stick.fillColor = uiColor(UI_THEME.surface, 185); stick.circle(0, 0, 90); stick.fill()
+    stick.lineWidth = 3; stick.strokeColor = uiColor(UI_THEME.accent, 180); stick.circle(0, 0, 88); stick.stroke()
+    this.knob = uiNode(joystick, 'Knob')
+    const knob = this.knob.addComponent(Graphics)
+    knob.fillColor = uiColor(UI_THEME.accent, 240); knob.circle(0, 0, 36); knob.fill()
+    const movement = uiLabel(joystick, 'MovementMethod', 18, 180)
+    movement.node.setPosition(0, -116, 0); movement.string = '拖动移动'
 
-    const a = art(action)
-    a.fillColor = new Color(255, 255, 255, 60)
-    a.circle(0, 0, ACTION_R)
-    a.fill()
-    a.lineWidth = 5
-    a.strokeColor = new Color(255, 255, 255, 170)
-    a.circle(0, 0, ACTION_R - 3)
-    a.stroke()
-    this.actionNode = action
-    this.actionText = label(action, 30, VERB_Y)
-    // Left and right hand: what the next taps at the grill and bench will put down
-    for (const x of [-HAND_GAP, HAND_GAP]) {
-      const slot = new Node('Hand')
-      slot.layer = action.layer
-      action.addChild(slot)
-      slot.setPosition(x, HAND_Y, 0)
-      slot.addComponent(UITransform)
-      const bg = slot.addComponent(Graphics)
-      bg.fillColor = new Color(0, 0, 0, 110)
-      bg.circle(0, 0, HAND_R)
-      bg.fill()
-      bg.lineWidth = 3
-      bg.strokeColor = new Color(255, 255, 255, 140)
-      bg.circle(0, 0, HAND_R - 1.5)
-      bg.stroke()
-      const icon = new Node('Icon')
-      icon.layer = action.layer
-      slot.addChild(icon)
-      icon.addComponent(UITransform).setContentSize(HAND_R * 1.5, HAND_R * 1.5)
-      const sp = icon.addComponent(Sprite)
-      sp.sizeMode = Sprite.SizeMode.CUSTOM
-      icon.active = false
-      this.hands.push(sp)
+    this.actionArt = uiSurface(actionNode)
+    this.targetText = uiLabel(actionNode, 'ActionTarget', 18, 112)
+    this.targetText.node.setPosition(0, 58, 0); this.targetText.color = uiColor(UI_THEME.muted)
+    for (const x of [-26, 26]) {
+      const hand = uiNode(actionNode, 'Hand', 40, 40); hand.setPosition(x, 26, 0)
+      const bg = hand.addComponent(Graphics)
+      bg.fillColor = uiColor(UI_THEME.raised); bg.circle(0, 0, 20); bg.fill()
+      const empty = uiLabel(hand, 'EmptyHand', 14, 36); empty.string = '空手'; this.emptyHands.push(empty)
+      const sp = uiNode(hand, 'Icon', 32, 32).addComponent(Sprite)
+      sp.sizeMode = Sprite.SizeMode.CUSTOM; sp.node.active = false; this.hands.push(sp)
     }
+    this.actionText = uiLabel(actionNode, 'ActionVerb', 24, 146, 32)
+    this.actionText.node.setPosition(0, -14, 0)
+    this.gestureText = uiLabel(actionNode, 'ActionMethod', 18, 128)
+    this.gestureText.node.setPosition(0, -48, 0)
+    this.setContext(actionPresentation(''))
 
-    const d = art(discard)
-    d.fillColor = new Color(200, 60, 50, 220)
-    d.circle(0, 0, DISCARD_R)
-    d.fill()
-    label(discard, 40, 8).string = '🗑'
-    label(discard, 18, -30).string = '长按丢弃'
+    const d = uiSurface(discard)
+    d.fillColor = uiColor(UI_THEME.dangerSurface, 246); d.circle(0, 0, 58); d.fill()
+    d.lineWidth = 2; d.strokeColor = uiColor(UI_THEME.danger); d.circle(0, 0, 56); d.stroke()
+    const title = uiLabel(discard, 'DiscardVerb', 26, 96); title.string = '丢弃'; title.node.setPosition(0, 16, 0)
+    const method = uiLabel(discard, 'DiscardMethod', 18, 96); method.string = '按住'; method.node.setPosition(0, -14, 0)
+    this.discardTarget = uiLabel(discard, 'DiscardTarget', 14, 90)
+    this.discardTarget.string = '手中物品'; this.discardTarget.node.setPosition(0, -37, 0)
+    this.discardRing = uiNode(discard, 'DiscardProgress').addComponent(Graphics)
   }
-
-  /** Stick direction is screen space, y up; magnitude 0–1 */
   syncStick(dirX: number, dirY: number, magnitude: number): void {
     this.knob.setPosition(dirX * magnitude * KNOB_TRAVEL, dirY * magnitude * KNOB_TRAVEL, 0)
   }
-
-  /** What the action key would do right now; empty = nothing in reach */
   setAction(text: string): void {
-    if (text === this.actionShown) return
-    this.actionShown = text
-    this.actionText.string = text || '·'
-    if (text) pop(this.actionText.node)
+    if (text === this.legacyShown) return
+    this.legacyShown = text; this.setContext(actionPresentation(text))
   }
-
-  /** Icons for the two hands; null = empty hand */
+  setContext(context: ActionPresentation): void {
+    const key = `${context.target}|${context.verb}|${context.gesture}|${context.enabled}`
+    if (key === this.actionShown) return
+    this.actionShown = key
+    this.targetText.string = context.target; this.actionText.string = context.verb
+    this.gestureText.string = GESTURE_LABEL[context.gesture]
+    this.gestureText.color = uiColor(context.enabled ? UI_THEME.accent : UI_THEME.muted)
+    const g = this.actionArt
+    g.clear(); g.fillColor = uiColor(context.enabled ? UI_THEME.surface : UI_THEME.raised, 242)
+    g.circle(0, 0, 78); g.fill(); g.lineWidth = 3
+    g.strokeColor = uiColor(context.enabled ? UI_THEME.accent : UI_THEME.stroke)
+    g.circle(0, 0, 76); g.stroke()
+  }
+  setDiscardTarget(text: string): void { if (this.discardTarget.string !== text) this.discardTarget.string = text }
+  setDiscardProgress(progress: number): void {
+    progress = Math.max(0, Math.min(1, progress))
+    if (progress === this.discardProgress) return
+    this.discardProgress = progress
+    const g = this.discardRing; g.clear()
+    if (!(progress > 0)) return
+    g.lineWidth = 5; g.strokeColor = uiColor(UI_THEME.danger)
+    g.arc(0, 0, 54, Math.PI / 2, Math.PI / 2 + Math.PI * 2 * Math.min(1, progress), false); g.stroke()
+  }
   setHands(left: SpriteFrame | null, right: SpriteFrame | null): void {
     const want = [left, right]
     for (let i = 0; i < 2; i++) {
       if (want[i] === this.handShown[i]) continue
       this.handShown[i] = want[i]!
       const sp = this.hands[i]!
-      sp.spriteFrame = want[i]!
-      sp.node.active = want[i] !== null
+      sp.spriteFrame = want[i]!; sp.node.active = want[i] !== null; this.emptyHands[i]!.node.active = want[i] === null
       if (want[i]) pop(sp.node)
     }
   }
-
   setPressed(down: boolean): void {
     if (down === this.pressed) return
-    this.pressed = down
-    pressTo(this.actionNode, down)
+    this.pressed = down; pressTo(this.actionNode, down)
   }
 }
