@@ -1,0 +1,37 @@
+{
+  "main": {
+    "bytes": 2253532,
+    "files": 45
+  },
+  "subpackages": [
+    {
+      "name": "internal",
+      "root": "subpackages/internal",
+      "bytes": 405194,
+      "files": 20
+    },
+    {
+      "name": "main",
+      "root": "subpackages/main",
+      "bytes": 6075353,
+      "files": 105
+    }
+  ],
+  "totalBytes": 8734079,
+  "mainLimit": 4194304,
+  "safeLimit": 3984384,
+  "totalLimit": 31457280,
+  "withinBudget": true,
+  "withinSafetyMargin": true,
+  "orientation": "landscapeRight",
+  "launchScene": "db://assets/main.scene",
+  "remoteBundles": [],
+  "debug": false,
+  "archive": {
+    "path": "game/build/packages/kitchen-chaos-player-feedback-wechat-20261015.zip",
+    "bytes": 2547229,
+    "files": 170,
+    "sha256": "0c0094f4df32a0892c7ce79b0b3b61fc3c7750fcee0e055c4b0fcd7a9eeb9501",
+    "allFileHashesMatch": true
+  }
+}

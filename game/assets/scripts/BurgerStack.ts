@@ -131,6 +131,7 @@ export function fitStackArt(parent: Node, src: Node, w: number, h: number): Node
     holder.layer = parent.layer
     parent.addChild(holder)
     const art = instantiate(src)
+    art.active = true
     holder.addChild(art)
     art.setRotationFromEuler(0, 0, 0)
     art.setScale(1, 1, 1)

@@ -59,8 +59,9 @@ function targetFor(id: TaskId, customers: number): number {
 }
 
 /** Same day → same tasks. Fries only once the fryer is owned */
-export function rollTasks(day: number, customers: number, fryer: boolean): Task[] {
+export function rollTasks(day: number, customers: number, fryer: boolean, delivery = true): Task[] {
   const pool: TaskId[] = ['good', 'no-wrong', 'no-burnt', 'no-broken', 'delivered', 'income']
+  if (!delivery) pool.splice(pool.indexOf('delivered'), 1)
   if (fryer) pool.push('fries')
   const rng = createRng(Math.imul(day, 0x9e3779b1) ^ 0x7a5c3)
   const out: Task[] = []

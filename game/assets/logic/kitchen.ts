@@ -9,6 +9,8 @@
  * 「冰箱怎么选食材」「丢弃怎么触发」是 UI 决策，这里只提供 API。
  */
 import { inTriggerRange } from './collision'
+import { canUseStation } from './layout'
+import type { AABB } from './collision'
 import { judge } from './order'
 import type { OrderVerdict } from './order'
 import { addCookedPatty, addIngredient, cookLevelAt, createBurger, hasCore } from './recipe'
@@ -53,6 +55,8 @@ export interface GrillSlot {
 // ─────────────────────────── 配置与状态 ───────────────────────────
 
 export interface KitchenConfig {
+  singleItem?: boolean
+  accessBoxes?: readonly AABB[]
   /** 由 StationView 组件从场景节点读出来，尺寸只有一个来源（m2-scene-guide §8） */
   stations: Station[]
   cook: CookWindows
@@ -319,7 +323,7 @@ export function stationInReach(st: KitchenState, pos: Vec2): Station | null {
   const list = st.cfg.stations
   for (let i = 0; i < list.length; i++) {
     const s = list[i]!
-    if (!offers(st, s) || !inTriggerRange(pos, s.pos, s.triggerRange)) continue
+    if (!offers(st, s) || !canUseStation(pos, s, st.cfg.accessBoxes)) continue
     const dx = pos.x - s.pos.x
     const dz = pos.z - s.pos.z
     const d = dx * dx + dz * dz
@@ -440,7 +444,7 @@ export function interact(
   station: Station,
   req: InteractRequest = {},
 ): InteractResult {
-  if (!inTriggerRange(playerPos, station.pos, station.triggerRange)) {
+  if (!canUseStation(playerPos, station, st.cfg.accessBoxes)) {
     return blocked('out-of-range')
   }
 
@@ -484,6 +488,7 @@ function takeFromFridge(st: KitchenState, ing: Ingredient | undefined): Interact
   if (st.carry.kind === 'crate') return restock(st)
   if (ing === undefined) return blocked('unsupported')
   const c = st.carry
+  if (st.cfg.singleItem && c.kind !== 'none') return blocked('hands-full')
   const raw = c.kind === 'patty' && c.cook === 'raw' && !c.plated
   if (c.kind !== 'none' && c.kind !== 'ingredient' && !raw) return blocked('hands-full')
   const i = INGREDIENTS.indexOf(ing)

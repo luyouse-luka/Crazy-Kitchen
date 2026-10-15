@@ -1,3 +1,5 @@
+import { PattyVisual } from './PattyVisual'
+import type { StationKind } from '../logic/types'
 import { Color, gfx, instantiate, Material, Mesh, MeshRenderer, Node, Prefab, utils, Vec3 } from 'cc'
 import { DRINK_SEC, grillCookLevel } from '../logic/kitchen'
 import type { KitchenState } from '../logic/kitchen'
@@ -14,10 +16,6 @@ const CUP: Tint = [.78, .93, .96, .45]
 const JUICE: Tint = [1, .31, .035, .9]
 const OIL: Tint = [.40, .25, .035, .7]
 const WHITE: Tint = [.96, .96, .86, 1]
-const SPONGE: Tint = [.95, .75, .07, 1]
-const RAW: Tint = [.65, .17, .11, 1]
-const COOKED: Tint = [.28, .09, .035, 1]
-const BURNT: Tint = [.045, .032, .025, 1]
 const CAPACITY = 6144
 const SIDES = 10
 const TAU = Math.PI * 2
@@ -37,6 +35,8 @@ export class WorkstationEffects {
   private basin: Vec3
   private grill: Vec3[]
   private pans: Node[] = []
+  private patties: PattyVisual[] = []
+  private scrubTarget!: Vec3
   private drinks: Vec3
   private fryer: Vec3
   private rack: Vec3
@@ -50,6 +50,7 @@ export class WorkstationEffects {
     // Coordinates are in the fitted KayKit model space, not the collision box.
     this.sink = anchor('Prop_Sink_0', 'kitchenSink', 0, 1.57, -.08)
     this.basin = anchor('Prop_Sink_0', 'kitchenSink', 0, 1.27, -.08)
+    this.scrubTarget = new Vec3(this.basin.x, this.basin.y + .055, this.basin.z)
     const stoves = props.getChildByName('Prop_Grill')!.children.filter(n => n.name === 'kitchenStove')
     this.grill = stoves.map((n, i) => Vec3.transformMat4(new Vec3(), new Vec3(i ? .5 : -.5, 1.21, .49), n.worldMatrix))
     if (panModel) this.pans = this.grill.map((p, i) => {
@@ -60,12 +61,17 @@ export class WorkstationEffects {
       pan.setWorldPosition(p.x, p.y + .005, p.z)
       return pan
     })
-    const drink = parent.getChildByName('Station_Drinks')!.worldPosition
-    this.drinks = new Vec3(drink.x, DRINKS_BASE_Y + .582, drink.z + .055)
-    const fryer = props.getChildByName('Prop_Fryer')!.worldPosition
-    this.fryer = new Vec3(fryer.x - .15, 1.035, fryer.z - .035)
-    const rack = props.getChildByName('Prop_WashRack')!.worldPosition
-    this.rack = new Vec3(rack.x, 1.06, rack.z)
+    const drinkHost = parent.getChildByName('Station_Drinks')!, drinkModel = drinkHost.children.find(n => n.name !== 'Body')
+    this.drinks = drinkModel ? Vec3.transformMat4(new Vec3(), new Vec3(0, .582, .055), drinkModel.worldMatrix)
+      : new Vec3(drinkHost.worldPosition.x, DRINKS_BASE_Y + .582, drinkHost.worldPosition.z + .055)
+    this.fryer = Vec3.transformMat4(new Vec3(), new Vec3(-.15, 1.035, -.035), props.getChildByName('Prop_Fryer')!.worldMatrix)
+    this.rack = Vec3.transformMat4(new Vec3(), new Vec3(0, 1.06, 0), props.getChildByName('Prop_WashRack')!.worldMatrix)
+    this.patties = this.grill.map(p => {
+      const patty = PattyVisual.create(parent, .34, .032)
+      patty.node.setWorldPosition(p.x, p.y + .06, p.z)
+      patty.node.active = false
+      return patty
+    })
     this.node = new Node('WorkstationEffects')
     this.node.layer = parent.layer
     parent.addChild(this.node)
@@ -84,7 +90,16 @@ export class WorkstationEffects {
     this.hide()
   }
 
-  hide(): void { this.node.active = false }
+  hide(): void {
+    this.node.active = false
+    for (const patty of this.patties) patty.node.active = false
+  }
+
+  actionTarget(kind: StationKind, slot = 0): Vec3 | null {
+    if (kind === 'sink') return this.scrubTarget
+    const p = kind === 'grill' ? this.grill[slot] : kind === 'drinks' ? this.drinks : kind === 'fryer' ? this.fryer : kind === 'rack' ? this.rack : null
+    return p ? new Vec3(p.x, p.y + (kind === 'grill' ? .065 : 0), p.z) : null
+  }
 
   update(k: KitchenState, scrubbing: boolean, running: boolean, dt: number): void {
     this.used = 0
@@ -93,6 +108,9 @@ export class WorkstationEffects {
     const t = this.clock
     for (let i = 0; i < this.grill.length; i++) {
       const slot = k.grill[i], p = this.grill[i]!
+      const visual = this.patties[i]!
+      visual.node.active = !!slot?.busy
+      if (slot?.busy) visual.setCook(grillCookLevel(k, i))
       if (!slot?.busy && !k.fire) continue
       const burnt = slot?.busy && grillCookLevel(k, i) === 'burnt'
       for (let j = 0; j < (k.fire ? 6 : 4); j++) {
@@ -102,11 +120,8 @@ export class WorkstationEffects {
         this.flame(x, p.y - .02, z, k.fire ? .085 : .045, h, FIRE, t + j)
         this.flame(x, p.y - .015, z, k.fire ? .045 : .024, h * .62, CORE, t + j)
       }
-      if (slot?.busy) {
-        this.disc(p.x, p.y + .06, p.z, .17, .032, burnt ? BURNT : slot.elapsed < k.cfg.cook.rareAt ? RAW : COOKED)
-        for (let j = -1; j <= 1; j++) this.box(p.x + j * .065, p.y + .078, p.z, .017, .003, .22, BURNT)
-      }
-      this.puffs(p, t, burnt || k.fire ? SMOKE : STEAM, k.fire ? .95 : .48, 6)
+
+      if (!burnt || k.fire) this.puffs(p, t, k.fire ? SMOKE : STEAM, k.fire ? .95 : .48, 6)
     }
     if (k.sink.stage !== 'empty') {
       const p = this.basin
@@ -124,7 +139,6 @@ export class WorkstationEffects {
         this.blob(p.x + Math.cos(a) * .16, p.y + .02 + wave * .025, p.z + Math.sin(a) * .16, .023 + wave * .018, .018, .023 + wave * .018, FOAM)
       }
       if (scrubbing) {
-        this.box(p.x + Math.sin(t * 24) * .10, p.y + .044, p.z + Math.cos(t * 12) * .055, .095, .04, .055, SPONGE)
         this.puffs(p, t * 1.5, FOAM, .22, 5)
       }
     }
@@ -236,7 +250,9 @@ export class WorkstationEffects {
   }
 
   destroy(): void {
-    for (const pan of this.pans) pan.destroy()
+    this.hide()
+    for (const pan of this.pans) { pan.active = false; pan.destroy() }
+    for (const patty of this.patties) patty.node.destroy()
     this.node.destroy()
     this.mesh.destroy()
     this.material.destroy()

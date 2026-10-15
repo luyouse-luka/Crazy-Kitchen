@@ -1,4 +1,4 @@
-import { Color, Graphics, Label, Node, UITransform } from 'cc'
+import { Color, Graphics, Label, Node, UITransform, view } from 'cc'
 import type { PanelButton } from './ReviewUi'
 
 const W = 640
@@ -64,7 +64,8 @@ export class ListPanel {
   /** Rows past maxRows are dropped */
   show(title: string, rows: readonly ListRow[]): void {
     const n = Math.min(rows.length, this.names.length)
-    const h = HEAD_H + n * ROW_H + 16
+    const rowH = Math.min(ROW_H, Math.max(58, (view.getVisibleSize().height - 144 - HEAD_H) / Math.max(1, n)))
+    const h = HEAD_H + n * rowH + 16
     this.node.getComponent(UITransform)!.setContentSize(W, h)
     this.title.node.setPosition(0, h / 2 - 32, 0)
     this.title.string = title
@@ -81,7 +82,7 @@ export class ListPanel {
       this.descs[i]!.node.active = vis
       this.btnLabels[i]!.node.active = vis
       if (!vis || !r) continue
-      const y = h / 2 - HEAD_H - i * ROW_H - ROW_H / 2
+      const y = h / 2 - HEAD_H - i * rowH - rowH / 2
       const x = W / 2 - BTN_W / 2 - 24
       this.names[i]!.node.setPosition(-W / 2 + 24, y + 12, 0)
       this.names[i]!.string = r.name

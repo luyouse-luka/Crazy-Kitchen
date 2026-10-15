@@ -1,0 +1,37 @@
+{
+  "main": {
+    "bytes": 2253532,
+    "files": 45
+  },
+  "subpackages": [
+    {
+      "name": "internal",
+      "root": "subpackages/internal",
+      "bytes": 405194,
+      "files": 20
+    },
+    {
+      "name": "main",
+      "root": "subpackages/main",
+      "bytes": 6069927,
+      "files": 105
+    }
+  ],
+  "totalBytes": 8728653,
+  "mainLimit": 4194304,
+  "safeLimit": 3984384,
+  "totalLimit": 31457280,
+  "withinBudget": true,
+  "withinSafetyMargin": true,
+  "orientation": "landscapeRight",
+  "launchScene": "db://assets/main.scene",
+  "remoteBundles": [],
+  "debug": false,
+  "archive": {
+    "path": "game/build/packages/kitchen-chaos-loose-items-wechat-20261015.zip",
+    "bytes": 2545421,
+    "files": 170,
+    "sha256": "ba84ab5c7db555ec26429c685a027f88d939e08c145ed18e8ee1f4e1c5491cc6",
+    "allFileHashesMatch": true
+  }
+}

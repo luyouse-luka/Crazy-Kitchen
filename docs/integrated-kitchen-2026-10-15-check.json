@@ -1,0 +1,133 @@
+{
+  "editor": true,
+  "blockedSave": true,
+  "storageFailure": true,
+  "undo": true,
+  "cancel": true,
+  "saveReload": true,
+  "frozen": true,
+  "multiTouchCancel": true,
+  "simulatedCapsule": true,
+  "served": 1,
+  "wrong": 0,
+  "wash": true,
+  "restock": true,
+  "lifecycle": {
+    "base": 148,
+    "after": 148,
+    "pans": 2,
+    "effects": 1,
+    "shadows": 1
+  },
+  "viewports": [
+    {
+      "width": 1024,
+      "height": 768,
+      "minButton": 70.4
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "minButton": 88
+    },
+    {
+      "width": 1560,
+      "height": 720,
+      "minButton": 88
+    },
+    {
+      "width": 780,
+      "height": 360,
+      "minButton": 44
+    }
+  ],
+  "moves": [
+    {
+      "x": -3.4,
+      "z": 2.1,
+      "done": true
+    },
+    {
+      "x": -3.4,
+      "z": 2.1,
+      "done": true
+    },
+    {
+      "x": 4.5,
+      "z": -1.55,
+      "done": true
+    },
+    {
+      "x": 0.5,
+      "z": -1.55,
+      "done": true
+    },
+    {
+      "x": -1.5,
+      "z": -1.55,
+      "done": true
+    },
+    {
+      "x": 4.5,
+      "z": -1.55,
+      "done": true
+    },
+    {
+      "x": -1.5,
+      "z": -1.55,
+      "done": true
+    },
+    {
+      "x": -1,
+      "z": 2.1,
+      "done": true
+    },
+    {
+      "x": 6.4,
+      "z": 0.5,
+      "done": true
+    },
+    {
+      "x": 6.4,
+      "z": 2,
+      "done": true
+    },
+    {
+      "x": -2.5,
+      "z": 1.5,
+      "done": true
+    },
+    {
+      "x": -2.5,
+      "z": 0,
+      "done": true
+    },
+    {
+      "x": 6.25,
+      "z": -1.3,
+      "done": true
+    },
+    {
+      "x": 6.25,
+      "z": -4.5,
+      "done": true
+    },
+    {
+      "x": 6.25,
+      "z": -1.3,
+      "done": true
+    },
+    {
+      "x": 4.5,
+      "z": -1.55,
+      "done": true
+    },
+    {
+      "x": -3.4,
+      "z": 2.1,
+      "done": true
+    }
+  ],
+  "errors": [],
+  "failed": []
+}

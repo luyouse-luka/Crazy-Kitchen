@@ -1,4 +1,15 @@
-import type { InteractKind } from '../logic/kitchen'
+import type { Carry, InteractKind } from '../logic/kitchen'
+
+export function approachFacingYaw(current: number, target: number, dt: number): number {
+  const delta = Math.atan2(Math.sin(target - current), Math.cos(target - current))
+  const h = Math.min(.1, Math.max(0, dt))
+  const limit = 10 * h
+  return current + Math.max(-limit, Math.min(limit, delta * (1 - Math.exp(-18 * h))))
+}
+
+export function oneHandedCarry(c: Readonly<Carry>): boolean {
+  return (c.kind === 'ingredient' && c.second === null) || (c.kind === 'patty' && !c.plated) || c.kind === 'drink'
+}
 
 export interface Point3 { x: number; y: number; z: number }
 export interface ArmSolution { elbow: Point3; hand: Point3 }

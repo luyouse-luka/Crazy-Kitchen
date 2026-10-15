@@ -21,6 +21,11 @@ function setup(saved?: string) {
 }
 
 describe('first-order guide follows the real kitchen', () => {
+  it('explains recovery of nearby floor food instead of fetching duplicate food', () => {
+    const s = setup(); s.accept(); Object.assign(s.frame, { groundItem: '面包 + 生肉饼' })
+    const h = s.guide.observe(s.frame)
+    expect(h.control).toBe('ground'); expect(h.detail).toContain('拾取'); expect(h.detail).toContain('清理')
+  })
   it('waits for arrival and an accepted order, regardless of elapsed time', () => {
     const s = setup()
     expect(s.guide.observe(s.frame).step).toBe('move')
@@ -73,9 +78,9 @@ describe('first-order guide follows the real kitchen', () => {
   it('warns about burnt or wrong doneness instead of moving on to assembly', () => {
     const s = setup(); s.accept(); s.act('fridge', 'patty'); s.act('grill')
     stepKitchen(s.kitchen, DEFAULT_COOK.burntAt)
-    expect(s.guide.observe(s.frame).detail).toContain('丢弃')
+    expect(s.guide.observe(s.frame).detail).toContain('清理')
     s.act('grill')
-    expect(s.guide.observe(s.frame).gesture).toBe('hold')
+    expect(s.guide.observe(s.frame).gesture).toBe('tap')
   })
 
   it('recovers when the tracked diner leaves and ignores stale or wrong delivery events', () => {
@@ -122,7 +127,7 @@ describe('first-order guide follows the real kitchen', () => {
     expect(s.guide.observe(s.frame).step).toBe('ingredients')
     expect(s.guide.observe(s.frame).detail).toContain('肉饼')
     s.kitchen.burger.double = true; s.kitchen.burger.cook2 = 'medium'; s.kitchen.burger.ingredients.push('onion')
-    expect(s.guide.observe(s.frame).detail).toContain('丢弃')
+    expect(s.guide.observe(s.frame).detail).toContain('清理')
   })
 
   it('routes to the correct real plate recovery stage and can deliver sides before the burger', () => {
@@ -140,11 +145,11 @@ describe('first-order guide follows the real kitchen', () => {
   it('recovers when held ingredients duplicate the bench or violate the order', () => {
     const s = setup(); s.accept(); s.act('fridge', 'bun'); s.act('assembly'); s.act('fridge', 'bun')
     expect(s.act('assembly').reason).toBe('duplicate-ingredient')
-    expect(s.guide.observe(s.frame).gesture).toBe('hold')
+    expect(s.guide.observe(s.frame).gesture).toBe('tap')
     expect(s.guide.observe(s.frame).control).toBe('discard')
     discard(s.kitchen); s.act('fridge', 'onion')
     expect(s.guide.observe(s.frame).detail).toContain('忌口')
-    expect(s.guide.observe(s.frame).gesture).toBe('hold')
+    expect(s.guide.observe(s.frame).gesture).toBe('tap')
   })
 
   it('does not tell the player to place a third cooked patty on a full burger', () => {
@@ -152,7 +157,7 @@ describe('first-order guide follows the real kitchen', () => {
     for (let i = 0; i < 2; i++) { s.act('fridge', 'patty'); s.act('grill'); stepKitchen(s.kitchen, DEFAULT_COOK.mediumAt); s.act('grill'); s.act('assembly') }
     s.act('fridge', 'patty'); s.act('grill'); stepKitchen(s.kitchen, DEFAULT_COOK.mediumAt); s.act('grill')
     expect(s.act('assembly').reason).toBe('duplicate-ingredient')
-    expect(s.guide.observe(s.frame).gesture).toBe('hold')
+    expect(s.guide.observe(s.frame).gesture).toBe('tap')
   })
 
   it('frees hands before side machines and avoids trying to put meat on a full grill', () => {
@@ -160,10 +165,10 @@ describe('first-order guide follows the real kitchen', () => {
     for (let i = 0; i < 2; i++) { s.act('fridge', 'patty'); s.act('grill') }
     s.act('fridge', 'patty')
     expect(s.act('grill').reason).toBe('grill-full')
-    expect(s.guide.observe(s.frame).gesture).toBe('hold')
+    expect(s.guide.observe(s.frame).gesture).toBe('tap')
     s.customer.burgerVerdict = { ok: true, missing: [], forbidden: [], cookOk: true }; s.customer.friesDue = true
     expect(s.guide.observe(s.frame).detail).toContain('空出双手')
-    expect(s.guide.observe(s.frame).gesture).toBe('hold')
+    expect(s.guide.observe(s.frame).gesture).toBe('tap')
   })
 })
 

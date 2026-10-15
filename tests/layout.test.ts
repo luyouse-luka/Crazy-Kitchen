@@ -7,9 +7,9 @@ describe('layout data and geometry', () => {
   it('keeps the approved defaults and stable gameplay identities', () => {
     const d = defaultLayout(), g = buildLayoutGeometry(d)
     expect(d.version).toBe(1)
-    expect(d.stations.fridge).toEqual({ x: -3.5, z: 0, quarterTurn: 0 })
-    expect(d.stations.shelf).toEqual({ x: -3.5, z: 1, quarterTurn: 0 })
-    expect(d.stations.assembly).toEqual({ x: -3.5, z: -1.5, quarterTurn: 0 })
+    expect(d.stations.fridge).toEqual({ x: 3.5, z: -2.5, quarterTurn: 0 })
+    expect(d.stations.shelf).toEqual({ x: -3.5, z: 0, quarterTurn: 0 })
+    expect(d.stations.assembly).toEqual({ x: -1.5, z: -2.5, quarterTurn: 0 })
     expect(d.stations.extinguisher.z).toBe(3.25)
     expect(g.stations.map(s => s.id)).toEqual([
       'Station_Fridge', 'Station_Grill', 'Station_Assembly', 'Block_Plate', 'Station_Sink',
@@ -40,7 +40,7 @@ describe('layout data and geometry', () => {
     parsed.stations.fridge.x = 2
     const g = buildLayoutGeometry(b)
     g.fixtures.fridge.center.x = 7
-    expect(b.stations.fridge.x).toBe(-3.5)
+    expect(b.stations.fridge.x).toBe(3.5)
     expect(defaultLayout()).toEqual(b)
     expect(parseLayout(JSON.parse(JSON.stringify(b)))).toEqual(b)
   })
@@ -93,7 +93,7 @@ describe('layout data and geometry', () => {
   it('rotates the drinks trigger offset while keeping the whole base footprint', () => {
     const d = defaultLayout()
     const initial = buildLayoutGeometry(d).stations.find(s => s.kind === 'drinks')!
-    expect(initial.pos).toEqual({ x: 3.5, z: -2.7 })
+    expect(initial.pos).toEqual({ x: 2, z: -2.7 })
     expect(initial.triggerRange).toBe(1.1)
     d.stations.drinks = { x: 0, z: 0, quarterTurn: 1 }
     const g = buildLayoutGeometry(d), s = g.stations.find(s => s.kind === 'drinks')!

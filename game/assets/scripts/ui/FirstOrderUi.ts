@@ -65,7 +65,7 @@ export class FirstOrderUi {
     const zoneKey = `${this.visible}|${full}|${card.x},${card.y},${card.w},${card.h}`
     if (zoneKey !== this.zoneKey) { this.zoneKey = zoneKey; this.zoneRevision++ }
     this.node.active = this.visible
-    this.marker.active = this.visible && this.guide.status === 'active' && this.hint?.control !== 'discard'
+    this.marker.active = this.visible && this.guide.status === 'active' && this.hint?.control !== 'discard' && this.hint?.control !== 'ground'
     if (!this.visible) return
     const hint = this.hint
     const key = `${card.x},${card.y},${card.w},${card.h}|${full}|${this.guide.status}|${hint?.title}|${hint?.detail}`
@@ -84,7 +84,7 @@ export class FirstOrderUi {
     const textW = card.w - 152
     for (const l of [this.progress, this.detail]) l.node.getComponent(UITransform)!.width = textW
     this.progress.node.setPosition(-66, 50, 0)
-    this.progress.string = `首次制作 ${hint.index}/6 · ${hint.control === 'discard' ? '丢弃键' : STATION_NAME[hint.target]} · ${GESTURE_LABEL[hint.gesture]}`
+    this.progress.string = `首次制作 ${hint.index}/6 · ${hint.control === 'discard' ? '辅助键' : hint.control === 'ground' ? '地面物品' : STATION_NAME[hint.target]} · ${GESTURE_LABEL[hint.gesture]}`
     this.detail.node.setPosition(-66, -34, 0); this.detail.string = hint.detail
     const skip = this.skipArt.node
     skip.setPosition(layout.skip.x + layout.skip.w / 2 - (card.x + card.w / 2), 0, 0)

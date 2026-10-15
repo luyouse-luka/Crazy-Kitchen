@@ -1,5 +1,7 @@
 # 自定义厨房布局 Implementation Plan
 
+2026-10-15 整合执行：Task 1 已从独立工作树提交 88b51c3 接入；继续 Task 2–7。用户新增默认要求覆盖本文旧坐标示例，实际规格统一取 scene-layout.ts；设计稿顶部已列出本轮备餐线坐标。九项反馈分批范围见 ../../feedback-phases-2026-10-15.md。执行进度与验证以最新 ROADMAP 和整合验收文档为准。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 在休息日提供可保存、可撤销的工位移动与旋转，同时保证实际操作、碰撞、模型、特效和顾客服务位置同步。

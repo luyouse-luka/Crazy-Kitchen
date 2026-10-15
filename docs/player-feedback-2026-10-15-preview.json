@@ -1,0 +1,44 @@
+[
+  {
+    "width": 587,
+    "height": 652,
+    "scrollWidth": 587,
+    "scrollHeight": 652,
+    "canvas": {
+      "x": 0,
+      "y": 0,
+      "w": 587,
+      "h": 652
+    },
+    "headerVisible": false,
+    "profilerVisible": false
+  },
+  {
+    "width": 1280,
+    "height": 720,
+    "scrollWidth": 1280,
+    "scrollHeight": 720,
+    "canvas": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 720
+    },
+    "headerVisible": false,
+    "profilerVisible": false
+  },
+  {
+    "width": 780,
+    "height": 360,
+    "scrollWidth": 780,
+    "scrollHeight": 360,
+    "canvas": {
+      "x": 0,
+      "y": 0,
+      "w": 780,
+      "h": 360
+    },
+    "headerVisible": false,
+    "profilerVisible": false
+  }
+]

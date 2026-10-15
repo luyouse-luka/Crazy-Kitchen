@@ -99,7 +99,22 @@ import type { Review, ReviewKind, ReviewLog } from '../logic/reviews'
 import { CARD_LINES } from './cardLines'
 import { ComputerPanel, NameTab, Toast, TOAST_H, TOAST_W } from './ReviewUi'
 import { Controls } from './Controls'
+import { LayoutRuntime } from './LayoutRuntime'
+import { LayoutEditor } from './LayoutEditor'
+import { buildLayoutGeometry, safeLayoutPosition, validateLayout, warehouseGate } from '../logic/layout'
+import { LAYOUT_FIXTURES } from '../logic/scene-layout'
+import type { LayoutConfig } from '../logic/scene-layout'
+import { persistProgress, progressWithLayout } from '../logic/progress'
+import { earlyShiftPolicyForDay } from '../logic/difficulty'
+import { FirstOrderUi } from './ui/FirstOrderUi'
+import { InventorySkin, OrderCardView } from './ui/KitchenPanels'
+import { actionPresentation } from './ui/UiModel'
+import { ChefActions } from './ChefActions'
+import { approachFacingYaw } from './ChefMotion'
 import { BurgerStack } from './BurgerStack'
+import { LooseItemsView } from './LooseItemsView'
+import { canSetLooseItem, clearLooseItem, createLooseItems, nearestLooseItem, pickLooseItem, putLooseItem, resetLooseItems, stepLooseItems } from '../logic/loose-items'
+import type { LooseItem, LooseResult, LooseWorld } from '../logic/loose-items'
 import type { OfferRow, ReviewLine } from './ReviewUi'
 import {
   acceptDelivery,
@@ -112,7 +127,7 @@ import {
   stepDesk,
 } from '../logic/delivery'
 import type { Delivery, DeliveryDesk, DeskEvents } from '../logic/delivery'
-import { createMovement, stepMovement, teleport } from '../logic/movement'
+import { createMovement, FLOOR_BOUNDS, stepMovement, teleport } from '../logic/movement'
 import { RUNTIME_SPOTS, DRINKS_BASE_Y } from '../logic/scene-layout'
 import type { MovementState } from '../logic/movement'
 import { DEFAULT_COOK } from '../logic/recipe'
@@ -541,9 +556,24 @@ export class StationView extends Component {
   private ordersY = 0
   /** 出餐口的 x；顾客取餐站在柜台外 queueZ 那条线上 */
   private pickupX = 0
+  private layoutRuntime: LayoutRuntime | null = null
+  private layoutEditor: LayoutEditor | null = null
+  private looseItems = createLooseItems()
+  private looseView: LooseItemsView | null = null
+  private looseWorld: LooseWorld = { bounds: FLOOR_BOUNDS, blockers: [], reserved: [warehouseGate()] }
+  private groundPress = false
+  private editorHud: Array<{ node: Node; active: boolean }> = []
+  private firstOrderUi: FirstOrderUi | null = null
+  private inventorySkin: InventorySkin | null = null
+  private modernOrders: OrderCardView[] = []
+  private uiRun = 0
+  private uiPoll = 0
   private playerAnim: SkeletalAnimation | null = null
+  private chefActions: ChefActions | null = null
+  private chefFrame = { running: false, moving: false, carrying: false, scrubbing: false, holding: false, sinkInReach: false }
   private playerModel: Node | null = null
   private playerWalking = false
+  private renderedYaw = 0
   private carryBubble!: Bubble
   private grillRings: Ring[] = []
   private benchBubble!: Bubble
@@ -773,6 +803,9 @@ export class StationView extends Component {
       this.drinksStation = this.toStation(this.drinksNode, 'drinks')
       stations.push(this.drinksStation)
     }
+    this.progress = parseProgress(StationView.load())
+    try { this.layoutRuntime = new LayoutRuntime(kitchenRoot); this.layoutRuntime.apply(this.progress.layout) }
+    catch (e) { console.error('[Layout] initialization failed', e); this.enabled = false; return }
     this.platePos = shelf.pos
     this.rackPos = rack.pos
     this.grillStation = stations.find((s) => s.kind === 'grill') ?? null
@@ -843,6 +876,7 @@ export class StationView extends Component {
     this.pickupX = this.queueX
 
     this.kitchen = createKitchen({
+      singleItem: true,
       stations,
       cook: { ...DEFAULT_COOK },
       grillSlots: 2,
@@ -850,7 +884,10 @@ export class StationView extends Component {
       fireSec: FIRE_SEC,
       doublePatty: true,
     })
-    this.progress = parseProgress(StationView.load())
+    const initialGeometry = buildLayoutGeometry(this.progress.layout)
+    this.kitchen.cfg.stations = initialGeometry.stations
+    this.kitchen.cfg.accessBoxes = initialGeometry.blockers
+    this.cacheLayoutStations()
     this.applyUpgrades()
     // Capacities come from the save, which is read only after the kitchen exists
     resetKitchen(this.kitchen)
@@ -872,15 +909,19 @@ export class StationView extends Component {
     this.shift = createShift(this.shiftConfig(this.day, seed))
     this.resultNode.active = false
     this.buildResultButtons()
-    this.menu = new ListPanel(this.node, DECOR_SLOTS.length + 3)
+    this.menu = new ListPanel(this.node, DECOR_SLOTS.length + 4)
     this.buildDecor(kitchenRoot)
     this.fryerServing = kitchenRoot.getChildByPath('Props/Prop_Fryer/fries')
     this.workstationEffects = new WorkstationEffects(kitchenRoot, this.grillPanModel)
     const blockers = this.need(NODES.blockers)
     this.cutaway = new WallCutaway(blockers ? [kitchenRoot, blockers] : [kitchenRoot])
     this.movement = createMovement({ stations, boxes: blockers ? StationView.readBoxes(blockers) : [], x: player.worldPosition.x, z: player.worldPosition.z })
+    this.movement.cfg.boxes = initialGeometry.blockers
     this.baseSpeed = this.movement.cfg.speed
     this.spawn = { x: this.movement.pos.x, z: this.movement.pos.z }
+    this.firstOrderUi = new FirstOrderUi(this.node, sys.localStorage)
+    this.inventorySkin = new InventorySkin(this.panelNode, this.slotNodes, this.panelTitle)
+    for (let i = 0; i < ORDER_CARDS; i++) this.modernOrders.push(new OrderCardView(this.node, 280))
     this.router = new TouchRouter(view.getVisibleSize().width / 2, undefined, DEFAULT_ACTION)
     this.syncScreen()
     this.openDay()
@@ -906,8 +947,14 @@ export class StationView extends Component {
   }
 
   override onDestroy(): void {
+    this.layoutEditor?.destroy()
+    this.layoutRuntime?.destroy()
+    this.firstOrderUi?.destroy()
+    for (const c of this.modernOrders) c.destroy()
     this.cutaway?.destroy()
     this.workstationEffects?.destroy()
+    this.chefActions?.destroy()
+    this.looseView?.destroy()
     input.off(Input.EventType.TOUCH_START, this.onTouchStart, this)
     input.off(Input.EventType.TOUCH_MOVE, this.onTouchMove, this)
     input.off(Input.EventType.TOUCH_END, this.onTouchEnd, this)
@@ -980,13 +1027,15 @@ export class StationView extends Component {
 
   private shiftConfig(day: number, seed: number): ShiftConfig {
     const d = dayFlow(day, this.arrivalSec)
+    const early = earlyShiftPolicyForDay(day)
     return {
       seed,
-      customers: this.customersPerShift,
+      customers: early?.customers ?? this.customersPerShift,
       flow: {
         ...d.flow,
-        intervalSec: d.flow.intervalSec * flowFactor(this.progress),
-        intervalJitter: this.arrivalJitter,
+        intervalSec: (early?.intervalSec ?? d.flow.intervalSec) * flowFactor(this.progress),
+        intervalJitter: early?.intervalJitter ?? this.arrivalJitter,
+        maxConcurrent: early?.maxConcurrent ?? d.flow.maxConcurrent,
         patienceSec: d.flow.patienceSec * this.patienceScale,
         lateLeaveSec: this.lateLeaveSec * this.patienceScale,
         // 走进来要多久由场景几何算，不是拍的：接单的时机要和小人真走到柜台对上
@@ -997,9 +1046,10 @@ export class StationView extends Component {
       },
       orders: {
         ...d.orders,
+        bannedChance: early?.bannedChance ?? d.orders.bannedChance,
         friesChance: owns(this.progress, 'fryer') ? FRIES_CHANCE : 0,
         drinkChance: owns(this.progress, 'drinks') ? DRINK_CHANCE : 0,
-        doubleChance: day >= DOUBLE_FROM_DAY ? DOUBLE_CHANCE : 0,
+        doubleChance: early?.doubleChance ?? (day >= DOUBLE_FROM_DAY ? DOUBLE_CHANCE : 0),
       },
     }
   }
@@ -1078,12 +1128,126 @@ export class StationView extends Component {
     }
   }
 
-  private static save(p: Progress): void {
-    try {
-      sys.localStorage.setItem(SAVE_KEY, serializeProgress(p))
-    } catch (e) {
-      console.warn('[StationView] 存档写不进去', e)
+  private deliveryEnabled(): boolean { return earlyShiftPolicyForDay(this.day)?.delivery ?? true }
+
+  private cacheLayoutStations(): void {
+    const stations = this.kitchen.cfg.stations
+    this.grillStation = stations.find(s => s.kind === 'grill') ?? null
+    this.benchStation = stations.find(s => s.kind === 'assembly') ?? null
+    this.sinkStation = stations.find(s => s.kind === 'sink') ?? null
+    this.fryerStation = stations.find(s => s.kind === 'fryer') ?? null
+    this.drinksStation = stations.find(s => s.kind === 'drinks') ?? null
+    this.registerStation = stations.find(s => s.kind === 'register') ?? null
+    this.deliveryStation = stations.find(s => s.kind === 'delivery') ?? null
+    this.platePos = stations.find(s => s.kind === 'shelf')!.pos
+    this.rackPos = stations.find(s => s.kind === 'rack')!.pos
+    this.queueX = (this.registerStation?.pos.x ?? -3.5) + 1
+    this.pickupX = (stations.find(s => s.kind === 'serve')?.pos.x ?? -1) - 1.5
+  }
+
+  private applyLayout(layout: LayoutConfig): void {
+    this.workstationEffects?.hide()
+    this.workstationEffects?.destroy()
+    this.workstationEffects = null
+    const g = this.layoutRuntime!.apply(layout)
+    this.kitchen.cfg.stations = g.stations; this.kitchen.cfg.accessBoxes = g.blockers
+    this.movement.cfg.boxes = g.blockers
+    this.cacheLayoutStations()
+    const root = this.playerNode.scene.getChildByName('Kitchen')!
+    this.workstationEffects = new WorkstationEffects(root, this.grillPanModel)
+    if (this.shift.cfg.flow.takeOrder) this.shift.cfg.flow.takeOrder.walkInSec = Math.hypot(this.queueX - this.doorX, this.queueZ - this.doorZ) / CUSTOMER_SPEED
+  }
+
+  private clearLayoutInput(): void {
+    this.groundPress = false
+    this.router.cancelAll(); this.mouseDown = false; this.spaceDown = false; this.keyStickDown = false
+    this.keys.w = this.keys.a = this.keys.s = this.keys.d = false
+    this.scrubbing = false; this.chefActions?.reset(); this.zonesKey = ''
+  }
+
+  private resizeLayoutEditor(): void {
+    this.layoutEditor?.resize({ width: this.uiHalfW * 2, height: this.uiHalfH * 2,
+      inset: { ...this.inset, right: Math.max(this.inset.right, this.capsuleRight()) } })
+  }
+
+  private beginLayoutEditor(): void {
+    if (this.phase !== 'rest' || this.resultOpen || this.layoutEditor || !this.layoutRuntime) return
+    if (this.looseItems.items.length) {
+      this.closeMenu(); this.floaters.spawnAt(0, 60, '先收起或清理地面物品，再调整工位', HINT_COLOR, 30); return
     }
+    this.closeMenu(); this.clearLayoutInput(); this.workstationEffects?.hide()
+    this.editorHud = this.node.children.filter(n => n.active && !n.getComponent(Camera) && n.name !== 'UI_LayoutEditor').map(node => ({ node, active: node.active }))
+    for (const h of this.editorHud) h.node.active = false
+    this.layoutEditor = new LayoutEditor(this.node, this.cameraComp, this.progress.layout, this.progress.owned, {
+      preview: layout => { this.layoutRuntime!.apply(layout) },
+      save: layout => this.saveLayout(layout), cancel: () => this.exitLayoutEditor(true),
+    })
+    this.resizeLayoutEditor()
+  }
+
+  private saveLayout(layout: LayoutConfig): boolean {
+    if (!this.layoutEditor || !validateLayout(layout, this.progress.owned).ok) return false
+    const next = progressWithLayout(this.progress, layout)
+    if (!StationView.save(next)) return false
+    this.progress = next; this.applyLayout(next.layout); this.exitLayoutEditor(false); return true
+  }
+
+  private exitLayoutEditor(cancelled: boolean): void {
+    if (!this.layoutEditor) return
+    if (cancelled) this.applyLayout(this.progress.layout)
+    this.layoutEditor.destroy(); this.layoutEditor = null
+    for (const h of this.editorHud) if (h.node.isValid) h.node.active = h.active
+    this.editorHud = []; this.clearLayoutInput()
+    if (!safeLayoutPosition(this.progress.layout, this.movement.pos)) teleport(this.movement, this.spawn.x, this.spawn.z)
+    this.uiPoll = 0; this.syncNodes(); this.openMenu('rest')
+  }
+
+  private syncFirstOrderUi(): void {
+    const ui = this.firstOrderUi
+    if (!ui || this.layoutEditor) return
+    this.syncActionContext()
+    const carry = this.kitchen.carry
+    this.controls?.setLooseMode(canSetLooseItem(this.kitchen))
+    this.controls?.setDiscardTarget(carry.kind === 'ingredient' || carry.kind === 'crate' ? INGREDIENT_LABEL[carry.ingredient] : carry.kind === 'plate' ? '汉堡' : carry.kind === 'patty' ? '肉饼' : carry.kind === 'none' ? '空手' : '手中物品')
+    const discard = this.router.zone('discard')
+    this.controls?.setDiscardProgress(discard?.down ? discard.heldSeconds / DEFAULT_ACTION.holdSeconds : 0)
+    this.uiPoll -= game.deltaTime
+    if (this.uiPoll > 0) return
+    this.uiPoll = .15
+    const modal = this.panelOpen || this.reviewsOpen || this.resultOpen || !!this.menuKind
+    const ground = this.groundItem()
+    ui.sync({ kitchen: this.kitchen, customers: this.shift.flow.customers, near: stationInReach(this.kitchen, this.movement.pos)?.kind ?? null, phase: this.phase, run: this.uiRun, groundItem: ground ? this.groundName(ground) : null })
+    const obstacles = this.kitchen.cfg.stations.map(s => {
+      const p = new Vec3(); this.cameraComp.convertToUINode(new Vec3(s.pos.x, .7, s.pos.z), this.node, p)
+      return { x: p.x - 38, y: p.y - 28, w: 76, h: 56 }
+    })
+    for (const card of this.modernOrders) if (card.node.active) {
+      const p = card.node.position, k = card.node.scale.x
+      obstacles.push({ x: p.x - 140 * k, y: p.y - 80 * k, w: 280 * k, h: 160 * k })
+    }
+    ui.layout(this.uiHalfW * 2, this.uiHalfH * 2, modal, this.inset, obstacles)
+    const target = this.kitchen.cfg.stations.find(s => s.kind === ui.currentHint?.target)
+    if (target) {
+      const p = new Vec3(); this.cameraComp.convertToUINode(new Vec3(target.pos.x, 1, target.pos.z), this.node, p)
+      ui.pointAt(p.x, p.y, this.uiHalfW * 2, this.uiHalfH * 2)
+    }
+    if (this.panelOpen) { this.inventorySkin?.layout(this.designH, this.inset.bottom); this.inventorySkin?.sync(this.kitchen, this.panelStation?.kind === 'storeroom') }
+    this.ordersRoot.active = false
+    const active = this.shift.flow.customers.filter(c => c.active && c.ordered)
+    const available = this.uiHalfW * 2 - Math.max(20, this.inset.left) - Math.max(20, this.inset.right, this.capsuleRight()) - TASK_CARD_W - 24
+    const cols = Math.max(1, Math.min(3, active.length)), scale = Math.min(1, available / (cols * 292))
+    for (let i = 0; i < this.modernOrders.length; i++) {
+      const card = this.modernOrders[i]!, c = active[i] ?? null
+      card.sync(c, c ? this.nameOf(c.id) : undefined)
+      card.node.active = card.node.active && !modal
+      card.node.setScale(scale, scale, 1)
+      card.node.setPosition(-this.uiHalfW + Math.max(20, this.inset.left) + (140 + (i % cols) * 292) * scale,
+        this.uiHalfH - Math.max(20, this.inset.top) - (80 + Math.floor(i / cols) * 172) * scale, 0)
+    }
+  }
+
+  private static save(p: Progress): boolean {
+    return persistProgress(p, (key, value) => sys.localStorage.setItem(key, value))
   }
 
   /** Same cube-is-metres rule as readStations, for things that only block the way. */
@@ -1185,25 +1349,32 @@ export class StationView extends Component {
   }
 
   private onTouchStart(e: EventTouch): void {
+    if (this.layoutEditor) { this.route(e, (id, x, y) => this.layoutEditor?.down(id, x, y)); return }
     this.sawTouch = true
     this.firstInput('touch')
     this.route(e, (id, x, y) => this.router.onDown(id, x, y))
   }
 
   private onTouchMove(e: EventTouch): void {
+    if (this.layoutEditor) { this.route(e, (id, x, y) => this.layoutEditor?.move(id, x, y)); return }
     this.route(e, (id, x, y) => this.router.onMove(id, x, y))
   }
 
   private onTouchEnd(e: EventTouch): void {
+    if (this.layoutEditor) { this.route(e, id => this.layoutEditor?.up(id)); return }
     this.route(e, (id) => this.router.onUp(id))
   }
 
   private onTouchCancel(): void {
+    this.groundPress = false
+    this.layoutEditor?.cancelPointer()
+    this.chefActions?.reset()
     this.mouseDown = false
     this.router.cancelAll()
   }
 
   private onMouseDown(e: EventMouse): void {
+    if (this.layoutEditor) { e.getLocation(this.touchPoint); this.layoutEditor.down(MOUSE_ID, this.touchPoint.x, this.touchPoint.y); this.mouseDown = true; return }
     if (this.sawTouch) return
     this.firstInput('mouse')
     this.mouseDown = true
@@ -1212,12 +1383,14 @@ export class StationView extends Component {
   }
 
   private onMouseMove(e: EventMouse): void {
+    if (this.layoutEditor) { e.getLocation(this.touchPoint); this.layoutEditor.move(MOUSE_ID, this.touchPoint.x, this.touchPoint.y); return }
     if (this.sawTouch || !this.mouseDown) return
     e.getLocation(this.touchPoint)
     this.router.onMove(MOUSE_ID, this.touchPoint.x, this.touchPoint.y)
   }
 
   private onMouseUp(): void {
+    if (this.layoutEditor) { this.mouseDown = false; this.layoutEditor.up(MOUSE_ID); return }
     if (this.sawTouch || !this.mouseDown) return
     this.mouseDown = false
     this.router.onUp(MOUSE_ID)
@@ -1235,6 +1408,7 @@ export class StationView extends Component {
   }
 
   private onKeyDown(e: EventKeyboard): void {
+    if (this.layoutEditor) return
     if (e.keyCode === KeyCode.SPACE) {
       if (this.spaceDown) return
       this.spaceDown = true
@@ -1250,6 +1424,7 @@ export class StationView extends Component {
   }
 
   private onKeyUp(e: EventKeyboard): void {
+    if (this.layoutEditor) return
     if (e.keyCode === KeyCode.SPACE) {
       if (!this.spaceDown) return
       this.spaceDown = false
@@ -1307,6 +1482,8 @@ export class StationView extends Component {
       this.syncScreen()
     }
 
+    if (this.layoutEditor) return
+
     // Read the pulses BEFORE tick(), never after: touch events land between frames and
     // tick() clears last frame's pulses on the way in, so reading after it never sees a
     // tap. holdStarted still works (tick produces it), so the symptom is "walks fine,
@@ -1327,13 +1504,15 @@ export class StationView extends Component {
         stepKitchen(this.kitchen, dt)
         stepShift(this.shift, dt, this.onWalkOut)
         stepVent(this.venting, dt, this.onRantDone)
-        this.desk.open = !this.shift.over && this.shift.flow.arrived < this.customersPerShift
+        this.desk.open = this.deliveryEnabled() && !this.shift.over && this.shift.flow.arrived < this.shift.cfg.customers
         stepDesk(this.desk, dt, this.deskEvents)
       }
       // World keeps running while the panel is open; the stick is frozen because every
       // touch lands in a capture zone, so this is a no-op then.
       this.movement.cfg.speed = this.baseSpeed * carrySpeedFactor(this.kitchen) * ventSpeedFactor(this.venting)
       stepMovement(this.movement, this.router.stick, this.cameraYaw, dt)
+      this.looseWorld.blockers = this.movement.cfg.boxes
+      stepLooseItems(this.looseItems, dt, this.looseWorld)
       if (this.movement.blocked) bumpStack(this.kitchen, this.movement.impact)
       this.tickEvents()
       this.syncTasks(false)
@@ -1401,6 +1580,10 @@ export class StationView extends Component {
       e.w.updateAlignment()
     }
     this.layoutHud()
+    if (this.panelOpen) {
+      this.inventorySkin?.layout(this.designH, this.inset.bottom)
+      this.inventorySkin?.sync(this.kitchen, this.panelStation?.kind === 'storeroom')
+    }
 
     // Ortho height comes from the real aspect, not from the editor value: a near-square
     // screen needs a wider frame, otherwise following throws the grill off-screen (`pnpm cam`).
@@ -1408,6 +1591,7 @@ export class StationView extends Component {
     const h = effectiveOrthoHeight(aspect)
     this.cameraComp.orthoHeight = h
     this.camBounds = focusBounds(h, aspect)
+    if (this.layoutEditor) this.resizeLayoutEditor()
   }
 
   /**
@@ -1442,15 +1626,74 @@ export class StationView extends Component {
     return ((w - r.left) * this.uiHalfW * 2) / w + HUD_MARGIN
   }
 
+  private groundItem(): LooseItem | null {
+    if (this.kitchen.carry.kind !== 'none') return null
+    return nearestLooseItem(this.looseItems, this.movement.pos, this.looseWorld)
+  }
+
+  private groundName(item: LooseItem): string {
+    const c = item.payload.carry
+    if (c.kind === 'plate') return '地面汉堡'
+    if (c.kind === 'patty') return '地面肉饼'
+    return [c.ingredient, ...(c.second ? [c.second] : [])].map(i => INGREDIENT_LABEL[i]).join(' + ')
+  }
+
+  private syncActionContext(): void {
+    const item = this.groundItem()
+    if (item) this.controls?.setGroundContext(this.groundName(item), !!item.payload.burger && this.kitchen.assemblyOccupied)
+    else this.controls?.setContext(actionPresentation(this.actionVerb(), stationInReach(this.kitchen, this.movement.pos)?.kind))
+  }
+
+  private looseFeedback(result: LooseResult): void {
+    const text = result === 'full' ? '地面物品已满 · 先拾取或长按清理' : result === 'no-space' ? '前方没有空位 · 转向或走开再放下' : result === 'bench-occupied' ? '先腾空制作台，再拾取这份汉堡' : ''
+    if (text) this.floaters.spawnAt(0, 60, text, HINT_COLOR, 28)
+    this.uiPoll = 0
+  }
+
+  private tickLooseItems(): boolean {
+    const aux = this.router.zone('discard')
+    if (aux?.tapped || aux?.holdStarted) {
+      if (canSetLooseItem(this.kitchen)) {
+        const result = putLooseItem(this.looseItems, this.kitchen, this.movement.pos, this.renderedYaw, aux.holdStarted, this.looseWorld)
+        if (result === 'ok') {
+          const item = this.looseItems.items[this.looseItems.items.length - 1]!
+          this.chefActions?.notify('put-plate', new Vec3(item.x, aux.holdStarted ? 1.05 : .15, item.z)); this.sfx.play('drop')
+        }
+        this.looseFeedback(result)
+      } else if (aux.holdStarted) this.act(discard(this.kitchen))
+      return true
+    }
+    const item = this.groundItem(), action = this.router.action
+    if (this.groundPress && !action.down && !action.tapped) { this.groundPress = false; return true }
+    if (!item && !this.groundPress) return false
+    if (action.down) this.groundPress = true
+    if (item && (action.tapped || action.holdStarted)) {
+      const result = action.holdStarted ? clearLooseItem(this.looseItems, this.kitchen, this.movement.pos, this.looseWorld) : pickLooseItem(this.looseItems, this.kitchen, this.movement.pos, this.looseWorld)
+      if (result === 'ok') {
+        this.chefActions?.notify('take-ingredient', new Vec3(item.x, .15, item.z)); this.sfx.play(action.holdStarted ? 'drop' : 'pick')
+        this.movement.facingYaw = Math.atan2(item.x - this.movement.pos.x, item.z - this.movement.pos.z)
+      }
+      this.looseFeedback(result)
+      this.groundPress = action.down
+    }
+    return true
+  }
+
   private tickPlay(): void {
+    for (const id of ['guide-skip', 'guide-help', 'guide-body']) if (this.router.zone(id)?.tapped) { this.firstOrderUi?.tapped(id); this.uiPoll = 0; return }
+    if (this.tickLooseItems()) return
     if (this.phase !== 'open') {
-      if (this.router.action.tapped && stationInReach(this.kitchen, this.movement.pos)?.kind === 'register') {
+      const station = stationInReach(this.kitchen, this.movement.pos)
+      if (this.router.action.tapped && station?.kind === 'register') {
         this.openMenu(this.phase === 'rest' ? 'rest' : 'open')
       }
-      return
-    }
-    if (this.router.zone('discard')?.holdStarted) {
-      this.act(discard(this.kitchen))
+      if (this.router.action.tapped && station?.kind === 'fridge') {
+        if (this.kitchen.carry.kind === 'plate' || this.kitchen.carry.kind === 'stack') this.report('hands-full')
+        else if (this.kitchen.carry.kind === 'crate') this.act(this.interactAt(station))
+        else if (this.kitchen.cfg.singleItem && this.kitchen.carry.kind !== 'none') this.report('hands-full')
+        else this.openPanel(station)
+      }
+      if (this.router.action.tapped && station?.kind === 'assembly') this.act(this.interactAt(station))
       return
     }
     if (this.tickArgue()) return
@@ -1473,7 +1716,8 @@ export class StationView extends Component {
     const held = this.kitchen.carry.kind
     if (station.kind === 'fridge') {
       // 抱着箱子点冰柜就是补货，不用开面板
-      if (held === 'crate') return this.act(interact(this.kitchen, this.movement.pos, station))
+      if (held === 'crate') return this.act(this.interactAt(station))
+      if (this.kitchen.cfg.singleItem && held !== 'none') return this.report('hands-full')
       // 手上拿着生料也让开 —— 点错一样食材不该逼玩家先跑一趟垃圾桶。
       // 盘子例外，换食材等于把整个汉堡扔了，那一下要玩家自己按 discard。
       if (held === 'plate' || held === 'stack') return this.report('hands-full')
@@ -1495,7 +1739,7 @@ export class StationView extends Component {
     }
     if (station.kind === 'delivery') {
       const d = matchDelivery(this.desk, this.kitchen.burger)
-      const r = interact(this.kitchen, this.movement.pos, station, { spec: d?.spec })
+      const r = this.interactAt(station, { spec: d?.spec })
       if (r.kind === 'serve' && d && r.verdict) {
         const rv = serveReview(r.verdict.ok, false, d.max > 0 ? d.left / d.max : 0)
         const line = CARD_LINES[this.cardIndex(DELIVERY_ID_BASE + d.id)]!
@@ -1515,7 +1759,7 @@ export class StationView extends Component {
         const side: Side = held === 'fries' ? 'fries' : 'drink'
         const c = matchSide(this.shift.flow, side)
         if (!c && this.gift(side, station)) return
-        const r = interact(this.kitchen, this.movement.pos, station, { spec: c?.spec })
+        const r = this.interactAt(station, { spec: c?.spec })
         if ((r.kind === 'serve-fries' || r.kind === 'serve-drink') && c) {
           const v = c.burgerVerdict
           const otherDue = side === 'fries' ? c.drinkDue : c.friesDue
@@ -1527,7 +1771,7 @@ export class StationView extends Component {
       }
       // 谁接这一盘是玩法规则，不在组件里挑：logic 先找吃得下的，找不到砸给最急的那位
       const c = matchCustomer(this.shift.flow, this.kitchen.burger)
-      const r = interact(this.kitchen, this.movement.pos, station, { spec: c?.spec })
+      const r = this.interactAt(station, { spec: c?.spec })
       if (r.kind === 'serve' && c && r.verdict) {
         const v = r.verdict
         if (v.ok && (c.friesDue || c.drinkDue)) {
@@ -1538,7 +1782,7 @@ export class StationView extends Component {
       }
       return this.act(r, r.reason === 'hands-empty' ? '先端上做好的汉堡' : undefined)
     }
-    this.act(interact(this.kitchen, this.movement.pos, station))
+    this.act(this.interactAt(station))
   }
 
   /** Holding the action key at the sink: scrub, with a brush sound every so often and a cheer when done */
@@ -1561,6 +1805,7 @@ export class StationView extends Component {
 
   /** A diner's order is complete: review (or rant), then `settle` releases them. Review is read before settling */
   private finishOrder(c: Customer, ok: boolean, station: Station, settle: () => void): void {
+    this.firstOrderUi?.guide.delivered({ run: this.uiRun, orderId: c.id, ok, complete: true })
     const rv = serveReview(ok, c.late, patienceRatio(this.shift.flow, c), c.gifted)
     const line = CARD_LINES[this.cardIndex(c.id)]!
     const upset = rv.kind !== 'praise'
@@ -1597,8 +1842,27 @@ export class StationView extends Component {
     this.floaters.spawn(this.cameraComp, station.pos.x, BUBBLE_Y.grill, station.pos.z, text, ok && !late ? GOOD_COLOR : BAD_COLOR, 34)
   }
 
+  private interactAt(station: Station, options?: Parameters<typeof interact>[3]): InteractResult {
+    const k = this.kitchen
+    const result = interact(k, this.movement.pos, station, options)
+    let target = this.workstationEffects?.actionTarget(station.kind, Math.max(0, result.slot)) ?? null
+    if (station.kind === 'assembly') {
+      const plate = this.playerNode.scene.getChildByPath('Kitchen/Props/Prop_AssemblyPlate/plate')
+      target = plate ? new Vec3(plate.worldPosition.x, this.benchTopY, plate.worldPosition.z) : null
+    }
+    if (!target) {
+      const m = this.movement.pos, dx = m.x - station.pos.x, dz = m.z - station.pos.z
+      target = new Vec3(station.pos.x + Math.sign(dx) * Math.min(Math.abs(dx), station.box.halfX), .82,
+        station.pos.z + Math.sign(dz) * Math.min(Math.abs(dz), station.box.halfZ))
+    }
+    this.chefActions?.notify(result.kind, target)
+    if (result.kind !== 'blocked') this.movement.facingYaw = Math.atan2(target.x - this.movement.pos.x, target.z - this.movement.pos.z)
+    return result
+  }
+
   private act(r: InteractResult, hint?: string): void {
     if (r.kind === 'blocked') return this.report(r.reason, hint)
+    if (r.kind === 'discard') this.chefActions?.notify('discard', null)
     const s = SFX_FOR[r.kind]
     if (s) this.sfx.play(s)
   }
@@ -1610,15 +1874,15 @@ export class StationView extends Component {
       this.closePanel()
       if (!station) return this.report('unsupported')
       if (i === INGREDIENTS.length) {
-        const r = interact(this.kitchen, this.movement.pos, station, { plates: true })
+        const r = this.interactAt(station, { plates: true })
         return this.act(r, r.reason === 'out-of-stock' ? '备用盘子领完了' : undefined)
       }
       // Picking closes the panel, even when refused — except after a first topping, so the
       // second hand is one more tap (tap outside to leave with just the one)
-      const r = interact(this.kitchen, this.movement.pos, station, { ingredient: INGREDIENTS[i]! })
+      const r = this.interactAt(station, { ingredient: INGREDIENTS[i]! })
       this.act(r)
       const c = this.kitchen.carry
-      if (r.kind === 'take-ingredient' && station.kind === 'fridge' && (c.kind === 'patty' || (c.kind === 'ingredient' && c.second === null))) {
+      if (!this.kitchen.cfg.singleItem && r.kind === 'take-ingredient' && station.kind === 'fridge' && (c.kind === 'patty' || (c.kind === 'ingredient' && c.second === null))) {
         this.openPanel(station)
       }
       return
@@ -1654,6 +1918,9 @@ export class StationView extends Component {
       this.sfx.play('tap')
     }
     this.panelOpen = true
+    this.inventorySkin?.layout(this.designH, this.inset.bottom)
+    this.inventorySkin?.sync(this.kitchen, !fridge)
+    this.zonesKey = ''
     // Freezes the stick: the thumb still on screen is dropped and cannot re-arm, since
     // the next press lands on the full-screen cancel zone.
     this.router.cancelAll()
@@ -1689,7 +1956,7 @@ export class StationView extends Component {
           : carrying
             ? 'discard'
             : 'none'
-    const key = `${mode}|${this.reviewsOpen ? this.offerMask : ''}|${this.panelStation?.kind}|${this.passed}|${this.menuKind}:${this.menuRows.length}|${this.screenW}x${this.screenH}`
+    const key = `${mode}|${this.reviewsOpen ? this.offerMask : ''}|${this.panelStation?.kind}|${this.passed}|${this.menuKind}:${this.menuRows.length}|${this.screenW}x${this.screenH}|${this.firstOrderUi?.zoneRevision}`
     if (key === this.zonesKey) return
     this.zonesKey = key
 
@@ -1759,6 +2026,7 @@ export class StationView extends Component {
         )
       }
     }
+    if (!this.menuKind && !this.resultOpen && !this.panelOpen && !this.reviewsOpen) zones.unshift(...this.firstOrderUi?.captureZones(this.screenW, this.screenH, this.designH) ?? [])
     this.router.setCaptureZones(zones)
   }
 
@@ -2010,7 +2278,7 @@ export class StationView extends Component {
   }
 
   private cardIndex(customerId: number): number {
-    return customerCardIndex(customerId, this.day, this.customersPerShift, CARD_LINES.length)
+    return customerCardIndex(customerId, this.day, this.shift.cfg.customers, CARD_LINES.length)
   }
 
   private nameOf(customerId: number): string {
@@ -2161,13 +2429,15 @@ export class StationView extends Component {
 
   /** What a tap (or hold) on the action key would do here, shown on the key */
   private actionVerb(): string {
+    if (this.groundItem()) return '拾取'
     const st = stationInReach(this.kitchen, this.movement.pos)
     if (!st) return ''
-    if (this.phase !== 'open') return st.kind === 'register' ? (this.phase === 'rest' ? '装修' : '开门') : ''
+    if (this.phase !== 'open' && st.kind !== 'fridge' && st.kind !== 'assembly') return st.kind === 'register' ? (this.phase === 'rest' ? '装修' : '开门') : ''
     const k = this.kitchen
     const held = k.carry.kind
     switch (st.kind) {
       case 'fridge':
+        if (k.cfg.singleItem && held !== 'none' && held !== 'crate') return '先放下'
         return held === 'crate' ? '补货' : '取料'
       case 'grill':
         if (k.fire) return held === 'extinguisher' ? '灭火' : '着火了'
@@ -2302,54 +2572,7 @@ export class StationView extends Component {
     const buf = this.iconBuf
     const m = this.movement.pos
     const carry = k.carry
-    if (carry.kind === 'none') this.carryBubble.hide()
-    else if (carry.kind === 'fries') {
-      if (this.carryBubble.show(600, buf, 0, '🍟 薯条', GOOD_COLOR)) pop(this.carryBubble.node)
-    } else if (carry.kind === 'drink') {
-      if (this.carryBubble.show(602, buf, 0, '🥤 饮料', GOOD_COLOR)) pop(this.carryBubble.node)
-    } else if (carry.kind === 'extinguisher') {
-      if (this.carryBubble.show(601, buf, 0, '🧯 灭火器', BAD_COLOR)) pop(this.carryBubble.node)
-    } else if (carry.kind === 'ingredient') {
-      buf[0] = this.icon(carry.ingredient)
-      const n = carry.second === null ? 1 : 2
-      if (carry.second !== null) buf[1] = this.icon(carry.second)
-      const key = 100 + INGREDIENTS.indexOf(carry.ingredient) * 10 + (carry.second === null ? 9 : INGREDIENTS.indexOf(carry.second))
-      if (this.carryBubble.show(key, buf, n, '', Color.WHITE)) pop(this.carryBubble.node)
-    } else if (carry.kind === 'crate') {
-      buf[0] = this.icon(carry.ingredient)
-      if (this.carryBubble.show(400 + INGREDIENTS.indexOf(carry.ingredient), buf, 1, '整箱', Color.WHITE)) pop(this.carryBubble.node)
-    } else if (carry.kind === 'stack') {
-      for (let i = 0; i < carry.count; i++) buf[i] = this.plateIcon
-      const heavy = carry.count > (k.cfg.stackSlow ?? STACK_SLOW)
-      if (this.carryBubble.show(500 + carry.count, buf, carry.count, heavy ? '太重了 · 别撞墙' : '', heavy ? BAD_COLOR : Color.WHITE)) {
-        pop(this.carryBubble.node)
-      }
-    } else if (carry.kind === 'patty') {
-      const n = carry.plated ? 2 : 1
-      buf[0] = this.plateIcon
-      buf[n - 1] = this.icon('patty')
-      const caption = COOK_LABEL[carry.cook] + (carry.stained ? ' · 脏盘' : '')
-      if (this.carryBubble.show(200 + n * 10 + COOK_LEVELS.indexOf(carry.cook) + (carry.stained ? 50 : 0), buf, n, caption, COOK_COLOR[carry.cook])) {
-        pop(this.carryBubble.node)
-      }
-    } else {
-      const cook = k.burger.cook
-      // The 3D stack already shows what is on it: doneness caption only
-      const n = this.burgerStack ? 0 : k.burger.ingredients.length + 1
-      if (n > 0) {
-        this.fillBurger(1)
-        buf[0] = this.plateIcon
-      }
-      const redrawn = this.carryBubble.show(
-        300 + k.burger.ingredients.length * 10 + (cook ? COOK_LEVELS.indexOf(cook) : 9),
-        buf,
-        n,
-        cook ? COOK_LABEL[cook] : '',
-        cook ? COOK_COLOR[cook] : Color.WHITE,
-      )
-      if (redrawn) pop(this.carryBubble.node)
-    }
-    if (carry.kind !== 'none') this.carryBubble.follow(cam, m.x, BUBBLE_Y.carry, m.z, this.uiHalfW, this.uiHalfH)
+    this.carryBubble.hide()
 
     const g = this.grillStation
     if (g) {
@@ -2359,7 +2582,8 @@ export class StationView extends Component {
         const slot = k.grill[i]
         if (k.fire) {
           ring.show(1, BAD_COLOR, '🔥')
-          ring.follow(cam, g.pos.x, BUBBLE_Y.grill, g.pos.z, this.uiHalfW, this.uiHalfH, (i - 0.5) * 64)
+          const anchor = this.workstationEffects?.actionTarget('grill', i)
+          ring.follow(cam, anchor?.x ?? g.pos.x, BUBBLE_Y.grill, anchor?.z ?? g.pos.z, this.uiHalfW, this.uiHalfH)
           continue
         }
         if (!slot || !slot.busy) {
@@ -2369,9 +2593,10 @@ export class StationView extends Component {
         const lv = grillCookLevel(k, i)
         const fs = k.cfg.fireSec
         // Full ring = burnt, so the arc racing towards 12 o'clock is the warning; once burnt it drains towards the fire
-        if (lv === 'burnt' && fs !== undefined) ring.show(Math.max(0, 1 - (slot.elapsed - w.burntAt) / fs), BAD_COLOR, COOK_LABEL[lv])
-        else ring.show(slot.elapsed / w.burntAt, COOK_COLOR[lv], COOK_LABEL[lv])
-        ring.follow(cam, g.pos.x, BUBBLE_Y.grill, g.pos.z, this.uiHalfW, this.uiHalfH, (i - 0.5) * 64)
+        if (lv === 'burnt' && fs !== undefined) ring.show(Math.max(0, 1 - (slot.elapsed - w.burntAt) / fs), BAD_COLOR, '')
+        else ring.show(slot.elapsed / w.burntAt, COOK_COLOR[lv], '')
+        const anchor = this.workstationEffects?.actionTarget('grill', i)
+        ring.follow(cam, anchor?.x ?? g.pos.x, BUBBLE_Y.grill, anchor?.z ?? g.pos.z, this.uiHalfW, this.uiHalfH)
       }
     }
 
@@ -2386,7 +2611,7 @@ export class StationView extends Component {
           k.burger.ingredients.length * 10 + (cook ? COOK_LEVELS.indexOf(cook) : 9),
           buf,
           n,
-          cook ? COOK_LABEL[cook] : '',
+          '',
           cook ? COOK_COLOR[cook] : Color.WHITE,
         )
         if (redrawn) pop(this.benchBubble.node)
@@ -2399,7 +2624,9 @@ export class StationView extends Component {
       const burger = k.burger
       if (carry.kind === 'plate') {
         const yaw = this.movement.facingYaw
-        bs.show(burger, k.burgerPlated, m.x + Math.sin(yaw) * HAND.reach, HAND.y, m.z + Math.cos(yaw) * HAND.reach)
+        const anchor = this.chefActions?.carryAnchor
+        bs.show(burger, k.burgerPlated, anchor?.x ?? m.x + Math.sin(yaw) * HAND.reach,
+          anchor?.y ?? HAND.y, anchor?.z ?? m.z + Math.cos(yaw) * HAND.reach)
       } else if (k.assemblyOccupied && b) bs.show(burger, false, b.pos.x, this.benchTopY, b.pos.z)
       else bs.hide()
     }
@@ -2512,6 +2739,17 @@ export class StationView extends Component {
     this.burgerStack = new BurgerStack(kitchenRoot.scene, {
       ...art as { [K in keyof typeof art]: Node }, ...toppings,
     })
+    this.chefActions = this.playerModel!.addComponent(ChefActions)
+    this.chefActions.configure(this.playerModel!, kitchenRoot.scene, {
+      ...art as { [K in keyof typeof art]: Node }, ...toppings,
+    }, {
+      fries: find('Prop_Fryer/fries'),
+      drink: find('Prop_Drinks/cup'),
+      crate: find('Prop_Crates/cardboardBoxClosed'),
+      extinguisher: kitchenRoot.getChildByName('Station_Extinguisher')?.children.find(n => n.name !== 'Body') ?? null,
+    })
+    this.chefActions.bindBurger(this.burgerStack)
+    this.looseView = new LooseItemsView(kitchenRoot.scene, { ...art as { [K in keyof typeof art]: Node }, ...toppings })
     for (const n of Object.values(toppings)) n.destroy()
     // Sits on the bench's decor plate
     this.benchTopY = benchPlate!.worldPosition.y + 0.02
@@ -2762,6 +3000,7 @@ export class StationView extends Component {
     this.syncHud()
     this.resultOpen = true
     this.workstationEffects?.hide()
+    this.chefActions?.reset()
     this.panelOpen = false
     if (this.reviewsOpen) this.closeReviews()
     this.toast.clear()
@@ -2897,6 +3136,7 @@ export class StationView extends Component {
         }
       })
       rows.push(
+        { name: '调整厨房布局', desc: '免费移动、旋转工位，保存后生效', btn: '调整', on: true, run: () => this.beginLayoutEditor() },
         { name: `墙面颜色：${WALL_COLORS[p.decor.wall]!.name}`, desc: `每换一次 ¥${COLOR_PRICE}`, btn: '换', on: true, run: () => this.openMenu('wall') },
         { name: `地板颜色：${FLOOR_COLORS[p.decor.floor]!.name}`, desc: `每换一次 ¥${COLOR_PRICE}`, btn: '换', on: true, run: () => this.openMenu('floor') },
         { name: '休息结束', desc: `开门营业第 ${this.day} 天`, btn: '开门', on: true, run: () => this.openForBusiness() },
@@ -2974,7 +3214,7 @@ export class StationView extends Component {
     this.phase = 'closed'
     this.taskCard.node.active = true
     this.floaters.spawnAt(0, 60, `第 ${this.day} 天 · 去前台开门`, GOOD_COLOR, 44)
-    this.tasks = rollTasks(this.day, this.customersPerShift, owns(this.progress, 'fryer'))
+    this.tasks = rollTasks(this.day, this.shift.cfg.customers, owns(this.progress, 'fryer'), this.deliveryEnabled())
     this.taskState = this.tasks.map((): TaskStatus => 'open')
     this.taskShown = this.tasks.map(() => '')
     this.syncTasks(false)
@@ -2999,6 +3239,7 @@ export class StationView extends Component {
 
   /** Start `day` over: the same day replays the same orders (seed unchanged), a new day tightens the flow */
   private restart(day: number): void {
+    this.uiRun++; this.uiPoll = 0
     this.sfx.play('tap')
     this.day = day
     this.passed = false
@@ -3013,6 +3254,7 @@ export class StationView extends Component {
     this.seenOffer = 1
     resetKitchen(this.kitchen)
     resetVent(this.venting)
+    resetLooseItems(this.looseItems); this.looseView?.clear(); this.groundPress = false
     resetLedger(this.ledger)
     this.rantReview.clear()
     this.seenVents = 0
@@ -3031,6 +3273,7 @@ export class StationView extends Component {
     this.rackWasDrying = false
     this.scrubbing = false
     this.workstationEffects?.hide()
+    this.chefActions?.reset()
     this.shakeLeft = 0
     this.nudged.fill(-1)
     this.urgedLate.fill(-1)
@@ -3052,11 +3295,14 @@ export class StationView extends Component {
     const m = this.movement.pos
     this.playerNode.setPosition(m.x, this.playerNode.position.y, m.z)
     if (this.playerModel) {
-      this.playerModel.setRotationFromEuler(0, (this.movement.facingYaw * 180) / Math.PI, 0)
+      this.renderedYaw = approachFacingYaw(this.renderedYaw, this.movement.facingYaw, game.deltaTime)
+      this.playerModel.setRotationFromEuler(0, (this.renderedYaw * 180) / Math.PI, 0)
       if (this.playerWalking !== this.movement.moving) {
         this.playerWalking = this.movement.moving
         this.playerAnim?.crossFade(this.playerWalking ? 'walk' : 'idle', 0.15)
       }
+      const walk = this.playerAnim?.getState('walk')
+      if (walk) walk.speed = 1 + this.router.stick.magnitude * .5
     }
 
     focusForPlayer(this.camFocus, m, this.camBounds)
@@ -3075,7 +3321,17 @@ export class StationView extends Component {
       this.camFocus.z + this.camOffset.z + sz,
     )
 
+    const frame = this.chefFrame
+    frame.running = !this.resultOpen
+    frame.moving = this.movement.moving
+    frame.carrying = this.kitchen.carry.kind !== 'none'
+    frame.scrubbing = this.scrubbing && this.kitchen.sink.stage === 'soaked'
+    frame.holding = this.router.action.holding && !this.panelOpen && !this.reviewsOpen && !this.menuKind
+    frame.sinkInReach = stationInReach(this.kitchen, this.movement.pos)?.kind === 'sink'
+    this.chefActions?.sync(this.kitchen, frame, game.deltaTime, this.workstationEffects?.actionTarget('sink') ?? null)
+    this.looseView?.sync(this.looseItems, this.groundItem(), game.deltaTime)
     this.syncBubbles()
+    this.syncFirstOrderUi()
     this.syncCustomers()
 
     this.syncKitchenRings()
@@ -3083,7 +3339,7 @@ export class StationView extends Component {
     if (this.controls) {
       this.controls.syncStick(stick.dirX, stick.dirY, stick.magnitude)
       this.controls.setPressed(this.router.action.down)
-      this.controls.setAction(this.actionVerb())
+      this.syncActionContext()
       this.syncHands(this.controls)
     }
     if (this.joystickNode.active !== stick.active) this.joystickNode.active = stick.active

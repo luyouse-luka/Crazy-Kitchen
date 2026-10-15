@@ -25,21 +25,13 @@ const scene = JSON.parse(readFileSync('game/assets/main.scene', 'utf8')) as Entr
 const nav = navigation()
 
 describe('open-centre kitchen layout', () => {
-  it('keeps the frequently used fridge and plates together in the middle of the side counter', () => {
-    const fridge = specBox('Station_Fridge')
-    const plates = specBox('Block_Plate')
-    expect(fridge.center.z).toBe(0)
-    expect(plates.center.z).toBe(1)
-    expect(nav.canReach(-2.5, 0)).toBe(true)
-    expect(nav.canReach(-2.5, 1)).toBe(true)
-    expect(nav.access(fridge).some(id => {
-      const p = nav.at(id)
-      return Math.abs(p.x + 2.5) < .06 && Math.abs(p.z) < .06
-    })).toBe(true)
-    expect(nav.access(plates).some(id => {
-      const p = nav.at(id)
-      return Math.abs(p.x + 2.5) < .06 && Math.abs(p.z - 1) < .06
-    })).toBe(true)
+  it('keeps the fridge near storage and common fixtures away from corners', () => {
+    const fridge = specBox('Station_Fridge'), assembly = specBox('Station_Assembly'), plates = specBox('Block_Plate')
+    expect(fridge.center).toEqual({x:3.5,z:-2.5})
+    expect(Math.hypot(fridge.center.x-6.5, fridge.center.z+5.5)).toBeLessThan(4.3)
+    expect(assembly.center.z).toBe(-2.5)
+    expect(plates.center.z).toBe(0)
+    for(const b of [fridge,assembly,plates]) expect(nav.access(b).length).toBeGreaterThan(0)
   })
 
   it('leaves the central floor clear for direct joystick crossings', () => {

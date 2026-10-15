@@ -5,16 +5,16 @@ import { newDecor } from '../game/assets/logic/decor'
 
 describe('progress · 存档', () => {
   it('往返无损', () => {
-    const p = { day: 4, best: [3, 2, 1], coins: 57, owned: ['fryer'], decor: { ...newDecor(), wall: 2 } }
+    const p = { ...newProgress(), day: 4, best: [3, 2, 1], coins: 57, owned: ['fryer'], decor: { ...newDecor(), wall: 2 } }
     expect(parseProgress(serializeProgress(p))).toEqual(p)
   })
 
   it('v1 旧档照样读进来，金币从 0 开始', () => {
-    expect(parseProgress('{"v":1,"day":3,"best":[3,2]}')).toEqual({ day: 3, best: [3, 2], coins: 0, owned: [], decor: newDecor() })
+    expect(parseProgress('{"v":1,"day":3,"best":[3,2]}')).toEqual({ day: 3, best: [3, 2], coins: 0, owned: [], decor: newDecor(), layout: newProgress().layout })
   })
 
   it('坏的金币字段归零，不连累整份存档', () => {
-    expect(parseProgress('{"v":2,"day":3,"best":[],"coins":"lots"}')).toEqual({ day: 3, best: [], coins: 0, owned: [], decor: newDecor() })
+    expect(parseProgress('{"v":2,"day":3,"best":[],"coins":"lots"}')).toEqual({ day: 3, best: [], coins: 0, owned: [], decor: newDecor(), layout: newProgress().layout })
     expect(parseProgress('{"v":2,"day":3,"best":[],"coins":-5}').coins).toBe(0)
   })
 
@@ -23,7 +23,7 @@ describe('progress · 存档', () => {
     expect(parseProgress('{"v":2,"day":2,"best":[],"coins":9,"owned":["fryer",3,null]}').owned).toEqual(['fryer'])
   })
 
-  it.each([null, '', '{', 'null', '[]', '{"v":0,"day":3,"best":[]}', '{"v":3,"day":3,"best":[]}', '{"v":1,"day":"3","best":[]}', '{"v":1,"day":2}'])(
+  it.each([null, '', '{', 'null', '[]', '{"v":0,"day":3,"best":[]}', '{"v":4,"day":3,"best":[]}', '{"v":1,"day":"3","best":[]}', '{"v":1,"day":2}'])(
     '坏档 %s 退回新档',
     (raw) => expect(parseProgress(raw)).toEqual(newProgress()),
   )
@@ -46,7 +46,7 @@ describe('progress · 推进', () => {
   })
 
   it('重打旧的一天只刷新最好成绩，不会把进度往回拉', () => {
-    const p = { day: 5, best: [1, 1, 1, 1], coins: 0, owned: [], decor: newDecor() }
+    const p = { ...newProgress(), day: 5, best: [1, 1, 1, 1], coins: 0, owned: [], decor: newDecor() }
     finishDay(p, 2, 3)
     expect(p.day).toBe(5)
     expect(p.best[1]).toBe(3)
@@ -55,7 +55,7 @@ describe('progress · 推进', () => {
   })
 
   it('难度表的最后一天之后照样往下打，客流停在最难那档', () => {
-    const p = { day: LAST_DAY, best: [], coins: 0, owned: [], decor: newDecor() }
+    const p = { ...newProgress(), day: LAST_DAY, best: [], coins: 0, owned: [], decor: newDecor() }
     expect(finishDay(p, LAST_DAY, 3)).toBe(true)
     expect(p.day).toBe(LAST_DAY + 1)
     expect(dayFlow(LAST_DAY + 30, 30)).toEqual(dayFlow(LAST_DAY, 30))

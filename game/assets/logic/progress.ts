@@ -9,15 +9,18 @@ import type { FlowParams, OrderDifficulty } from './customer'
 import { difficultyForDay } from './difficulty'
 import { newDecor, parseDecor } from './decor'
 import type { Decor } from './decor'
+import { defaultLayout, parseLayout, validateLayout } from './layout'
+import type { LayoutConfig } from './scene-layout'
 
 export const SAVE_KEY = 'kc.progress'
 /** v1 had no coins; it still loads, with coins 0 */
-const VERSION = 2
+const VERSION = 3
 
 /** ⏳ 占位：一星就放行，等真人数据再定 */
 export const PASS_STARS = 1
 
 export interface Progress {
+  layout: LayoutConfig
   /** 解锁到第几天（下次开游戏打这一天） */
   day: number
   /** best[d - 1] = 第 d 天拿过的最好星数 */
@@ -31,29 +34,42 @@ export interface Progress {
 }
 
 export function newProgress(): Progress {
-  return { day: 1, best: [], coins: 0, owned: [], decor: newDecor() }
+  return { day: 1, best: [], coins: 0, owned: [], decor: newDecor(), layout: defaultLayout() }
 }
 
 export function parseProgress(raw: string | null | undefined): Progress {
   if (!raw) return newProgress()
-  let o: { v?: unknown; day?: unknown; best?: unknown; coins?: unknown; owned?: unknown; decor?: unknown }
+  let o: { v?: unknown; day?: unknown; best?: unknown; coins?: unknown; owned?: unknown; decor?: unknown; layout?: unknown }
   try {
     o = JSON.parse(raw)
   } catch {
     return newProgress()
   }
-  if (!o || (o.v !== 1 && o.v !== VERSION) || !Number.isInteger(o.day) || !Array.isArray(o.best)) return newProgress()
+  if (!o || (o.v !== 1 && o.v !== 2 && o.v !== VERSION) || !Number.isInteger(o.day) || !Array.isArray(o.best)) return newProgress()
+  const owned = Array.isArray(o.owned) ? o.owned.filter((x): x is string => typeof x === 'string') : []
+  const candidate = parseLayout(o.layout)
   return {
     day: Math.max(1, o.day as number),
     best: o.best.map((n) => (Number.isInteger(n) ? Math.max(0, Math.min(3, n as number)) : 0)),
     coins: Number.isInteger(o.coins) ? Math.max(0, o.coins as number) : 0,
-    owned: Array.isArray(o.owned) ? o.owned.filter((x): x is string => typeof x === 'string') : [],
+    owned,
+    layout: candidate && validateLayout(candidate, owned).ok ? candidate : defaultLayout(),
     decor: parseDecor(o.decor),
   }
 }
 
 export function serializeProgress(p: Progress): string {
-  return JSON.stringify({ v: VERSION, day: p.day, best: p.best, coins: p.coins, owned: p.owned, decor: p.decor })
+  return JSON.stringify({ v: VERSION, day: p.day, best: p.best, coins: p.coins, owned: p.owned, decor: p.decor, layout: p.layout })
+}
+
+export function progressWithLayout(p: Progress, layout: LayoutConfig): Progress {
+  const copy = parseLayout(layout)
+  if (!copy) throw new Error('Invalid layout record')
+  return { ...p, layout: copy }
+}
+
+export function persistProgress(p: Progress, write: (key: string, value: string) => void): boolean {
+  try { write(SAVE_KEY, serializeProgress(p)); return true } catch { return false }
 }
 
 /** 打完第 day 天：记最好成绩，过线就解锁下一天。返回这一局是否过线 */

@@ -1,9 +1,9 @@
-import { _decorator, Color, Component, instantiate, Material, Mesh, MeshRenderer, Node, primitives, Quat, SkeletalAnimation, utils, Vec3 } from 'cc'
+import { _decorator, Color, Component, Material, Mesh, MeshRenderer, Node, primitives, Quat, utils, Vec3 } from 'cc'
 import type { Carry, InteractKind, KitchenState } from '../logic/kitchen'
 import type { Burger } from '../logic/types'
 import { BurgerStack, fitStackArt } from './BurgerStack'
 import type { StackArt } from './BurgerStack'
-import { ChefMotion, solveElbow } from './ChefMotion'
+import { ChefMotion, oneHandedCarry, solveElbow } from './ChefMotion'
 import type { ArmSolution, ChefFrame, Point3 } from './ChefMotion'
 
 const { ccclass, executionOrder } = _decorator
@@ -28,8 +28,6 @@ export class ChefActions extends Component {
   private extras: { kind: string; node: Node }[] = []
   private single: Burger = { ingredients: [], cook: null }
   private running = false
-  private animation: SkeletalAnimation | null = null
-  private wasBaked = true
   private target = new Vec3()
   private direction = new Vec3()
   private current = new Vec3()
@@ -46,12 +44,11 @@ export class ChefActions extends Component {
   private sponge!: Node
   private spongeMesh!: Mesh
   private spongeMaterial!: Material
+  private cupMesh!: Mesh
+  private cupMaterial!: Material
 
   configure(model: Node, world: Node, art: StackArt, extras: Record<string, Node | null> = {}): void {
     this.model = model
-    this.animation = model.getComponent(SkeletalAnimation)
-    this.wasBaked = this.animation?.useBakedAnimation ?? true
-    if (this.animation) this.animation.useBakedAnimation = false
     const bone = (name: string): Node => {
       const find = (n: Node): Node | null => n.name === name ? n : n.children.map(find).find(Boolean) ?? null
       const n = find(model)
@@ -86,11 +83,18 @@ export class ChefActions extends Component {
     }
     for (const [name, src] of Object.entries(extras)) {
       if (!src) continue
-      const n = name === 'extinguisher' ? instantiate(src) : fitStackArt(world, src, name === 'drink' ? .13 : .27, name === 'drink' ? .22 : .18)
-      if (name === 'extinguisher') { world.addChild(n); n.setScale(.25, .25, .25) }
+      const n = fitStackArt(world, src, name === 'crate' ? .38 : name === 'extinguisher' ? .18 : name === 'drink' ? .13 : .27,
+        name === 'crate' ? .28 : name === 'extinguisher' ? .35 : name === 'drink' ? .22 : .18)
       n.name = `ChefHeld_${name}`
       n.active = false
       this.extras.push({ kind: name, node: n })
+    }
+    if (!extras.drink) {
+      const cup = new Node('HeldCup'); cup.layer = model.layer; world.addChild(cup)
+      this.cupMesh = utils.MeshUtils.createMesh(primitives.cylinder(.065, .05, .18, { radialSegments: 12 }))
+      this.cupMaterial = new Material(); this.cupMaterial.initialize({ effectName: 'builtin-unlit' }); this.cupMaterial.setProperty('mainColor', new Color(240, 232, 209))
+      const renderer = cup.addComponent(MeshRenderer); renderer.mesh = this.cupMesh; renderer.setSharedMaterial(this.cupMaterial, 0); renderer.shadowCastingMode = 0
+      cup.active = false; this.extras.push({ kind: 'drink', node: cup })
     }
   }
 
@@ -138,7 +142,7 @@ export class ChefActions extends Component {
     const yaw = this.model.eulerAngles.y * Math.PI / 180
     const sx = Math.sin(yaw), cz = Math.cos(yaw)
     const chest = this.chest.worldPosition
-    const y = chest.y - .015
+    const y = chest.y - .22
     this.carryAnchor.set(chest.x + sx * .36, y + .025, chest.z + cz * .36)
     for (let i = 0; i < this.arms.length; i++) {
       const arm = this.arms[i]!
@@ -155,8 +159,9 @@ export class ChefActions extends Component {
       }
       arm.pole.set(cz * arm.side, -.6, -sx * arm.side)
       const result = solveElbow(arm.upper.worldPosition, this.target, arm.upperLength, arm.lowerLength, arm.pole, arm.solution)
-      this.aim(arm.upper, arm.lower, result.elbow, weight)
-      this.aim(arm.lower, arm.hand, result.hand, weight)
+      const armWeight = oneHandedCarry(carry) && i === 1 && motion.action !== 'scrub' ? 0 : weight
+      this.aim(arm.upper, arm.lower, result.elbow, armWeight)
+      this.aim(arm.lower, arm.hand, result.hand, armWeight)
       // Preserve animated wrist twist; attachment uses the actual palm after IK.
       Vec3.copy(this.handAnchors[i]!, arm.hand.worldPosition)
       if (i === 0) Vec3.copy(this.brushAnchor, arm.slot.worldPosition)
@@ -200,6 +205,7 @@ export class ChefActions extends Component {
     if (carry.kind === 'none') return
     const a = this.handAnchors[0]!, b = this.handAnchors[1]!
     this.carryAnchor.set((a.x + b.x) / 2, (a.y + b.y) / 2 + .025, (a.z + b.z) / 2)
+    if (oneHandedCarry(carry)) this.carryAnchor.set(a.x, a.y + .025, a.z)
     if (carry.kind === 'plate') return
     if (carry.kind === 'patty' || carry.kind === 'ingredient') {
       const count = carry.kind === 'ingredient' && carry.second ? 2 : 1
@@ -240,6 +246,6 @@ export class ChefActions extends Component {
     this.sponge?.destroy()
     this.spongeMesh?.destroy()
     this.spongeMaterial?.destroy()
-    if (this.animation?.isValid) this.animation.useBakedAnimation = this.wasBaked
+    this.cupMesh?.destroy(); this.cupMaterial?.destroy()
   }
 }

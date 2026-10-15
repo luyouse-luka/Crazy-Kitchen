@@ -119,3 +119,10 @@ export function starsFor(served: number, day: number, durationSec = CALIBRATION_
   if (served >= line(stars.one)) return 1
   return 0
 }
+export interface EarlyShiftPolicy { customers: number; intervalSec: number; intervalJitter: number; maxConcurrent: number; bannedChance: number; doubleChance: number; delivery: boolean }
+export function earlyShiftPolicyForDay(day: number): EarlyShiftPolicy | undefined {
+  if (!Number.isFinite(day) || day < 1 || day >= 6) return undefined
+  const i = Math.floor(day) - 1
+  return { customers: [4, 6, 8, 10, 10][i]!, intervalSec: [35, 36, 36, 33, 30][i]!, intervalJitter: [0, .1, .15, .2, .25][i]!,
+    maxConcurrent: [1, 2, 2, 3, 3][i]!, bannedChance: [0, 0, 0, .05, .08][i]!, doubleChance: [0, 0, 0, .1, .15][i]!, delivery: i >= 3 }
+}

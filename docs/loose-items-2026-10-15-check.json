@@ -1,0 +1,482 @@
+{
+  "pairedTransfer": true,
+  "wallThrow": {
+    "trace": [
+      {
+        "id": 2,
+        "payload": {
+          "carry": {
+            "kind": "ingredient",
+            "ingredient": "bun",
+            "second": "patty",
+            "cook": "raw",
+            "plated": false,
+            "stained": false,
+            "count": 0,
+            "countStained": 0
+          },
+          "burger": null,
+          "plated": false,
+          "stained": false
+        },
+        "x": 3.0875143050355307,
+        "z": -1.6533520661906216,
+        "y": 0.9273237899996853,
+        "vx": 0,
+        "vz": 0,
+        "vy": 2.0849999999999995,
+        "flying": true,
+        "impacts": 1
+      },
+      {
+        "id": 2,
+        "payload": {
+          "carry": {
+            "kind": "ingredient",
+            "ingredient": "bun",
+            "second": "patty",
+            "cook": "raw",
+            "plated": false,
+            "stained": false,
+            "count": 0,
+            "countStained": 0
+          },
+          "burger": null,
+          "plated": false,
+          "stained": false
+        },
+        "x": 3.0875143050355307,
+        "z": -1.6533520661906216,
+        "y": 0.9805478198293973,
+        "vx": 0,
+        "vz": 0,
+        "vy": 1.8366000008583063,
+        "flying": true,
+        "impacts": 1
+      },
+      {
+        "id": 2,
+        "payload": {
+          "carry": {
+            "kind": "ingredient",
+            "ingredient": "bun",
+            "second": "patty",
+            "cook": "raw",
+            "plated": false,
+            "stained": false,
+            "count": 0,
+            "countStained": 0
+          },
+          "burger": null,
+          "plated": false,
+          "stained": false
+        },
+        "x": 3.0875143050355307,
+        "z": -1.6533520661906216,
+        "y": 1.0378553397889712,
+        "vx": 0,
+        "vz": 0,
+        "vy": 1.52340000128746,
+        "flying": true,
+        "impacts": 1
+      },
+      {
+        "id": 2,
+        "payload": {
+          "carry": {
+            "kind": "ingredient",
+            "ingredient": "bun",
+            "second": "patty",
+            "cook": "raw",
+            "plated": false,
+            "stained": false,
+            "count": 0,
+            "countStained": 0
+          },
+          "burger": null,
+          "plated": false,
+          "stained": false
+        },
+        "x": 3.0875143050355307,
+        "z": -1.6533520661906216,
+        "y": 1.0674114598778632,
+        "vx": 0,
+        "vz": 0,
+        "vy": 1.3326000008583065,
+        "flying": true,
+        "impacts": 1
+      },
+      {
+        "id": 2,
+        "payload": {
+          "carry": {
+            "kind": "ingredient",
+            "ingredient": "bun",
+            "second": "patty",
+            "cook": "raw",
+            "plated": false,
+            "stained": false,
+            "count": 0,
+            "countStained": 0
+          },
+          "burger": null,
+          "plated": false,
+          "stained": false
+        },
+        "x": 3.0875143050355307,
+        "z": -1.6533520661906216,
+        "y": 1.1000728298522426,
+        "vx": 0,
+        "vz": 0,
+        "vy": 1.08240000128746,
+        "flying": true,
+        "impacts": 1
+      },
+      {
+        "id": 2,
+        "payload": {
+          "carry": {
+            "kind": "ingredient",
+            "ingredient": "bun",
+            "second": "patty",
+            "cook": "raw",
+            "plated": false,
+            "stained": false,
+            "count": 0,
+            "countStained": 0
+          },
+          "burger": null,
+          "plated": false,
+          "stained": false
+        },
+        "x": 3.0875143050355307,
+        "z": -1.6533520661906216,
+        "y": 1.130977350000358,
+        "vx": 0,
+        "vz": 0,
+        "vy": 0.7709999999999998,
+        "flying": true,
+        "impacts": 1
+      },
+      {
+        "id": 2,
+        "payload": {
+          "carry": {
+            "kind": "ingredient",
+            "ingredient": "bun",
+            "second": "patty",
+            "cook": "raw",
+            "plated": false,
+            "stained": false,
+            "count": 0,
+            "countStained": 0
+          },
+          "burger": null,
+          "plated": false,
+          "stained": false
+        },
+        "x": 3.0875143050355307,
+        "z": -1.6533520661906216,
+        "y": 1.1561550999601606,
+        "vx": 0,
+        "vz": 0,
+        "vy": 0.3354000012874602,
+        "flying": true,
+        "impacts": 1
+      },
+      {
+        "id": 2,
+        "payload": {
+          "carry": {
+            "kind": "ingredient",
+            "ingredient": "bun",
+            "second": "patty",
+            "cook": "raw",
+            "plated": false,
+            "stained": false,
+            "count": 0,
+            "countStained": 0
+          },
+          "burger": null,
+          "plated": false,
+          "stained": false
+        },
+        "x": 3.0875143050355307,
+        "z": -1.6533520661906216,
+        "y": 1.1612165700034192,
+        "vx": 0,
+        "vz": 0,
+        "vy": 0.02310000085830676,
+        "flying": true,
+        "impacts": 1
+      },
+      {
+        "id": 2,
+        "payload": {
+          "carry": {
+            "kind": "ingredient",
+            "ingredient": "bun",
+            "second": "patty",
+            "cook": "raw",
+            "plated": false,
+            "stained": false,
+            "count": 0,
+            "countStained": 0
+          },
+          "burger": null,
+          "plated": false,
+          "stained": false
+        },
+        "x": 3.0875143050355307,
+        "z": -1.6533520661906216,
+        "y": 1.15557503005044,
+        "vx": 0,
+        "vz": 0,
+        "vy": -0.28559999871253977,
+        "flying": true,
+        "impacts": 1
+      },
+      {
+        "id": 2,
+        "payload": {
+          "carry": {
+            "kind": "ingredient",
+            "ingredient": "bun",
+            "second": "patty",
+            "cook": "raw",
+            "plated": false,
+            "stained": false,
+            "count": 0,
+            "countStained": 0
+          },
+          "burger": null,
+          "plated": false,
+          "stained": false
+        },
+        "x": 3.0875143050355307,
+        "z": -1.6533520661906216,
+        "y": 1.15019128000216,
+        "vx": 0,
+        "vz": 0,
+        "vy": -0.4125000000000001,
+        "flying": true,
+        "impacts": 1
+      }
+    ],
+    "landed": {
+      "id": 2,
+      "payload": {
+        "carry": {
+          "kind": "ingredient",
+          "ingredient": "bun",
+          "second": "patty",
+          "cook": "raw",
+          "plated": false,
+          "stained": false,
+          "count": 0,
+          "countStained": 0
+        },
+        "burger": null,
+        "plated": false,
+        "stained": false
+      },
+      "x": 3.0875143050355307,
+      "z": -1.6533520661906216,
+      "y": 0,
+      "vx": 0,
+      "vz": 0,
+      "vy": 0,
+      "flying": false,
+      "impacts": 2
+    }
+  },
+  "lifecycle": {
+    "nodes": 1,
+    "renderers": 36
+  },
+  "restPreparation": true,
+  "editorGuard": true,
+  "platedTransfer": true,
+  "burgerThrowServe": true,
+  "served": 1,
+  "wrong": 0,
+  "singlePlateCleanup": true,
+  "noHoldFallthrough": true,
+  "touchCancel": true,
+  "backgroundCancelEvent": true,
+  "diagnosticDailyReset": true,
+  "viewports": [
+    {
+      "width": 1024,
+      "height": 768,
+      "verb": "放下",
+      "method": "点放 · 长按扔",
+      "minTarget": 96
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "verb": "放下",
+      "method": "点放 · 长按扔",
+      "minTarget": 120
+    },
+    {
+      "width": 1560,
+      "height": 720,
+      "verb": "放下",
+      "method": "点放 · 长按扔",
+      "minTarget": 120
+    },
+    {
+      "width": 780,
+      "height": 360,
+      "verb": "放下",
+      "method": "点放 · 长按扔",
+      "minTarget": 60
+    }
+  ],
+  "moves": [
+    {
+      "x": 3.5,
+      "z": -1.55,
+      "done": true
+    },
+    {
+      "x": 3,
+      "z": 0,
+      "done": true
+    },
+    {
+      "x": 2.45,
+      "z": 0,
+      "done": true
+    },
+    {
+      "x": 3,
+      "z": -1.4,
+      "done": true
+    },
+    {
+      "x": 3,
+      "z": 0,
+      "done": true
+    },
+    {
+      "x": 3.5,
+      "z": -1.55,
+      "done": true
+    },
+    {
+      "x": 3,
+      "z": 0,
+      "done": true
+    },
+    {
+      "x": 3,
+      "z": 0,
+      "done": true
+    },
+    {
+      "x": -3.4,
+      "z": 2.1,
+      "done": true
+    },
+    {
+      "x": 3.5,
+      "z": -1.55,
+      "done": true
+    },
+    {
+      "x": 3,
+      "z": 0,
+      "done": true
+    },
+    {
+      "x": -3.4,
+      "z": 2.1,
+      "done": true
+    },
+    {
+      "x": 2.870988080205851,
+      "z": 0.5045425359796756,
+      "done": true
+    },
+    {
+      "x": -3.4,
+      "z": 2.1,
+      "done": true
+    },
+    {
+      "x": 3.5,
+      "z": -1.55,
+      "done": true
+    },
+    {
+      "x": 0.5,
+      "z": -1.55,
+      "done": true
+    },
+    {
+      "x": 2.5,
+      "z": 0,
+      "done": true
+    },
+    {
+      "x": -1.5,
+      "z": -1.55,
+      "done": true
+    },
+    {
+      "x": 3.5,
+      "z": -1.55,
+      "done": true
+    },
+    {
+      "x": -1.5,
+      "z": -1.55,
+      "done": true
+    },
+    {
+      "x": 2,
+      "z": 0,
+      "done": true
+    },
+    {
+      "x": 6.303908696068601,
+      "z": 2.0031502515211694,
+      "done": true
+    },
+    {
+      "x": -1,
+      "z": 2.1,
+      "done": true
+    },
+    {
+      "x": 3.5,
+      "z": -1.55,
+      "done": true
+    },
+    {
+      "x": 0.5,
+      "z": -1.55,
+      "done": true
+    },
+    {
+      "x": 6.3,
+      "z": 0.5,
+      "done": true
+    },
+    {
+      "x": 3.5,
+      "z": -1.55,
+      "done": true
+    },
+    {
+      "x": 3,
+      "z": 0,
+      "done": true
+    }
+  ],
+  "errors": [],
+  "failed": []
+}

@@ -63,7 +63,7 @@ export const SPEC: Record<string, NodeSpec> = {
   Block_CounterW: { pos: [-2.5, 0.45, 3.1], scale: [1, 0.9, 1] },
   Block_CounterE: { pos: [1.25, 0.45, 3.1], scale: [2.5, 0.9, 1] },
   Block_Return: { pos: [-3.5, 0.45, -1.25], scale: [1, 0.9, 3.5], active: false },
-  Block_BackCounter: { pos: [-1.25, 0.45, -2.5], scale: [1.5, 0.9, 1] },
+  Block_BackCounter: { pos: [-1.25, 0.45, -2.5], scale: [1.5, 0.9, 1], active: false },
   Block_BackCounterE: { pos: [2.75, 0.45, -2.5], scale: [0.5, 0.9, 1] },
   Block_DrinkBase: fixtureNode('drinks'),
 
@@ -108,8 +108,8 @@ export const SPEC: Record<string, NodeSpec> = {
   Prop_ReturnBack: { pos: [-3.5, 0, -2.5], active: false },
   Prop_ReturnSide: { pos: [-3.5, 0, -1.25], scale: [1.5, 1, 1], yaw: 90, active: false },
   Prop_ReturnFront: { pos: [-3.5, 0, 0], active: false },
-  Prop_BackCounterW: { pos: [-1.625, 0, -2.5], scale: [0.75, 1, 1], active: true },
-  Prop_BackCounterW2: { pos: [-0.875, 0, -2.5], scale: [0.75, 1, 1] },
+  Prop_BackCounterW: { pos: [-1.625, 0, -2.5], scale: [0.75, 1, 1], active: false },
+  Prop_BackCounterW2: { pos: [-0.875, 0, -2.5], scale: [0.75, 1, 1], active: false },
   Prop_BackCounterE: { pos: [2.75, 0, -2.5], scale: [0.5, 1, 1] },
   Prop_DrinkBase: fixtureArt('drinks', 'Prop_DrinkBase'),
 }

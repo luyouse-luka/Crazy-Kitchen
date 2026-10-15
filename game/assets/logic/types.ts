@@ -172,6 +172,7 @@ export interface Station {
   pos: Vec2
   box: AABB
   triggerRange: number
+  access?: { front: Vec2 | null; reach: number; fixture: AABB }
 }
 
 // ─────────────────────────── 显示名 ───────────────────────────

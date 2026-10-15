@@ -35,9 +35,9 @@ export interface LayoutFixture {
 
 export const LAYOUT_FIXTURES: Readonly<Record<LayoutId, LayoutFixture>> = {
   fridge: {
-    node: 'Station_Fridge', kind: 'fridge', label: '冰箱', pose: { x: -3.5, z: 0, quarterTurn: 0 },
-    width: 1, depth: 1, front: { x: 1, z: 0 }, mode: 'free',
-    art: [{ node: 'Prop_Fridge', offset: [0, 0, 0], yaw: 90 }],
+    node: 'Station_Fridge', kind: 'fridge', label: '冰箱', pose: { x: 3.5, z: -2.5, quarterTurn: 0 },
+    width: 1, depth: 1, front: { x: 0, z: 1 }, mode: 'free',
+    art: [{ node: 'Prop_Fridge', offset: [0, 0, 0], yaw: 0 }],
   },
   grill: {
     node: 'Station_Grill', kind: 'grill', label: '烤炉', pose: { x: .5, z: -2.5, quarterTurn: 0 },
@@ -45,16 +45,16 @@ export const LAYOUT_FIXTURES: Readonly<Record<LayoutId, LayoutFixture>> = {
     art: [{ node: 'Prop_Grill', offset: [0, 0, 0] }],
   },
   assembly: {
-    node: 'Station_Assembly', kind: 'assembly', label: '制作台', pose: { x: -3.5, z: -1.5, quarterTurn: 0 },
-    width: 1, depth: 2, front: { x: 1, z: 0 }, mode: 'free',
+    node: 'Station_Assembly', kind: 'assembly', label: '制作台', pose: { x: -1.5, z: -2.5, quarterTurn: 0 },
+    width: 2, depth: 1, front: { x: 0, z: 1 }, mode: 'free',
     art: [
-      { node: 'Prop_Assembly', offset: [0, 0, -.5], yaw: 90 },
-      { node: 'Prop_AssemblyEast', offset: [0, 0, .5], yaw: 90 },
+      { node: 'Prop_Assembly', offset: [-.5, 0, 0], yaw: 0 },
+      { node: 'Prop_AssemblyEast', offset: [.5, 0, 0], yaw: 0 },
       { node: 'Prop_AssemblyPlate', offset: [0, 1, 0] },
     ],
   },
   shelf: {
-    node: 'Block_Plate', kind: 'shelf', label: '取盘架', pose: { x: -3.5, z: 1, quarterTurn: 0 },
+    node: 'Block_Plate', kind: 'shelf', label: '取盘架', pose: { x: -3.5, z: 0, quarterTurn: 0 },
     width: 1, depth: 1, front: { x: 1, z: 0 }, mode: 'free',
     art: [{ node: 'Prop_Plate', offset: [0, 0, 0], yaw: 90 }],
   },
@@ -69,12 +69,12 @@ export const LAYOUT_FIXTURES: Readonly<Record<LayoutId, LayoutFixture>> = {
     art: [{ node: 'Prop_WashRack', offset: [0, 0, 0], yaw: 90 }],
   },
   fryer: {
-    node: 'Block_Fryer', kind: 'fryer', label: '炸锅', pose: { x: 2, z: -2.5, quarterTurn: 0 },
-    width: 1, depth: 1, front: { x: 0, z: 1 }, mode: 'free', purchase: 'fryer',
-    art: [{ node: 'Prop_Fryer', offset: [0, 0, 0] }],
+    node: 'Block_Fryer', kind: 'fryer', label: '炸锅', pose: { x: -3.5, z: -1.5, quarterTurn: 0 },
+    width: 1, depth: 1, front: { x: 1, z: 0 }, mode: 'free', purchase: 'fryer',
+    art: [{ node: 'Prop_Fryer', offset: [0, 0, 0], yaw: 90 }],
   },
   drinks: {
-    node: 'Station_Drinks', kind: 'drinks', label: '饮料机', pose: { x: 3.5, z: -2.5, quarterTurn: 0 },
+    node: 'Station_Drinks', kind: 'drinks', label: '饮料机', pose: { x: 2, z: -2.5, quarterTurn: 0 },
     width: 1, depth: 1, front: { x: 0, z: 1 }, mode: 'free', purchase: 'drinks', runtime: true,
     triggerOffset: { x: 0, z: -.2 }, triggerSize: [.8, .6],
     art: [{ node: 'Prop_DrinkBase', offset: [0, 0, 0] }],
@@ -120,7 +120,6 @@ export const LAYOUT_FIXED = {
     { node: 'Wall_Store_S', x: 7.5, z: -3.1, width: 1, depth: .2 },
     { node: 'Wall_Kitchen_W', x: -4.1, z: -1.25, width: .2, depth: 3.5 },
     { node: 'Block_VoidNorth', x: .5, z: -4.5, width: 9, depth: 3 },
-    { node: 'Block_BackCounter', x: -1.25, z: -2.5, width: 1.5, depth: 1 },
     { node: 'Block_BackCounterE', x: 2.75, z: -2.5, width: .5, depth: 1 },
     { node: 'Block_StoreShelves', x: 7.5, z: -4.5, width: 1, depth: 3 },
     { node: 'Station_Storeroom', x: 6.5, z: -5.5, width: 1, depth: 1 },

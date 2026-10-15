@@ -2,7 +2,17 @@ import { COOK_LABEL, INGREDIENT_LABEL } from '../../logic/types'
 import type { Ingredient, OrderSpec, StationKind } from '../../logic/types'
 
 export type Gesture = 'tap' | 'hold' | 'wait' | 'move'
-export interface ActionPresentation { target: string; verb: string; gesture: Gesture; enabled: boolean }
+export type ActionIcon = 'move' | 'fridge' | 'pan-in' | 'pan-out' | 'burger' | 'assemble' | 'serve' | 'order' | 'box' | 'wash' | 'plate' | 'fire' | 'drink' | 'fryer' | 'door' | 'gear' | 'talk' | 'wait' | 'blocked' | 'pick' | 'place' | 'throw' | 'trash'
+export interface ActionPresentation { target: string; verb: string; gesture: Gesture; enabled: boolean; icon?: ActionIcon; secondaryIcon?: ActionIcon }
+export function groundPresentation(name: string, occupied: boolean): ActionPresentation {
+  return { target: name, verb: occupied ? '先腾空台面' : '拾取', gesture: 'tap', enabled: true, icon: occupied ? 'blocked' : 'pick', secondaryIcon: 'trash' }
+}
+const ACTION_ICONS: Record<string, ActionIcon> = {
+  取料: 'fridge', 补货: 'box', 下锅: 'pan-in', 取肉: 'pan-out', 端盘: 'burger', 放下: 'place', 组装: 'assemble', 上菜: 'serve', 交外卖: 'box',
+  接单: 'order', 狂点骂: 'talk', 长按怼: 'talk', 开门: 'door', 装修: 'gear', 搬箱: 'box', 按住刷: 'wash', 泡碗: 'wash', 泡着: 'wait',
+  拿盘子: 'plate', 放盘子: 'plate', 灭火: 'fire', 着火了: 'fire', 放回: 'fire', 灭火器: 'fire', 取饮料: 'drink', 接饮料: 'drink', 接着: 'wait', 擦干净: 'wash',
+  取薯条: 'fryer', 下薯条: 'fryer', 炸着: 'wait', 倒掉: 'trash', 先放下: 'blocked', 拾取: 'pick',
+}
 export const STATION_NAME: Record<StationKind, string> = {
   fridge: '冰箱', grill: '烤炉', assembly: '制作台', serve: '出餐口', register: '前台',
   storeroom: '冷库', sink: '洗碗池', rack: '晾盘架', shelf: '盘架', delivery: '外卖口',
@@ -10,6 +20,7 @@ export const STATION_NAME: Record<StationKind, string> = {
 }
 export const GESTURE_LABEL: Record<Gesture, string> = { tap: '点按', hold: '按住', wait: '等待', move: '拖动移动' }
 const LEGACY: Record<string, [StationKind, string, Gesture]> = {
+  先放下: ['fridge', '先放下手中物品', 'wait'],
   取料: ['fridge', '选择食材', 'tap'], 补货: ['fridge', '放入货箱', 'tap'],
   下锅: ['grill', '放入肉饼', 'tap'], 取肉: ['grill', '取出肉饼', 'tap'],
   灭火: ['grill', '灭火', 'tap'], 着火了: ['grill', '先拿灭火器', 'move'],
@@ -32,6 +43,7 @@ export function actionPresentation(verb: string, station?: StationKind | null): 
   return {
     target: station ? STATION_NAME[station] : known ? STATION_NAME[known[0]] : verb ? '当前工位' : '附近无工位',
     verb: known?.[1] ?? (verb || '走近工位'), gesture, enabled: !!verb && gesture !== 'wait' && gesture !== 'move',
+    icon: ACTION_ICONS[verb] ?? (verb ? 'pick' : 'move'),
   }
 }
 
@@ -67,6 +79,7 @@ export function guideLayout(width: number, height: number, safe: UiInsets = { le
     const candidates = [
       { x: -80, y: bottom, w: 160, h: 88 },
       { x: -width / 2 + Math.max(18, safe.left + 12), y: height / 2 - Math.max(214, safe.top + 214), w: 160, h: 88 },
+      { x: -width / 2 + Math.max(18, safe.left + 12), y: height / 2 - Math.max(360, safe.top + 360), w: 160, h: 88 },
     ]
     const fit = candidates.find(c => !obstacles.some(r => overlaps(r, c)) && !overlaps(c, leftControl) && !overlaps(c, rightControl))
     card = fit ?? candidates[0]!

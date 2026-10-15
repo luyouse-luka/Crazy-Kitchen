@@ -40,8 +40,8 @@ describe('restaurant art integration', () => {
       }
       centres.push([x / 72, z / 72])
     }
-    expect(centres.some(([x, z]) => Math.abs(x + 3.5) < 1e-5 && Math.abs(z - 1) < 1e-5)).toBe(true)
-    expect(centres.some(([x, z]) => Math.abs(x + 3.5) < 1e-5 && Math.abs(z + 1.5) < 1e-5)).toBe(true)
+    expect(centres.some(([x, z]) => Math.abs(x - 3.5) < 1e-5 && Math.abs(z + 2.5) < 1e-5)).toBe(true)
+    expect(centres.some(([x, z]) => Math.abs(x + 1.5) < 1e-5 && Math.abs(z + 2.5) < 1e-5)).toBe(true)
     expect(centres.some(([x, z]) => Math.abs(x + 3.5) < 1e-5 && Math.abs(z) < 1e-5)).toBe(true)
     expect(centres.some(([x, z]) => Math.abs(x) < 1e-5 && Math.abs(z) < 1e-5)).toBe(false)
     expect(centres.some(([x, z]) => Math.abs(x + 3.5) < 1e-5 && Math.abs(z + 2.5) < 1e-5)).toBe(false)

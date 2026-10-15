@@ -4,6 +4,7 @@ import { CHEF_RADIUS, FLOOR_BOUNDS } from '../game/assets/logic/movement'
 import { circleOverlapsAABB } from '../game/assets/logic/collision'
 import type { AABB } from '../game/assets/logic/collision'
 import { RUNTIME_SPOTS } from '../game/assets/logic/scene-layout'
+import { buildLayoutGeometry, canUseStation, defaultLayout } from '../game/assets/logic/layout'
 
 export const CORE_STATIONS = ['Station_Fridge', 'Station_Grill', 'Station_Assembly', 'Station_Serve']
 export const STEP = 0.1
@@ -15,6 +16,7 @@ export const specBox = (name: string, spec = SPEC): Obstacle => {
 }
 
 export function navigation(spec: Record<string, NodeSpec> = SPEC) {
+  const shared = spec === SPEC ? buildLayoutGeometry(defaultLayout()) : null
   const obstacles = Object.keys(spec)
     .filter(n => spec[n]!.active !== false && (n.startsWith('Station_') || n.startsWith('Block_') || n.startsWith('Wall_')))
     .map(n => specBox(n, spec))
@@ -54,6 +56,8 @@ export function navigation(spec: Record<string, NodeSpec> = SPEC) {
     (a.name === 'Station_Storeroom' && b.name === 'Block_Crates') ||
     (a.name === 'Station_Drinks' && b.name === 'Block_DrinkBase')
   const access = (station: Obstacle) => [...reached].filter(id => {
+    const realStation = shared?.stations.find(s => s.id === station.name)
+    if (realStation) return canUseStation(at(id), realStation, shared!.blockers)
     const p = at(id), dx = p.x - station.center.x, dz = p.z - station.center.z
     const distance = Math.hypot(dx, dz)
     if (distance > Math.max(station.halfX, station.halfZ) + 0.7 + 1e-9) return false

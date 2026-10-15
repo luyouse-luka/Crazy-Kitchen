@@ -131,6 +131,7 @@ if (scene[model].__editorExtras__.restaurantArtRevision !== revision('actor-chef
   scene[model].__editorExtras__.restaurantArtRevision = revision('actor-chef')
 }
 scene[scene[model]._components.find(r => scene[r.__id__].__type__ === 'cc.SkeletalAnimation').__id__].playOnLoad = true
+scene[scene[model]._components.find(r => scene[r.__id__].__type__ === 'cc.SkeletalAnimation').__id__]._useBakedAnimation = false
 const view = scene.find(n => n.customerModels)
 view.customerModels = ['barbarian', 'knight', 'mage', 'ranger'].map(n => ({ __uuid__: meta(`actor-${n}`).userData.assetFinder.scenes[0], __expectedType__: 'cc.Prefab' }))
 view.onionModel = { __uuid__: meta('onion').userData.assetFinder.scenes[0], __expectedType__: 'cc.Prefab' }
