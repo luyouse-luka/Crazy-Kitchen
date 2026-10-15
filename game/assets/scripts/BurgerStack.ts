@@ -1,5 +1,6 @@
 import { Color, instantiate, MeshRenderer, Node, Vec3 } from 'cc'
 import type { Burger, CookLevel, Ingredient } from '../logic/types'
+import { PattyVisual } from './PattyVisual'
 
 /** Scene nodes cloned as layer art; the stack squashes each into a disc, so any food model works */
 export interface StackArt {
@@ -36,14 +37,6 @@ const LAYERS: Record<Exclude<Ingredient, 'bun'>, LayerSpec> = {
   bacon: { art: 'bacon', fallback: 'meat', h: 0.015, tint: new Color(190, 90, 80, 255) },
 }
 
-const COOK_TINT: Record<CookLevel, Color> = {
-  raw: new Color(255, 255, 255, 255),
-  rare: new Color(210, 130, 115, 255),
-  medium: new Color(160, 95, 65, 255),
-  well: new Color(115, 72, 48, 255),
-  burnt: new Color(45, 36, 32, 255),
-}
-
 /** The burger as a 3D stack: plate, bottom bun, toppings in the order they went on, top bun */
 export class BurgerStack {
   readonly node: Node
@@ -52,7 +45,13 @@ export class BurgerStack {
   private top: Node
   private layers = new Map<Ingredient, Node>()
   private patty2: Node
-  private key = ''
+  private patties: PattyVisual[] = []
+  private shown = false
+  private lastIngredients: Ingredient[] = []
+  private lastCook: CookLevel | null = null
+  private lastCook2: CookLevel | null | undefined = null
+  private lastDouble: boolean | undefined = false
+  private lastPlated = false
 
   constructor(parent: Node, art: StackArt) {
     this.node = new Node('BurgerStack')
@@ -63,11 +62,11 @@ export class BurgerStack {
     this.top = this.layer(art.bread, D, BUN_H)
     for (const [ing, s] of Object.entries(LAYERS) as [Exclude<Ingredient, 'bun'>, LayerSpec][]) {
       const source = art[s.art] ?? art[s.fallback!]
-      const n = this.layer(source!, ing === 'patty' ? D * 0.95 : D * 1.05, s.h)
+      const n = ing === 'patty' ? this.pattyLayer() : this.layer(source!, D * 1.05, s.h)
       if (!art[s.art] && s.tint) tint(n, s.tint)
       this.layers.set(ing, n)
     }
-    this.patty2 = this.layer(art.meat, D * 0.95, LAYERS.patty.h)
+    this.patty2 = this.pattyLayer()
     this.node.active = false
   }
 
@@ -80,9 +79,16 @@ export class BurgerStack {
     this.node.setPosition(x, y, z)
     const ings = b.ingredients
     const cook = b.cook
-    const key = `${ings.join()}|${cook}|${b.double ? b.cook2 : '-'}|${plated}`
-    if (key === this.key) return
-    this.key = key
+    let same = this.shown && cook === this.lastCook && b.cook2 === this.lastCook2 && b.double === this.lastDouble && plated === this.lastPlated && ings.length === this.lastIngredients.length
+    for (let i = 0; same && i < ings.length; i++) same = ings[i] === this.lastIngredients[i]
+    if (same) return
+    this.shown = true
+    this.lastCook = cook
+    this.lastCook2 = b.cook2
+    this.lastDouble = b.double
+    this.lastPlated = plated
+    this.lastIngredients.length = ings.length
+    for (let i = 0; i < ings.length; i++) this.lastIngredients[i] = ings[i]!
     for (const n of this.node.children) n.active = false
     let h = 0
     const put = (n: Node, dy: number): void => {
@@ -96,21 +102,34 @@ export class BurgerStack {
     for (const ing of ings) {
       if (ing === 'bun') continue
       const s = LAYERS[ing]
-      if (ing === 'patty' && cook) tint(this.layers.get(ing)!, COOK_TINT[cook])
+      if (ing === 'patty') this.patties[0]!.setCook(cook ?? 'raw')
       put(this.layers.get(ing)!, s.h)
       if (ing === 'patty' && b.double) {
-        if (b.cook2) tint(this.patty2, COOK_TINT[b.cook2])
+        this.patties[1]!.setCook(b.cook2 ?? 'raw')
         put(this.patty2, s.h)
       }
     }
     if (bun) put(this.top, BUN_H)
   }
 
-  /** A clone of `src` scaled to a w × h × w box whose bottom sits on y = 0 */
-  private layer(src: Node, w: number, h: number): Node {
-    const holder = new Node(src.name)
+  private pattyLayer(): Node {
+    const holder = new Node('Patty')
     holder.layer = this.node.layer
     this.node.addChild(holder)
+    this.patties.push(PattyVisual.create(holder, D * .95, LAYERS.patty.h))
+    return holder
+  }
+
+  /** A clone of `src` scaled to a w × h × w box whose bottom sits on y = 0 */
+  private layer(src: Node, w: number, h: number): Node {
+    return fitStackArt(this.node, src, w, h)
+  }
+}
+
+export function fitStackArt(parent: Node, src: Node, w: number, h: number): Node {
+    const holder = new Node(src.name)
+    holder.layer = parent.layer
+    parent.addChild(holder)
     const art = instantiate(src)
     holder.addChild(art)
     art.setRotationFromEuler(0, 0, 0)
@@ -134,7 +153,6 @@ export class BurgerStack {
     art.setScale(sx, sy, sz)
     art.setPosition(-((lo.x + hi.x) / 2) * sx, -lo.y * sy, -((lo.z + hi.z) / 2) * sz)
     return holder
-  }
 }
 
 function tint(n: Node, c: Color): void {

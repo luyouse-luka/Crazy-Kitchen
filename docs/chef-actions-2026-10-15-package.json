@@ -1,0 +1,30 @@
+{
+  "main": {
+    "bytes": 2253532,
+    "files": 45
+  },
+  "subpackages": [
+    {
+      "name": "internal",
+      "root": "subpackages/internal",
+      "bytes": 405194,
+      "files": 20
+    },
+    {
+      "name": "main",
+      "root": "subpackages/main",
+      "bytes": 6012236,
+      "files": 105
+    }
+  ],
+  "totalBytes": 8670962,
+  "mainLimit": 4194304,
+  "safeLimit": 3984384,
+  "totalLimit": 31457280,
+  "withinBudget": true,
+  "withinSafetyMargin": true,
+  "orientation": "landscapeRight",
+  "launchScene": "db://assets/main.scene",
+  "remoteBundles": [],
+  "debug": false
+}

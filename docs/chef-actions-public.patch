@@ -1,0 +1,289 @@
+diff --git a/game/assets/scripts/StationView.ts b/game/assets/scripts/StationView.ts
+--- a/game/assets/scripts/StationView.ts
++++ b/game/assets/scripts/StationView.ts
+@@ -99,6 +99,7 @@ import type { Review, ReviewKind, ReviewLog } from '../logic/reviews'
+ import { CARD_LINES } from './cardLines'
+ import { ComputerPanel, NameTab, Toast, TOAST_H, TOAST_W } from './ReviewUi'
+ import { Controls } from './Controls'
++import { ChefActions } from './ChefActions'
+ import { BurgerStack } from './BurgerStack'
+ import type { OfferRow, ReviewLine } from './ReviewUi'
+ import {
+@@ -542,6 +543,8 @@ export class StationView extends Component {
+   /** 出餐口的 x；顾客取餐站在柜台外 queueZ 那条线上 */
+   private pickupX = 0
+   private playerAnim: SkeletalAnimation | null = null
++  private chefActions: ChefActions | null = null
++  private chefFrame = { running: false, moving: false, carrying: false, scrubbing: false, holding: false, sinkInReach: false }
+   private playerModel: Node | null = null
+   private playerWalking = false
+   private carryBubble!: Bubble
+@@ -908,6 +911,7 @@ export class StationView extends Component {
+   override onDestroy(): void {
+     this.cutaway?.destroy()
+     this.workstationEffects?.destroy()
++    this.chefActions?.destroy()
+     input.off(Input.EventType.TOUCH_START, this.onTouchStart, this)
+     input.off(Input.EventType.TOUCH_MOVE, this.onTouchMove, this)
+     input.off(Input.EventType.TOUCH_END, this.onTouchEnd, this)
+@@ -1199,6 +1203,7 @@ export class StationView extends Component {
+   }
+ 
+   private onTouchCancel(): void {
++    this.chefActions?.reset()
+     this.mouseDown = false
+     this.router.cancelAll()
+   }
+@@ -1473,7 +1478,7 @@ export class StationView extends Component {
+     const held = this.kitchen.carry.kind
+     if (station.kind === 'fridge') {
+       // 抱着箱子点冰柜就是补货，不用开面板
+-      if (held === 'crate') return this.act(interact(this.kitchen, this.movement.pos, station))
++      if (held === 'crate') return this.act(this.interactAt(station))
+       // 手上拿着生料也让开 —— 点错一样食材不该逼玩家先跑一趟垃圾桶。
+       // 盘子例外，换食材等于把整个汉堡扔了，那一下要玩家自己按 discard。
+       if (held === 'plate' || held === 'stack') return this.report('hands-full')
+@@ -1495,7 +1500,7 @@ export class StationView extends Component {
+     }
+     if (station.kind === 'delivery') {
+       const d = matchDelivery(this.desk, this.kitchen.burger)
+-      const r = interact(this.kitchen, this.movement.pos, station, { spec: d?.spec })
++      const r = this.interactAt(station, { spec: d?.spec })
+       if (r.kind === 'serve' && d && r.verdict) {
+         const rv = serveReview(r.verdict.ok, false, d.max > 0 ? d.left / d.max : 0)
+         const line = CARD_LINES[this.cardIndex(DELIVERY_ID_BASE + d.id)]!
+@@ -1515,7 +1520,7 @@ export class StationView extends Component {
+         const side: Side = held === 'fries' ? 'fries' : 'drink'
+         const c = matchSide(this.shift.flow, side)
+         if (!c && this.gift(side, station)) return
+-        const r = interact(this.kitchen, this.movement.pos, station, { spec: c?.spec })
++        const r = this.interactAt(station, { spec: c?.spec })
+         if ((r.kind === 'serve-fries' || r.kind === 'serve-drink') && c) {
+           const v = c.burgerVerdict
+           const otherDue = side === 'fries' ? c.drinkDue : c.friesDue
+@@ -1527,7 +1532,7 @@ export class StationView extends Component {
+       }
+       // 谁接这一盘是玩法规则，不在组件里挑：logic 先找吃得下的，找不到砸给最急的那位
+       const c = matchCustomer(this.shift.flow, this.kitchen.burger)
+-      const r = interact(this.kitchen, this.movement.pos, station, { spec: c?.spec })
++      const r = this.interactAt(station, { spec: c?.spec })
+       if (r.kind === 'serve' && c && r.verdict) {
+         const v = r.verdict
+         if (v.ok && (c.friesDue || c.drinkDue)) {
+@@ -1538,7 +1543,7 @@ export class StationView extends Component {
+       }
+       return this.act(r, r.reason === 'hands-empty' ? '先端上做好的汉堡' : undefined)
+     }
+-    this.act(interact(this.kitchen, this.movement.pos, station))
++    this.act(this.interactAt(station))
+   }
+ 
+   /** Holding the action key at the sink: scrub, with a brush sound every so often and a cheer when done */
+@@ -1597,8 +1602,27 @@ export class StationView extends Component {
+     this.floaters.spawn(this.cameraComp, station.pos.x, BUBBLE_Y.grill, station.pos.z, text, ok && !late ? GOOD_COLOR : BAD_COLOR, 34)
+   }
+ 
++  private interactAt(station: Station, options?: Parameters<typeof interact>[3]): InteractResult {
++    const k = this.kitchen
++    const result = interact(k, this.movement.pos, station, options)
++    let target = this.workstationEffects?.actionTarget(station.kind, Math.max(0, result.slot)) ?? null
++    if (station.kind === 'assembly') {
++      const plate = this.playerNode.scene.getChildByPath('Kitchen/Props/Prop_AssemblyPlate/plate')
++      target = plate ? new Vec3(plate.worldPosition.x, this.benchTopY, plate.worldPosition.z) : null
++    }
++    if (!target) {
++      const m = this.movement.pos, dx = m.x - station.pos.x, dz = m.z - station.pos.z
++      target = new Vec3(station.pos.x + Math.sign(dx) * Math.min(Math.abs(dx), station.box.halfX), .82,
++        station.pos.z + Math.sign(dz) * Math.min(Math.abs(dz), station.box.halfZ))
++    }
++    this.chefActions?.notify(result.kind, target)
++    if (result.kind !== 'blocked') this.movement.facingYaw = Math.atan2(target.x - this.movement.pos.x, target.z - this.movement.pos.z)
++    return result
++  }
++
+   private act(r: InteractResult, hint?: string): void {
+     if (r.kind === 'blocked') return this.report(r.reason, hint)
++    if (r.kind === 'discard') this.chefActions?.notify('discard', null)
+     const s = SFX_FOR[r.kind]
+     if (s) this.sfx.play(s)
+   }
+@@ -1610,12 +1634,12 @@ export class StationView extends Component {
+       this.closePanel()
+       if (!station) return this.report('unsupported')
+       if (i === INGREDIENTS.length) {
+-        const r = interact(this.kitchen, this.movement.pos, station, { plates: true })
++        const r = this.interactAt(station, { plates: true })
+         return this.act(r, r.reason === 'out-of-stock' ? '备用盘子领完了' : undefined)
+       }
+       // Picking closes the panel, even when refused — except after a first topping, so the
+       // second hand is one more tap (tap outside to leave with just the one)
+-      const r = interact(this.kitchen, this.movement.pos, station, { ingredient: INGREDIENTS[i]! })
++      const r = this.interactAt(station, { ingredient: INGREDIENTS[i]! })
+       this.act(r)
+       const c = this.kitchen.carry
+       if (r.kind === 'take-ingredient' && station.kind === 'fridge' && (c.kind === 'patty' || (c.kind === 'ingredient' && c.second === null))) {
+@@ -2399,7 +2423,9 @@ export class StationView extends Component {
+       const burger = k.burger
+       if (carry.kind === 'plate') {
+         const yaw = this.movement.facingYaw
+-        bs.show(burger, k.burgerPlated, m.x + Math.sin(yaw) * HAND.reach, HAND.y, m.z + Math.cos(yaw) * HAND.reach)
++        const anchor = this.chefActions?.carryAnchor
++        bs.show(burger, k.burgerPlated, anchor?.x ?? m.x + Math.sin(yaw) * HAND.reach,
++          anchor?.y ?? HAND.y, anchor?.z ?? m.z + Math.cos(yaw) * HAND.reach)
+       } else if (k.assemblyOccupied && b) bs.show(burger, false, b.pos.x, this.benchTopY, b.pos.z)
+       else bs.hide()
+     }
+@@ -2512,6 +2538,14 @@ export class StationView extends Component {
+     this.burgerStack = new BurgerStack(kitchenRoot.scene, {
+       ...art as { [K in keyof typeof art]: Node }, ...toppings,
+     })
++    this.chefActions = this.playerModel!.addComponent(ChefActions)
++    this.chefActions.configure(this.playerModel!, kitchenRoot.scene, {
++      ...art as { [K in keyof typeof art]: Node }, ...toppings,
++    }, {
++      fries: find('Prop_Fryer/fries'),
++      drink: find('Prop_Drinks/cup'),
++    })
++    this.chefActions.bindBurger(this.burgerStack)
+     for (const n of Object.values(toppings)) n.destroy()
+     // Sits on the bench's decor plate
+     this.benchTopY = benchPlate!.worldPosition.y + 0.02
+@@ -2762,6 +2796,7 @@ export class StationView extends Component {
+     this.syncHud()
+     this.resultOpen = true
+     this.workstationEffects?.hide()
++    this.chefActions?.reset()
+     this.panelOpen = false
+     if (this.reviewsOpen) this.closeReviews()
+     this.toast.clear()
+@@ -3031,6 +3066,7 @@ export class StationView extends Component {
+     this.rackWasDrying = false
+     this.scrubbing = false
+     this.workstationEffects?.hide()
++    this.chefActions?.reset()
+     this.shakeLeft = 0
+     this.nudged.fill(-1)
+     this.urgedLate.fill(-1)
+@@ -3075,6 +3111,14 @@ export class StationView extends Component {
+       this.camFocus.z + this.camOffset.z + sz,
+     )
+ 
++    const frame = this.chefFrame
++    frame.running = this.phase === 'open' && !this.resultOpen
++    frame.moving = this.movement.moving
++    frame.carrying = this.kitchen.carry.kind !== 'none'
++    frame.scrubbing = this.scrubbing && this.kitchen.sink.stage === 'soaked'
++    frame.holding = this.router.action.holding && !this.panelOpen && !this.reviewsOpen && !this.menuKind
++    frame.sinkInReach = stationInReach(this.kitchen, this.movement.pos)?.kind === 'sink'
++    this.chefActions?.sync(this.kitchen, frame, game.deltaTime, this.workstationEffects?.actionTarget('sink') ?? null)
+     this.syncBubbles()
+     this.syncCustomers()
+ 
+diff --git a/game/assets/scripts/WorkstationEffects.ts b/game/assets/scripts/WorkstationEffects.ts
+--- a/game/assets/scripts/WorkstationEffects.ts
++++ b/game/assets/scripts/WorkstationEffects.ts
+@@ -1,3 +1,5 @@
++import { PattyVisual } from './PattyVisual'
++import type { StationKind } from '../logic/types'
+ import { Color, gfx, instantiate, Material, Mesh, MeshRenderer, Node, Prefab, utils, Vec3 } from 'cc'
+ import { DRINK_SEC, grillCookLevel } from '../logic/kitchen'
+ import type { KitchenState } from '../logic/kitchen'
+@@ -14,10 +16,6 @@ const CUP: Tint = [.78, .93, .96, .45]
+ const JUICE: Tint = [1, .31, .035, .9]
+ const OIL: Tint = [.40, .25, .035, .7]
+ const WHITE: Tint = [.96, .96, .86, 1]
+-const SPONGE: Tint = [.95, .75, .07, 1]
+-const RAW: Tint = [.65, .17, .11, 1]
+-const COOKED: Tint = [.28, .09, .035, 1]
+-const BURNT: Tint = [.045, .032, .025, 1]
+ const CAPACITY = 6144
+ const SIDES = 10
+ const TAU = Math.PI * 2
+@@ -37,6 +35,8 @@ export class WorkstationEffects {
+   private basin: Vec3
+   private grill: Vec3[]
+   private pans: Node[] = []
++  private patties: PattyVisual[] = []
++  private scrubTarget!: Vec3
+   private drinks: Vec3
+   private fryer: Vec3
+   private rack: Vec3
+@@ -50,6 +50,7 @@ export class WorkstationEffects {
+     // Coordinates are in the fitted KayKit model space, not the collision box.
+     this.sink = anchor('Prop_Sink_0', 'kitchenSink', 0, 1.57, -.08)
+     this.basin = anchor('Prop_Sink_0', 'kitchenSink', 0, 1.27, -.08)
++    this.scrubTarget = new Vec3(this.basin.x, this.basin.y + .055, this.basin.z)
+     const stoves = props.getChildByName('Prop_Grill')!.children.filter(n => n.name === 'kitchenStove')
+     this.grill = stoves.map((n, i) => Vec3.transformMat4(new Vec3(), new Vec3(i ? .5 : -.5, 1.21, .49), n.worldMatrix))
+     if (panModel) this.pans = this.grill.map((p, i) => {
+@@ -66,6 +67,12 @@ export class WorkstationEffects {
+     this.fryer = new Vec3(fryer.x - .15, 1.035, fryer.z - .035)
+     const rack = props.getChildByName('Prop_WashRack')!.worldPosition
+     this.rack = new Vec3(rack.x, 1.06, rack.z)
++    this.patties = this.grill.map(p => {
++      const patty = PattyVisual.create(parent, .34, .032)
++      patty.node.setWorldPosition(p.x, p.y + .06, p.z)
++      patty.node.active = false
++      return patty
++    })
+     this.node = new Node('WorkstationEffects')
+     this.node.layer = parent.layer
+     parent.addChild(this.node)
+@@ -84,7 +91,16 @@ export class WorkstationEffects {
+     this.hide()
+   }
+ 
+-  hide(): void { this.node.active = false }
++  hide(): void {
++    this.node.active = false
++    for (const patty of this.patties) patty.node.active = false
++  }
++
++  actionTarget(kind: StationKind, slot = 0): Vec3 | null {
++    if (kind === 'sink') return this.scrubTarget
++    const p = kind === 'grill' ? this.grill[slot] : kind === 'drinks' ? this.drinks : kind === 'fryer' ? this.fryer : kind === 'rack' ? this.rack : null
++    return p ? new Vec3(p.x, p.y + (kind === 'grill' ? .065 : 0), p.z) : null
++  }
+ 
+   update(k: KitchenState, scrubbing: boolean, running: boolean, dt: number): void {
+     this.used = 0
+@@ -93,6 +109,9 @@ export class WorkstationEffects {
+     const t = this.clock
+     for (let i = 0; i < this.grill.length; i++) {
+       const slot = k.grill[i], p = this.grill[i]!
++      const visual = this.patties[i]!
++      visual.node.active = !!slot?.busy
++      if (slot?.busy) visual.setCook(grillCookLevel(k, i))
+       if (!slot?.busy && !k.fire) continue
+       const burnt = slot?.busy && grillCookLevel(k, i) === 'burnt'
+       for (let j = 0; j < (k.fire ? 6 : 4); j++) {
+@@ -102,11 +121,8 @@ export class WorkstationEffects {
+         this.flame(x, p.y - .02, z, k.fire ? .085 : .045, h, FIRE, t + j)
+         this.flame(x, p.y - .015, z, k.fire ? .045 : .024, h * .62, CORE, t + j)
+       }
+-      if (slot?.busy) {
+-        this.disc(p.x, p.y + .06, p.z, .17, .032, burnt ? BURNT : slot.elapsed < k.cfg.cook.rareAt ? RAW : COOKED)
+-        for (let j = -1; j <= 1; j++) this.box(p.x + j * .065, p.y + .078, p.z, .017, .003, .22, BURNT)
+-      }
+-      this.puffs(p, t, burnt || k.fire ? SMOKE : STEAM, k.fire ? .95 : .48, 6)
++
++      if (!burnt || k.fire) this.puffs(p, t, k.fire ? SMOKE : STEAM, k.fire ? .95 : .48, 6)
+     }
+     if (k.sink.stage !== 'empty') {
+       const p = this.basin
+@@ -124,7 +140,6 @@ export class WorkstationEffects {
+         this.blob(p.x + Math.cos(a) * .16, p.y + .02 + wave * .025, p.z + Math.sin(a) * .16, .023 + wave * .018, .018, .023 + wave * .018, FOAM)
+       }
+       if (scrubbing) {
+-        this.box(p.x + Math.sin(t * 24) * .10, p.y + .044, p.z + Math.cos(t * 12) * .055, .095, .04, .055, SPONGE)
+         this.puffs(p, t * 1.5, FOAM, .22, 5)
+       }
+     }
+@@ -237,6 +252,7 @@ export class WorkstationEffects {
+ 
+   destroy(): void {
+     for (const pan of this.pans) pan.destroy()
++    for (const patty of this.patties) patty.node.destroy()
+     this.node.destroy()
+     this.mesh.destroy()
+     this.material.destroy()

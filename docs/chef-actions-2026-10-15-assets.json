@@ -1,0 +1,91 @@
+{
+  "baseline": "88b51c3",
+  "protectedFilesUnchanged": [
+    "game/assets/main.scene",
+    "game/assets/scripts/StationView.ts",
+    "game/assets/scripts/WorkstationEffects.ts",
+    "game/assets/art/restaurant/actor-chef.glb",
+    "game/assets/art/restaurant/actor-chef.glb.meta"
+  ],
+  "chef": {
+    "bytes": 673892,
+    "sha256": "81c381e7983513386726d43b5822e07c241b99c6c8f447d2ee67c7dc8eb2696f",
+    "uuid": "dc8ee3a1-6ff6-43bb-8e2e-b1c4992d4f96",
+    "bones": [
+      "K_root",
+      "K_hips",
+      "K_upperleg.l",
+      "K_lowerleg.l",
+      "K_foot.l",
+      "K_toes.l",
+      "K_upperleg.r",
+      "K_lowerleg.r",
+      "K_foot.r",
+      "K_toes.r",
+      "K_spine",
+      "K_chest",
+      "K_upperarm.r",
+      "K_lowerarm.r",
+      "K_wrist.r",
+      "K_hand.r",
+      "K_handslot.r",
+      "K_head",
+      "K_upperarm.l",
+      "K_lowerarm.l",
+      "K_wrist.l",
+      "K_hand.l",
+      "K_handslot.l"
+    ],
+    "clips": [
+      "idle",
+      "walk",
+      "sit"
+    ]
+  },
+  "addedModelTextureAudioBytes": 0,
+  "newSourceAndMetaBytes": 22203,
+  "sourceFiles": [
+    {
+      "file": "game/assets/scripts/ChefActions.ts",
+      "bytes": 11638
+    },
+    {
+      "file": "game/assets/scripts/ChefActions.ts.meta",
+      "bytes": 171
+    },
+    {
+      "file": "game/assets/scripts/ChefMotion.ts",
+      "bytes": 3532
+    },
+    {
+      "file": "game/assets/scripts/ChefMotion.ts.meta",
+      "bytes": 171
+    },
+    {
+      "file": "game/assets/scripts/CookAppearance.ts",
+      "bytes": 590
+    },
+    {
+      "file": "game/assets/scripts/CookAppearance.ts.meta",
+      "bytes": 171
+    },
+    {
+      "file": "game/assets/scripts/PattyVisual.ts",
+      "bytes": 5759
+    },
+    {
+      "file": "game/assets/scripts/PattyVisual.ts.meta",
+      "bytes": 171
+    }
+  ],
+  "runtimeGeometry": {
+    "sharedPattyVariants": 5,
+    "bodyTriangles": {
+      "raw": 48,
+      "otherLevels": 54
+    },
+    "smokeTrianglesPerVisibleBurntPatty": 24,
+    "spongeTriangles": 12,
+    "note": "Five shared body meshes and one shared opaque material; one smoke mesh/material per PattyVisual, drawn only when burnt. Two grill patties add up to two opaque draws. Each visible burnt patty adds one transparent draw. One sponge mesh/material adds one draw only during scrubbing. Desktop profiler and phone performance must be reported separately."
+  }
+}
