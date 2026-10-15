@@ -49,6 +49,16 @@
 
 ## 📍 当前断点（2026-10-15 常用工位默认位置与自定义布局计划）
 
+### 自定义布局 Task 1：数据与旋转几何（2026-10-15）
+
+用户恢复实现后进一步限定：本次只完成当前任务，其余在其他对话窗口继续。本轮完成共享工位目录（稳定 ID、默认摆位、设备组占地 / 操作方向 / 编辑方式 / 购买条件）、完整布局结构解析、独立默认拷贝、Cocos 朝向一致的四档旋转与几何投影。前台服务标记与固定柜台碰撞分开；饮料触发盒保留原尺寸和局部偏移，整台物理占地包含底柜。`tools/scene-spec.ts` 从共享目录派生设备 / 模型默认位置，`main.scene` 无改动。
+
+工作区 `C:/Users/12255/.codex/worktrees/custom-kitchen-layout/kitchen-chaos`，分支 `codex/custom-kitchen-layout`，起点 `be80cc6`；原 main 保留基线。本次没有接入编辑器或新存档。下一窗口从实现计划 Task 2（净宽、连通性与真实操作面）继续，交接见 `docs/custom-layout-task1-handoff-2026-10-15.md`。
+
+新增 27 项先失败后通过的布局数据 / 旋转 / 解析 / 占地 / 场景来源检查；`pnpm check` 共 546 项 / 41 文件、零引擎依赖和类型检查通过。默认 `pnpm layout` 完成率 91.8%、后期 84.3%、idle 偏差 +0.6%，原闸门通过；`pnpm scene` 通过，`pnpm scene:apply` dry-run 明确无改动。独立审查无待修项，额外确认整个 SPEC 与基线 be80cc6 的全部默认值一致。
+
+文件清单：`game/assets/logic/scene-layout.ts`、新增 `game/assets/logic/layout.ts` 及 `.meta`、`tools/scene-spec.ts`、新增 `tests/layout.test.ts`、实现计划执行状态、本记录及 Task 1 交接文件。后续 Task 2–7 保持未完成；未合并 main、推送、发布或重新构建游戏。
+
 ### 暂停与 Git 提交断点（2026-10-15）
 
 用户已认可自定义布局实现计划，选择“本会话直接实现”，随后要求先暂停、记录并将全部改动提交 Git。执行停在 Task 1 之前：只有启动说明和读取尝试，未新增编辑器代码、布局存档或装修入口。恢复时沿用已批准方案和执行方式，从 `docs/superpowers/plans/2026-10-15-custom-kitchen-layout.md` 的 Task 1 开始，不重新征求范围确认。

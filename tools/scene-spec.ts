@@ -1,6 +1,9 @@
 /** Shared scene transforms for scene:apply, scene checks, and navigation.
  * Layout source: ROADMAP.md, open-centre layout; cube scales are metres.
  */
+import { LAYOUT_FIXTURES } from '../game/assets/logic/scene-layout'
+import type { LayoutId } from '../game/assets/logic/scene-layout'
+
 export interface NodeSpec {
   pos?: [number, number, number]
   yaw?: number
@@ -13,6 +16,20 @@ export const RENAMES: Record<string, string> = {
   Wall_W: 'Wall_E',
 }
 
+function fixtureNode(id: LayoutId): NodeSpec {
+  const f = LAYOUT_FIXTURES[id]
+  return { pos: [f.pose.x, .45, f.pose.z], scale: [f.width, .9, f.depth] }
+}
+
+function fixtureArt(id: LayoutId, node: string): NodeSpec {
+  const f = LAYOUT_FIXTURES[id], art = f.art.find(a => a.node === node)
+  if (!art) throw new Error(`Missing layout art: ${id}/${node}`)
+  return {
+    pos: [f.pose.x + art.offset[0], art.offset[1], f.pose.z + art.offset[2]],
+    ...(art.yaw === undefined ? {} : { yaw: art.yaw }),
+  }
+}
+
 export const SPEC: Record<string, NodeSpec> = {
 
   Floor: { pos: [0.5, -0.05, 0.3], scale: [9, 0.1, 6.6] },
@@ -23,13 +40,13 @@ export const SPEC: Record<string, NodeSpec> = {
   Wall_N: { pos: [0.5, 1.25, -3.1], scale: [9.2, 2.5, 0.2] },
   Wall_StoreBack: { pos: [6.5, 1.25, -6.1], scale: [3.2, 2.5, 0.2] },
 
-  Station_Fridge: { pos: [-3.5, 0.45, 0], scale: [1, 0.9, 1] },
-  Station_Grill: { pos: [0.5, 0.45, -2.5], scale: [2, 0.9, 1] },
-  Station_Assembly: { pos: [-3.5, 0.45, -1.5], scale: [1, 0.9, 2] },
-  Station_Serve: { pos: [-1, 0.45, 3.1], scale: [2, 0.9, 1] },
-  Station_Order: { pos: [-3.5, 0.45, 3.1], scale: [1, 0.9, 1] },
+  Station_Fridge: fixtureNode('fridge'),
+  Station_Grill: fixtureNode('grill'),
+  Station_Assembly: fixtureNode('assembly'),
+  Station_Serve: fixtureNode('serve'),
+  Station_Order: fixtureNode('register'),
 
-  Station_Delivery: { pos: [3, 0.45, 3.1], scale: [1, 0.9, 1] },
+  Station_Delivery: fixtureNode('delivery'),
 
   Station_Storeroom: { pos: [6.5, 0.45, -5.5], scale: [1, 0.9, 1] },
 
@@ -41,20 +58,20 @@ export const SPEC: Record<string, NodeSpec> = {
   Wall_Utility: { pos: [5.1, 0.45, -1], scale: [0.2, 0.9, 4], active: false },
   Wall_Kitchen_W: { pos: [-4.1, 0.45, -1.25], scale: [0.2, 0.9, 3.5] },
   Block_Pack: { pos: [-2.5, 0.45, 3.1], scale: [1, 0.9, 1], active: false },
-  Block_Plate: { pos: [-3.5, 0.45, 1], scale: [1, 0.9, 1] },
-  Block_Fryer: { pos: [2, 0.45, -2.5], scale: [1, 0.9, 1] },
+  Block_Plate: fixtureNode('shelf'),
+  Block_Fryer: fixtureNode('fryer'),
   Block_CounterW: { pos: [-2.5, 0.45, 3.1], scale: [1, 0.9, 1] },
   Block_CounterE: { pos: [1.25, 0.45, 3.1], scale: [2.5, 0.9, 1] },
   Block_Return: { pos: [-3.5, 0.45, -1.25], scale: [1, 0.9, 3.5], active: false },
   Block_BackCounter: { pos: [-1.25, 0.45, -2.5], scale: [1.5, 0.9, 1] },
   Block_BackCounterE: { pos: [2.75, 0.45, -2.5], scale: [0.5, 0.9, 1] },
-  Block_DrinkBase: { pos: [3.5, 0.45, -2.5], scale: [1, 0.9, 1] },
+  Block_DrinkBase: fixtureNode('drinks'),
 
   Block_VoidNorth: { pos: [0.5, 0.45, -4.5], scale: [9, 0.9, 3] },
   Block_StoreShelves: { pos: [7.5, 0.45, -4.5], scale: [1, 0.9, 3] },
 
-  Station_Sink: { pos: [7.5, 0.45, 0.5], scale: [1, 0.9, 2] },
-  Block_DishRack: { pos: [7.5, 0.45, 2], scale: [1, 0.9, 1] },
+  Station_Sink: fixtureNode('sink'),
+  Block_DishRack: fixtureNode('rack'),
   Block_Crates: { pos: [6.5, 0.45, -5.5], scale: [0.8, 0.9, 0.8] },
 
 
@@ -69,17 +86,17 @@ export const SPEC: Record<string, NodeSpec> = {
   Anchor_Hand: { pos: [0, 1.75, 0] },
 
   Shadow: { pos: [0, 0.006, 0], scale: [0.08, 1, 0.06], active: true },
-  Prop_Fridge: { pos: [-3.5, 0, 0], yaw: 90 },
-  Prop_Grill: { pos: [0.5, 0, -2.5] },
-  Prop_Assembly: { pos: [-3.5, 0, -2], yaw: 90 },
-  Prop_AssemblyEast: { pos: [-3.5, 0, -1], yaw: 90 },
-  Prop_AssemblyPlate: { pos: [-3.5, 1, -1.5] },
-  Prop_Pack: { pos: [-2.5, 0, 3.1], yaw: 0 },
-  Prop_Plate: { pos: [-3.5, 0, 1], yaw: 90 },
-  Prop_Fryer: { pos: [2, 0, -2.5] },
-  Prop_Sink_0: { pos: [7.5, 0, 0], yaw: 90, active: true },
-  Prop_Sink_1: { pos: [7.5, 0, 1], yaw: 90, active: true },
-  Prop_WashRack: { pos: [7.5, 0, 2], yaw: 90 },
+  Prop_Fridge: fixtureArt('fridge', 'Prop_Fridge'),
+  Prop_Grill: fixtureArt('grill', 'Prop_Grill'),
+  Prop_Assembly: fixtureArt('assembly', 'Prop_Assembly'),
+  Prop_AssemblyEast: fixtureArt('assembly', 'Prop_AssemblyEast'),
+  Prop_AssemblyPlate: fixtureArt('assembly', 'Prop_AssemblyPlate'),
+  Prop_Pack: fixtureArt('serve', 'Prop_Pack'),
+  Prop_Plate: fixtureArt('shelf', 'Prop_Plate'),
+  Prop_Fryer: fixtureArt('fryer', 'Prop_Fryer'),
+  Prop_Sink_0: { ...fixtureArt('sink', 'Prop_Sink_0'), active: true },
+  Prop_Sink_1: { ...fixtureArt('sink', 'Prop_Sink_1'), active: true },
+  Prop_WashRack: fixtureArt('rack', 'Prop_WashRack'),
   Prop_Crates: { pos: [6.4, 0, -5.5] },
   Prop_Shelf_0: { pos: [7.7, 0, -5.4], scale: [0.75, 0.65, 0.75] },
   Prop_Shelf_1: { pos: [7.7, 0, -4.45], scale: [0.75, 0.65, 0.75] },
@@ -94,7 +111,7 @@ export const SPEC: Record<string, NodeSpec> = {
   Prop_BackCounterW: { pos: [-1.625, 0, -2.5], scale: [0.75, 1, 1], active: true },
   Prop_BackCounterW2: { pos: [-0.875, 0, -2.5], scale: [0.75, 1, 1] },
   Prop_BackCounterE: { pos: [2.75, 0, -2.5], scale: [0.5, 1, 1] },
-  Prop_DrinkBase: { pos: [3.5, 0, -2.5] },
+  Prop_DrinkBase: fixtureArt('drinks', 'Prop_DrinkBase'),
 }
 
 // ─────────────────────────── 材质 ───────────────────────────

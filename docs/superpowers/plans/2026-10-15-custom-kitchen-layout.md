@@ -10,6 +10,8 @@
 
 **Spec:** [已确认的设计稿](../../custom-layout-design-2026-10-14.md)。2026-10-15 用户补充：冰箱与盘子默认位置仍需调整，常用东西尽量不放角落；本计划采用下面的新默认布局。
 
+**Execution status (2026-10-15):** 用户恢复后限定本次只做 Task 1，其余在其他窗口继续。Task 1 已完成，546 项回归通过，独立审查无待修项；Task 2–7 未开始。当前代码位于 `codex/custom-kitchen-layout` 分支的独立工作区，接力入口见 [Task 1 交接](../../custom-layout-task1-handoff-2026-10-15.md)。
+
 ## Global Constraints
 
 - 建筑地板、墙、门、冷库边界、顾客座位固定；只在休息日编辑。
@@ -102,7 +104,7 @@ export function buildLayoutGeometry(layout: LayoutConfig): LayoutGeometry
 
 类型定义与 `LAYOUT_FIXTURES`、`LAYOUT_FIXED` 放在 `scene-layout.ts`；上面四个函数放在 `layout.ts`。`Station` / `AABB` / `Vec2` 使用现有类型。每个 fixture 定义默认 pose、宽深、中文名、原 station ID/kind、操作面、触发中心偏移、编辑方式及购买 ID。`RUNTIME_SPOTS` 从默认规格派生，既有调用继续可用。
 
-- [ ] 写失败测试，先锁定默认坐标、真实轴交换与旋转符号：
+- [x] 写失败测试，先锁定默认坐标、真实轴交换与旋转符号：
 
 ```ts
 it('projects a quarter-turn using the original fixture dimensions', () => {
@@ -124,9 +126,9 @@ it('returns independent defaults and rejects malformed records', () => {
 })
 ```
 
-- [ ] Run `pnpm test -- tests/layout.test.ts`；新模块/函数缺失应失败。
-- [ ] 实现深复制默认记录、封闭字段解析和整数朝向检查。缺失工位/未知 ID/未知版本/字符串数值/NaN/Infinity/非对象均返回 null，不接受部分设备配置。有限但越界坐标留给 Task 2，不能静默夹回地图。
-- [ ] 实现旋转和 AABB 投影；每次从原宽深计算，不能交换上一次的结果：
+- [x] Run `pnpm test -- tests/layout.test.ts`；新模块/函数缺失应失败。
+- [x] 实现深复制默认记录、封闭字段解析和整数朝向检查。缺失工位/未知 ID/未知版本/字符串数值/NaN/Infinity/非对象均返回 null，不接受部分设备配置。有限但越界坐标留给 Task 2，不能静默夹回地图。
+- [x] 实现旋转和 AABB 投影；每次从原宽深计算，不能交换上一次的结果：
 
 ```ts
 export function rotateOffset(p: Vec2, q: QuarterTurn): Vec2 {
@@ -139,9 +141,9 @@ export function rotateOffset(p: Vec2, q: QuarterTurn): Vec2 {
 }
 ```
 
-- [ ] `buildLayoutGeometry` 生成原玩法 station ID，统一 movable fixture 碰撞。饮料底柜与机器算同一设备；水槽、制作台的两段算一盒。服务点不加入移动实体碰撞，原柜台代理组成固定物理柜台；固定补货点继续生成玩法工位。
-- [ ] 将 `SPEC` 中可编辑设备默认变换改为读取同一规格并加模型局部偏移；固定节点规格保留。增加默认投影与场景的逐 ID 比对，并测试 drinks 一档旋转后的机器偏移为 x=-0.2、z=0。
-- [ ] Run `pnpm test -- tests/layout.test.ts tests/scene-layout.test.ts`、`pnpm typecheck`、`git diff --check`。默认场景不变，测试通过。
+- [x] `buildLayoutGeometry` 生成原玩法 station ID，统一 movable fixture 碰撞。饮料底柜与机器算同一设备；水槽、制作台的两段算一盒。服务点不加入移动实体碰撞，原柜台代理组成固定物理柜台；固定补货点继续生成玩法工位。
+- [x] 将 `SPEC` 中可编辑设备默认变换改为读取同一规格并加模型局部偏移；固定节点规格保留。增加默认投影与场景的逐 ID 比对，并测试 drinks 一档旋转后的机器偏移为 x=-0.2、z=0。
+- [x] Run `pnpm test -- tests/layout.test.ts tests/scene-layout.test.ts`、`pnpm typecheck`、`git diff --check`。默认场景不变，测试通过。
 
 ## Task 2: 净宽、连通性与真实操作面
 
@@ -483,4 +485,4 @@ assert.deepEqual(result.failedRequests, [])
 
 推荐本会话直接逐任务实现，末尾做一次独立整体审查。主要工作共享 StationView 初始化、存档和相机/输入接口，顺序实现更容易维护这些依赖；不需要逐任务建立多个上下文。
 
-本文件是实现计划，尚不代表编辑器已实现或各验收已通过。2026-10-15 用户已审阅认可，选择“本会话直接实现”；随后要求暂停记录并提交全部改动至 Git。执行暂停在 Task 1 之前，未创建任何新布局逻辑或编辑器代码。恢复时按 `superpowers:executing-plans` 从 Task 1 顺序开始，保留已有批准，不重复询问执行方式。
+本文件是实现计划，尚不代表编辑器已实现或各验收已通过。2026-10-15 用户已审阅认可，选择“本会话直接实现”；暂停并提交基线后恢复，又限定本次只实现 Task 1，其余在其他窗口继续。当前实际状态以文件顶部 Execution status 和 Task 1 交接为准；后续沿用已批准的设计与执行方式，不重复确认。
