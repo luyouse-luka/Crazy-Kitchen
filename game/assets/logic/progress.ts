@@ -11,6 +11,8 @@ import { newDecor, parseDecor } from './decor'
 import type { Decor } from './decor'
 import { defaultLayout, parseLayout, validateLayout } from './layout'
 import type { LayoutConfig } from './scene-layout'
+import { newRegularMemory, parseRegularMemory } from './regular'
+import type { RegularMemory } from './regular'
 
 export const SAVE_KEY = 'kc.progress'
 /** v1 had no coins; it still loads, with coins 0 */
@@ -20,6 +22,7 @@ const VERSION = 3
 export const PASS_STARS = 1
 
 export interface Progress {
+  regular: RegularMemory
   layout: LayoutConfig
   /** 解锁到第几天（下次开游戏打这一天） */
   day: number
@@ -34,12 +37,12 @@ export interface Progress {
 }
 
 export function newProgress(): Progress {
-  return { day: 1, best: [], coins: 0, owned: [], decor: newDecor(), layout: defaultLayout() }
+  return { day: 1, best: [], coins: 0, owned: [], decor: newDecor(), layout: defaultLayout(), regular: newRegularMemory() }
 }
 
 export function parseProgress(raw: string | null | undefined): Progress {
   if (!raw) return newProgress()
-  let o: { v?: unknown; day?: unknown; best?: unknown; coins?: unknown; owned?: unknown; decor?: unknown; layout?: unknown }
+  let o: { v?: unknown; day?: unknown; best?: unknown; coins?: unknown; owned?: unknown; decor?: unknown; layout?: unknown; regular?: unknown }
   try {
     o = JSON.parse(raw)
   } catch {
@@ -49,6 +52,7 @@ export function parseProgress(raw: string | null | undefined): Progress {
   const owned = Array.isArray(o.owned) ? o.owned.filter((x): x is string => typeof x === 'string') : []
   const candidate = parseLayout(o.layout)
   return {
+    regular: parseRegularMemory(o.regular),
     day: Math.max(1, o.day as number),
     best: o.best.map((n) => (Number.isInteger(n) ? Math.max(0, Math.min(3, n as number)) : 0)),
     coins: Number.isInteger(o.coins) ? Math.max(0, o.coins as number) : 0,
@@ -59,7 +63,7 @@ export function parseProgress(raw: string | null | undefined): Progress {
 }
 
 export function serializeProgress(p: Progress): string {
-  return JSON.stringify({ v: VERSION, day: p.day, best: p.best, coins: p.coins, owned: p.owned, decor: p.decor, layout: p.layout })
+  return JSON.stringify({ v: VERSION, day: p.day, best: p.best, coins: p.coins, owned: p.owned, decor: p.decor, layout: p.layout, regular: p.regular })
 }
 
 export function progressWithLayout(p: Progress, layout: LayoutConfig): Progress {

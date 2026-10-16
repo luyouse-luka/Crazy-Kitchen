@@ -1,0 +1,2312 @@
+{
+  "schema": 1,
+  "verifiedAt": "2026-10-16T05:33:29.908750+00:00",
+  "branch": "codex/integrated-kitchen-experience",
+  "baseCommit": "b75e6260b2f4c28863e6da0584841fed55a59769",
+  "workingTreeChangesIncluded": true,
+  "sources": {
+    "game/assets/logic/gameplay.ts": "59c7c3209c7ea3f5815f5eeb8873879f8170a1578d57b8988c0260c655eb61d4",
+    "game/assets/logic/gameplay.ts.meta": "6ac72741be0180985ffd134bd464af09f8aacf0213f285b4177b69231b6e7c83",
+    "game/assets/logic/sim.ts": "b6ee49318916b248343cd002f17abd6ca924032fe2ef85634c3dd215eec732f1",
+    "game/assets/scripts/StationView.ts": "3ab5705533b54f7fdf4f101b2bc6bd0cfc31e7326959ced4c488a50059118590",
+    "tests/gameplay.test.ts": "cdf41a0a6eb122c96931833033e23e01e4b74ab9654bb3b5cf3b1ffbad8f778f",
+    "tests/difficulty.test.ts": "26e6c727d323e34c766dfc038007756dd29e8e4084e9eafb086e53257c66b860",
+    "tests/scene-layout.test.ts": "bd55ba7176bdd41b3ca47e875848c50831d1b0e06b947cbb20e4a9721609e922",
+    "package.json": "bff1a62e4589b94af473184efa072fa005a617f8fc589e7f75788443298afda4",
+    "tools/difficulty-capture.ts": "c0bdf6f503cbb63cc5eecef1be4ec2a943208ec03e8dee5036f97f1f01ed06a8",
+    "tools/difficulty-calibrate.ts": "752eb4fe756d378cb5e882a1028c2313312d0d2a3947aef4aa8d2d0b4b26bfc9",
+    "tools/layoutcheck.ts": "8b6e126b550c462e1ccf6abf9f39f7496c76e8a3201f696452a07d747976de03",
+    "tools/sim-cli.ts": "0ccdd1f187610dc1d6816b7d6d751d7cce6e7e08750ceed66378bf3fcfaa8d6a",
+    "tools/verify-p0-ui.cjs": "44e37a9ca7115bd4c007f4e0b574abfb9f6d0a2da7f8e0e627b3a3d1d9240b8b"
+  },
+  "validation": {
+    "check": {
+      "files": 50,
+      "tests": 649,
+      "typecheck": true,
+      "noEngine": true,
+      "logSha256": "3460a5c22887065f1bcfd47d996692bb04682828aa0e239469c6b49341377740"
+    },
+    "geometry": {
+      "scene": {
+        "logSha256": "75bccc5d65d0023b8e6898c8afd98e5b0ca6867d1215c452db76c2d27a9acf39",
+        "tail": [
+          "  { name: 'Station_Storeroom', x: 6.5, z: -5.5, w: 1, d: 1 },",
+          "  { name: 'Station_Order', x: -3.5, z: 3.1, w: 1, d: 1 },",
+          "  { name: 'Station_Delivery', x: 3, z: 3.1, w: 1, d: 1 },",
+          "  { name: 'Station_Sink', x: 7.5, z: 0.5, w: 1, d: 2 },",
+          "]"
+        ],
+        "passedAnchors": [
+          "OK：无物理组件、无实时阴影、Skybox 无贴图",
+          "OK：671 个 _id 都是合法的压缩 uuid",
+          "OK：28 条路径在场景里都找得到",
+          "OK：router.tick() 排在读脉冲之后",
+          "OK：Position / Scale 与 §2.3 完全一致",
+          "OK：12 个材质，挂载 / 颜色 / Technique 全部对上定稿"
+        ]
+      },
+      "cam": {
+        "logSha256": "07af6c59c6f6cf98406423a957a2fda6e6f11ef690771664903ec556ae5a4803",
+        "tail": [
+          "   16:9         半高 3.60  玩家余量 0.48m  丢烤炉 19%  四工位全见 16%  不跟随 —",
+          "   19.5:9 实测    半高 3.00  玩家余量 0.48m  丢烤炉 38%  四工位全见 0%  不跟随 —",
+          "   20:9         半高 3.00  玩家余量 0.48m  丢烤炉 38%  四工位全见 0%  不跟随 —",
+          "",
+          "✅ 相机通过：三轴与场景一致，玩家在任何可达位置都完整可见"
+        ]
+      },
+      "layout": {
+        "logSha256": "bbf3849cf27ef941147582ca91e5345f15eb76dc3bddca00939e330815ec7fe8",
+        "tail": [
+          "   M1 基线        完成率 92.7%  后期 85.9%  idle 72.6s  带外 0 天",
+          "   场景摆位         完成率 92.2%  后期 84.9%  idle 67.5s  带外 0 天",
+          "   偏差：idle -7.0%  后期完成率 -0.9pt",
+          "",
+          "✅ 摆位通过：几何可走，难度与 M1 标定一致"
+        ]
+      }
+    },
+    "simulation": {
+      "runs": 2242,
+      "checks": {
+        "accounting": true,
+        "plates": true,
+        "singleItem": true,
+        "repeatable": true,
+        "sharedRuntimePolicy": true,
+        "firstDaySingleConcurrent": true
+      },
+      "snapshotSha256": "fa9b64debf91d39fa8ac7c3a65723e388376510204e0c485e9e346247233c230",
+      "resultSha256": "9606a3c55388ac5b26c473270ad851d3329bbb843cf25eedcf3d29bf172629dd"
+    },
+    "driftRejection": {
+      "anchorPresent": true,
+      "modifiedSnapshotRejected": true,
+      "exitCode": 1
+    },
+    "preview": [
+      {
+        "width": 587,
+        "height": 652,
+        "scrollWidth": 587,
+        "scrollHeight": 652,
+        "canvas": {
+          "x": 0,
+          "y": 0,
+          "w": 587,
+          "h": 652
+        },
+        "headerVisible": false,
+        "profilerVisible": false
+      },
+      {
+        "width": 1280,
+        "height": 720,
+        "scrollWidth": 1280,
+        "scrollHeight": 720,
+        "canvas": {
+          "x": 0,
+          "y": 0,
+          "w": 1280,
+          "h": 720
+        },
+        "headerVisible": false,
+        "profilerVisible": false
+      },
+      {
+        "width": 780,
+        "height": 360,
+        "scrollWidth": 780,
+        "scrollHeight": 360,
+        "canvas": {
+          "x": 0,
+          "y": 0,
+          "w": 780,
+          "h": 360
+        },
+        "headerVisible": false,
+        "profilerVisible": false
+      }
+    ],
+    "ui": {
+      "checks": [
+        {
+          "name": "built-runtime-matches-simulation-policy",
+          "pass": true,
+          "data": {
+            "configurations": 30,
+            "rules": {
+              "singleItem": true,
+              "doublePatty": true
+            }
+          }
+        },
+        {
+          "name": "real-browser-two-finger-input",
+          "pass": true,
+          "data": {
+            "stick": 0.6666666666666666,
+            "action": true
+          }
+        },
+        {
+          "name": "touch-cancel-clears-without-tap",
+          "pass": true,
+          "data": {
+            "stick": 0,
+            "action": false,
+            "tap": false
+          }
+        },
+        {
+          "name": "hide-clears-keyboard-latches",
+          "pass": true,
+          "data": {
+            "keys": {
+              "w": false,
+              "a": false,
+              "s": false,
+              "d": false
+            },
+            "space": false,
+            "stickDown": false,
+            "action": false
+          }
+        },
+        {
+          "name": "action-can-be-pressed-after-hide",
+          "pass": true
+        },
+        {
+          "name": "controls-in-window-1024x768",
+          "pass": true,
+          "data": {
+            "width": 1280,
+            "height": 960,
+            "action": {
+              "x": 1000,
+              "y": 120,
+              "w": 160,
+              "h": 160
+            },
+            "aux": {
+              "x": 1020,
+              "y": 300,
+              "w": 120,
+              "h": 120
+            },
+            "task": {
+              "x": 968,
+              "y": 816,
+              "w": 300,
+              "h": 132
+            },
+            "safe": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            }
+          }
+        },
+        {
+          "name": "controls-target-at-least-44px-1024x768",
+          "pass": true,
+          "data": {
+            "action": {
+              "x": 1000,
+              "y": 120,
+              "w": 160,
+              "h": 160
+            },
+            "aux": {
+              "x": 1020,
+              "y": 300,
+              "w": 120,
+              "h": 120
+            }
+          }
+        },
+        {
+          "name": "controls-in-window-1280x720",
+          "pass": true,
+          "data": {
+            "width": 1280,
+            "height": 720,
+            "action": {
+              "x": 1000,
+              "y": 120,
+              "w": 160,
+              "h": 160
+            },
+            "aux": {
+              "x": 1020,
+              "y": 300,
+              "w": 120,
+              "h": 120
+            },
+            "task": {
+              "x": 968,
+              "y": 576,
+              "w": 300,
+              "h": 132
+            },
+            "safe": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            }
+          }
+        },
+        {
+          "name": "controls-target-at-least-44px-1280x720",
+          "pass": true,
+          "data": {
+            "action": {
+              "x": 1000,
+              "y": 120,
+              "w": 160,
+              "h": 160
+            },
+            "aux": {
+              "x": 1020,
+              "y": 300,
+              "w": 120,
+              "h": 120
+            }
+          }
+        },
+        {
+          "name": "controls-in-window-1560x720",
+          "pass": true,
+          "data": {
+            "width": 1560,
+            "height": 720,
+            "action": {
+              "x": 1280,
+              "y": 120,
+              "w": 160,
+              "h": 160
+            },
+            "aux": {
+              "x": 1300,
+              "y": 300,
+              "w": 120,
+              "h": 120
+            },
+            "task": {
+              "x": 1248,
+              "y": 576,
+              "w": 300,
+              "h": 132
+            },
+            "safe": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            }
+          }
+        },
+        {
+          "name": "controls-target-at-least-44px-1560x720",
+          "pass": true,
+          "data": {
+            "action": {
+              "x": 1280,
+              "y": 120,
+              "w": 160,
+              "h": 160
+            },
+            "aux": {
+              "x": 1300,
+              "y": 300,
+              "w": 120,
+              "h": 120
+            }
+          }
+        },
+        {
+          "name": "controls-in-window-780x360",
+          "pass": true,
+          "data": {
+            "width": 1560,
+            "height": 720,
+            "action": {
+              "x": 1280,
+              "y": 120,
+              "w": 160,
+              "h": 160
+            },
+            "aux": {
+              "x": 1300,
+              "y": 300,
+              "w": 120,
+              "h": 120
+            },
+            "task": {
+              "x": 1248,
+              "y": 576,
+              "w": 300,
+              "h": 132
+            },
+            "safe": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            }
+          }
+        },
+        {
+          "name": "controls-target-at-least-44px-780x360",
+          "pass": true,
+          "data": {
+            "action": {
+              "x": 1280,
+              "y": 120,
+              "w": 160,
+              "h": 160
+            },
+            "aux": {
+              "x": 1300,
+              "y": 300,
+              "w": 120,
+              "h": 120
+            }
+          }
+        },
+        {
+          "name": "injected-safe-area-and-wechat-capsule",
+          "pass": true,
+          "data": {
+            "inset": {
+              "left": 40,
+              "right": 40,
+              "top": 30,
+              "bottom": 20
+            },
+            "right": 1368,
+            "limit": 1368
+          }
+        },
+        {
+          "name": "no-browser-errors-or-failed-requests",
+          "pass": true,
+          "data": {
+            "errors": [],
+            "failed": []
+          }
+        }
+      ],
+      "injected": [
+        "Game.EVENT_HIDE lifecycle event",
+        "safe area and WeChat capsule geometry"
+      ]
+    },
+    "feedback": {
+      "singleItem": true,
+      "dropPickThrow": true,
+      "served": 1,
+      "wrong": 0,
+      "wash": true,
+      "viewports": [
+        {
+          "width": 1024,
+          "height": 768,
+          "visibleText": []
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "visibleText": []
+        },
+        {
+          "width": 1560,
+          "height": 720,
+          "visibleText": []
+        },
+        {
+          "width": 780,
+          "height": 360,
+          "visibleText": []
+        }
+      ],
+      "moves": [
+        {
+          "x": 3.5,
+          "z": -1.55,
+          "done": true
+        },
+        {
+          "x": 2,
+          "z": 0.2,
+          "done": true
+        },
+        {
+          "x": 3,
+          "z": 0,
+          "done": true
+        },
+        {
+          "x": 1.3567430995909884,
+          "z": -1.6608255464333201,
+          "done": true
+        },
+        {
+          "x": -3.4,
+          "z": 2.1,
+          "done": true
+        },
+        {
+          "x": 3.5,
+          "z": -1.55,
+          "done": true
+        },
+        {
+          "x": 0.5,
+          "z": -1.55,
+          "done": true
+        },
+        {
+          "x": -1.5,
+          "z": -1.55,
+          "done": true
+        },
+        {
+          "x": 3.5,
+          "z": -1.55,
+          "done": true
+        },
+        {
+          "x": -1.5,
+          "z": -1.55,
+          "done": true
+        },
+        {
+          "x": -1,
+          "z": 2.1,
+          "done": true
+        },
+        {
+          "x": 6.4,
+          "z": 0.5,
+          "done": true
+        },
+        {
+          "x": 6.4,
+          "z": 2,
+          "done": true
+        },
+        {
+          "x": -2.5,
+          "z": 1.5,
+          "done": true
+        },
+        {
+          "x": -2.5,
+          "z": 0,
+          "done": true
+        }
+      ],
+      "icons": [
+        {
+          "key": "冰箱|选择食材|tap|true|fridge|undefined",
+          "visibleText": []
+        },
+        {
+          "key": "冰箱|先放下手中物品|wait|false|blocked|undefined",
+          "visibleText": []
+        },
+        {
+          "key": "面包|拾取|tap|true|pick|trash",
+          "visibleText": []
+        },
+        {
+          "key": "前台|准备开门|tap|true|door|undefined",
+          "visibleText": []
+        },
+        {
+          "key": "前台|接单|tap|true|order|undefined",
+          "visibleText": []
+        },
+        {
+          "key": "烤炉|放入肉饼|tap|true|pan-in|undefined",
+          "visibleText": []
+        },
+        {
+          "key": "烤炉|取出肉饼|tap|true|pan-out|undefined",
+          "visibleText": []
+        },
+        {
+          "key": "制作台|放入配料|tap|true|assemble|undefined",
+          "visibleText": []
+        },
+        {
+          "key": "制作台|端起汉堡|tap|true|burger|undefined",
+          "visibleText": []
+        },
+        {
+          "key": "出餐口|交付餐点|tap|true|serve|undefined",
+          "visibleText": []
+        },
+        {
+          "key": "洗碗池|放入脏盘|tap|true|wash|undefined",
+          "visibleText": []
+        },
+        {
+          "key": "洗碗池|刷洗盘子|hold|true|wash|undefined",
+          "visibleText": []
+        },
+        {
+          "key": "晾盘架|取出盘子|tap|true|plate|undefined",
+          "visibleText": []
+        }
+      ],
+      "errors": [],
+      "failed": []
+    },
+    "boneMotion": {
+      "emptyWalk": {
+        "legVariation": 1.0145294753613423,
+        "leftArmVariation": 0.7564734531422899
+      },
+      "carryingWalk": {
+        "legVariation": 1.1136254037097153,
+        "leftArmVariation": 0.857090294978122
+      }
+    },
+    "preFixReproduction": [
+      {
+        "name": "hide-clears-keyboard-latches",
+        "pass": false,
+        "data": {
+          "keys": {
+            "w": true,
+            "a": false,
+            "s": false,
+            "d": false
+          },
+          "space": true,
+          "stickDown": true,
+          "action": false
+        }
+      }
+    ]
+  },
+  "builds": [
+    {
+      "directory": "D:\\codex-workspace-sync\\vultr-projects\\server-home-20260930\\project\\kitchen-chaos\\game\\build\\p0-single-item-web",
+      "config": {
+        "buildPath": "project://build",
+        "outputName": "p0-single-item-web",
+        "startScene": "52c145e4-a2d4-4aa7-a69e-22a04d973d0b",
+        "debug": true,
+        "platform": "web-desktop",
+        "scenes": [
+          {
+            "uuid": "52c145e4-a2d4-4aa7-a69e-22a04d973d0b",
+            "url": "db://assets/main.scene"
+          }
+        ],
+        "packages": {},
+        "mainBundleCompressionType": "merge_dep",
+        "mainBundleIsRemote": false,
+        "startSceneAssetBundle": false
+      },
+      "logSha256": "b4c130ca8494d844a052ce99068812402b6368cc3e59e3242570fb22b74fb0fc",
+      "files": [
+        {
+          "path": "application.js",
+          "bytes": 3300,
+          "sha256": "3876486e03ffd49f5cb8bce6d5a23b7ec392a533487229483a3b2429530093f2"
+        },
+        {
+          "path": "assets/internal/config.json",
+          "bytes": 6291,
+          "sha256": "706c83552c9bed2d319afa4a77d76bcdd8ad277f4377bca5e14a69d19e94dd14"
+        },
+        {
+          "path": "assets/internal/import/06/06ba65fee.json",
+          "bytes": 615734,
+          "sha256": "0b636aeaf6a2c21d0500713cf8ace42a523794a536d1e330b0886a780cddc5fa"
+        },
+        {
+          "path": "assets/internal/index.js",
+          "bytes": 103562,
+          "sha256": "d842bf596127320ad8cd42ce506a2817cd8a6402fbec6735e6b13af359a40757"
+        },
+        {
+          "path": "assets/main/config.json",
+          "bytes": 24206,
+          "sha256": "c213c179d2f3b4f0bb057839cb98e5d25f3a93960492a11c099a0af648c335e3"
+        },
+        {
+          "path": "assets/main/import/03/037f583d-bbfd-49b1-b719-9dbab782c5bb.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "assets/main/import/04/04d0d5a9d.json",
+          "bytes": 2119,
+          "sha256": "78b952f4a706d78e069141b692b1641e20b8ee87b35ac58fbc65038eba7d5383"
+        },
+        {
+          "path": "assets/main/import/06/06a3d54a7.json",
+          "bytes": 1049920,
+          "sha256": "f06e00e247656d72de16776504b7c60069a9a65e64cd32e5713e696dd654f542"
+        },
+        {
+          "path": "assets/main/import/09/092b0bb6b.json",
+          "bytes": 1971,
+          "sha256": "9f1ecdc20e17bbcb9de20b6893a6e8be040ee0819105f2059121fe457c724df1"
+        },
+        {
+          "path": "assets/main/import/09/09c4e9db2.json",
+          "bytes": 16809,
+          "sha256": "9d998222edf9409ef1a32f03ba1f17cb31e0dcaab0880a5cff0f49e28aa699e0"
+        },
+        {
+          "path": "assets/main/import/0a/0ab35a3a0.json",
+          "bytes": 163011,
+          "sha256": "a43cecb56e2b821c0c1321ace3f8a27c8894d90e5d69ac6988e582798883ed7b"
+        },
+        {
+          "path": "assets/main/import/0e/0e129e518.json",
+          "bytes": 2432,
+          "sha256": "67c389dd96a908cb2f78c33f53c3903943c77562c342fe0afda60395a2af2885"
+        },
+        {
+          "path": "assets/main/import/0f/0f862547d.json",
+          "bytes": 4852,
+          "sha256": "0f287a8a06bc3ce515c01b82767b85e5650d53cfe2624f01645cafbb0a1f6efb"
+        },
+        {
+          "path": "assets/main/import/1f/1fd43565-8118-459b-97ce-a65a2dd758fd.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "assets/main/import/1f/1fe28d16-7041-49de-a021-8c0bb50feb6c.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "assets/main/import/29/29b88d95-ac50-4445-b6c9-0f2099272c60@1e57b.bin",
+          "bytes": 33364,
+          "sha256": "92dc109dda412b31001d3d3a81e642a2ec184129526f65fc1a1474be83bf1744"
+        },
+        {
+          "path": "assets/main/import/29/29b88d95-ac50-4445-b6c9-0f2099272c60@1f586.bin",
+          "bytes": 46308,
+          "sha256": "09c38fd9142cc311871735dfce0a70b082b12bb29409d262fc065b29c5b51b45"
+        },
+        {
+          "path": "assets/main/import/29/29b88d95-ac50-4445-b6c9-0f2099272c60@7f3dc.bin",
+          "bytes": 44812,
+          "sha256": "6e33f04faf41c3af31e8342443a5df8a15008d243b8b028a74f89e0936ec9909"
+        },
+        {
+          "path": "assets/main/import/39/39467792-665e-4914-bef9-b1f4a530fdaf.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "assets/main/import/57/57520716-48c8-4a19-8acf-41c9f8777fb0.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "assets/main/import/60/60ea40f5-a37a-49e9-8769-4fcd303035b2.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "assets/main/import/61/61c9ff05-7b0d-45cc-9ae4-fcef25533334.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "assets/main/import/89/891310fc-e275-4c86-8677-a33ec73f13f4.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "assets/main/import/92/920c53e8-6c84-4842-ae9a-98b58d51a5e6.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "assets/main/import/92/928c8f21-574d-4861-970b-13be7c427b16@1e57b.bin",
+          "bytes": 34320,
+          "sha256": "512cc8de84ac63b9e68084c2651dd2bd3eafbc62c4518f738997acf0ed78a213"
+        },
+        {
+          "path": "assets/main/import/92/928c8f21-574d-4861-970b-13be7c427b16@1f586.bin",
+          "bytes": 47264,
+          "sha256": "36685f4a7dc9047c326f265959a81fcc41f66455fc5988c0b1a4aab48f796fb8"
+        },
+        {
+          "path": "assets/main/import/92/928c8f21-574d-4861-970b-13be7c427b16@7f3dc.bin",
+          "bytes": 45768,
+          "sha256": "2fd35b0ac582ed61af9b55d5cf1418e9f3186ba2b7ba0c46a256ff606fe90b22"
+        },
+        {
+          "path": "assets/main/import/9c/9ca0af40-788a-47ff-b225-383189771d96.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "assets/main/import/a1/a101a8aa-eadd-4e36-a58d-43c800ead140.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "assets/main/import/ac/ac40bb5d-8e6c-414b-bcbd-2210f3cde052.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "assets/main/import/ba/ba21476f-2866-4f81-9c4d-6e359316e448.json",
+          "bytes": 192,
+          "sha256": "0a34e9263b215bb661d6334db6a255497c6cdac1f1c40b130f50bf9d91f4dd39"
+        },
+        {
+          "path": "assets/main/import/cb/cbc393fd-bdd2-45c8-8795-0fc7813e5e78@1e57b.bin",
+          "bytes": 32536,
+          "sha256": "343d1c886c476151213c8837038171f826edecafa765e4de10ee90ba92ec1b90"
+        },
+        {
+          "path": "assets/main/import/cb/cbc393fd-bdd2-45c8-8795-0fc7813e5e78@1f586.bin",
+          "bytes": 45488,
+          "sha256": "a958741ffc9d87daeae70c3dedfd39a10837c2143bb7bdeb8b9b14b6e4442f78"
+        },
+        {
+          "path": "assets/main/import/cb/cbc393fd-bdd2-45c8-8795-0fc7813e5e78@7f3dc.bin",
+          "bytes": 43992,
+          "sha256": "477e50c4468658c964acf49f3e7fa8f01751b0d56dcc9868a0f71f9a3af3116b"
+        },
+        {
+          "path": "assets/main/import/dc/dc8ee3a1-6ff6-43bb-8e2e-b1c4992d4f96@1e57b.bin",
+          "bytes": 32352,
+          "sha256": "79c901ff1cb3b18b92365ea4536773dfa3c091f507345c339eee4d902c84f2f1"
+        },
+        {
+          "path": "assets/main/import/dc/dc8ee3a1-6ff6-43bb-8e2e-b1c4992d4f96@1f586.bin",
+          "bytes": 45296,
+          "sha256": "1a8b29180eb916b71f970110a550df4b55f13a26b28095b7b56db6de62ece3cb"
+        },
+        {
+          "path": "assets/main/import/dc/dc8ee3a1-6ff6-43bb-8e2e-b1c4992d4f96@7f3dc.bin",
+          "bytes": 43800,
+          "sha256": "7dc48c518641afdac34090a009ca509c1d328b39085fdd39e5867f1562826f8d"
+        },
+        {
+          "path": "assets/main/import/e0/e0108ae4-3a2c-4f8a-a76a-5a173b042c05@1e57b.bin",
+          "bytes": 33276,
+          "sha256": "e0e7215455cfbb53dc9d4c6d9dafa5f7374b1c8005b9c413a9e28a4cf216f586"
+        },
+        {
+          "path": "assets/main/import/e0/e0108ae4-3a2c-4f8a-a76a-5a173b042c05@1f586.bin",
+          "bytes": 46220,
+          "sha256": "28e9c7051bedf89d4915631455db4001eb8b7c5e5707dd3d700f792877a96f72"
+        },
+        {
+          "path": "assets/main/import/e0/e0108ae4-3a2c-4f8a-a76a-5a173b042c05@7f3dc.bin",
+          "bytes": 44724,
+          "sha256": "29f264f11a26669d8fdf1fe6ae5d1c496e1af93f91b7f09e648ad79c397a7e53"
+        },
+        {
+          "path": "assets/main/import/f2/f2b9020c-afe9-489f-8f67-60d151b2ba93.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "assets/main/import/fd/fd8ec536-a354-4a17-9c74-4f3883c378c8.json",
+          "bytes": 480,
+          "sha256": "c2eee4552a460ed97591f527e127b95c811d5f796b9448f3f705974af9beba9d"
+        },
+        {
+          "path": "assets/main/index.js",
+          "bytes": 642426,
+          "sha256": "dd398d11b95663c0f6f2dab6bf8e478f14dc63f180e3f3c386f12473b74bad33"
+        },
+        {
+          "path": "assets/main/native/00/00a3b1e6-835f-451a-8cf9-ce88d72d0f42@faad7.bin",
+          "bytes": 13224,
+          "sha256": "f4435c8a51c7ddef8b006d18cece8f1cfa7694e2d32733ac986e5dce55606cd9"
+        },
+        {
+          "path": "assets/main/native/03/037f583d-bbfd-49b1-b719-9dbab782c5bb.png",
+          "bytes": 1296,
+          "sha256": "3b4d7fde0b43cfdad93b53f677a29163d02b7f6e9e37934df04909aed144c393"
+        },
+        {
+          "path": "assets/main/native/0e/0ee81e32-abb0-44ba-b48f-3e8e2e825193@e68fe.bin",
+          "bytes": 4032,
+          "sha256": "1e00b67b2f4a720dc09911357894bf2e178dacedc83a83a2819964dc5c70993b"
+        },
+        {
+          "path": "assets/main/native/12/1263d74c-8167-4928-91a6-4e2672411f47@17020.bin",
+          "bytes": 86744,
+          "sha256": "2c5520a0c27113096c9333d92b78d33d09dc7ab4d47af8d4e7e0974523eaaa12"
+        },
+        {
+          "path": "assets/main/native/12/1263d74c-8167-4928-91a6-4e2672411f47@2e76e.bin",
+          "bytes": 7976,
+          "sha256": "81d53223c37b4fc0e05f8106cde93a4e8fe2d70bdc55241bc0a93841c25002fb"
+        },
+        {
+          "path": "assets/main/native/12/1263d74c-8167-4928-91a6-4e2672411f47@801ec.bin",
+          "bytes": 86264,
+          "sha256": "fa6c08f756e281fd070ce61923eb1573ecc4b634d1274763e6d341103a23f1b6"
+        },
+        {
+          "path": "assets/main/native/12/1263d74c-8167-4928-91a6-4e2672411f47@a804a.bin",
+          "bytes": 1416,
+          "sha256": "12d1d971a062777e3883c44aa9810c446b575c41a5ab0447648778255b21a265"
+        },
+        {
+          "path": "assets/main/native/1f/1fd43565-8118-459b-97ce-a65a2dd758fd.png",
+          "bytes": 10715,
+          "sha256": "75baf74d9483a0fc56ac21ceba346fbe16fc24a2a1bf0524c53e6bbe802e1153"
+        },
+        {
+          "path": "assets/main/native/1f/1fe28d16-7041-49de-a021-8c0bb50feb6c.png",
+          "bytes": 2001,
+          "sha256": "0a87315fe729c64bbbd1536066a4aace95a064f7702238ff52f5da8ed9e62855"
+        },
+        {
+          "path": "assets/main/native/20/20bcb1d8-8010-470a-a230-0ce7a132d72e@9b742.bin",
+          "bytes": 49554,
+          "sha256": "ad04f77d93f56be40e5b26a61fb3e7bf6ca2b1a7c04d28f23f1c5d0116efb623"
+        },
+        {
+          "path": "assets/main/native/21/217121d8-7219-4bd4-a225-7cd80d5df8a3@83794.bin",
+          "bytes": 41820,
+          "sha256": "c5560b7cc2097ad10c1bf44783d9270a5cab79eda60c4fa2754320dbfd6bcb3c"
+        },
+        {
+          "path": "assets/main/native/28/284486ac-e960-4fed-b34e-57e33a60c8e6@bcca5.bin",
+          "bytes": 76608,
+          "sha256": "27e751bde0ee48122114dfdae33b32205a540fc30a2212259a39f07ecac5aa8f"
+        },
+        {
+          "path": "assets/main/native/29/29b88d95-ac50-4445-b6c9-0f2099272c60@39e1f.bin",
+          "bytes": 574012,
+          "sha256": "b773d70e453b01a59f01cab05fc860cb835c4ba340c2ae77bdd7fe4512e3a3d4"
+        },
+        {
+          "path": "assets/main/native/31/31cd005f-6dcf-4129-b217-8b00766becb1@8c58b.bin",
+          "bytes": 2640,
+          "sha256": "d7cd0cdd721a8213611a589e464803b9620cc175dfe882964cc3dc12ef396b90"
+        },
+        {
+          "path": "assets/main/native/32/3294e91b-fe42-4078-be74-5cf58750b465@bcca5.bin",
+          "bytes": 216840,
+          "sha256": "2488407728c5f36a70a6b52f4b2a6d7bc6c7748b7016ecdfdd70f8bcd9ba64e4"
+        },
+        {
+          "path": "assets/main/native/33/33196736-02dd-4769-bd9c-b698d6738283@fd38b.bin",
+          "bytes": 16848,
+          "sha256": "0edf7996a7844826ad40bcd06a40fb3fa912ac1cd4fa1466ed17c64c6f2e9c4f"
+        },
+        {
+          "path": "assets/main/native/34/344e66dd-2f50-440d-847b-6ad05a8c8115@bcca5.bin",
+          "bytes": 124992,
+          "sha256": "faffac4dddf7492b201d68b8231a645d0d4cd0e3f827f3a4f0e1c77a08bd50c0"
+        },
+        {
+          "path": "assets/main/native/39/39467792-665e-4914-bef9-b1f4a530fdaf.png",
+          "bytes": 1804,
+          "sha256": "88a941fee1c667210ae7d5655d450bc236d7a833d36f081641b0a4214731399f"
+        },
+        {
+          "path": "assets/main/native/49/49cb229a-01a1-4791-bbcd-5bfd16972fc5@45f73.bin",
+          "bytes": 8424,
+          "sha256": "7fbf0131ab38c10710fea056242fc3eb0ec38b9718e73e6c8a9ad87c2133a654"
+        },
+        {
+          "path": "assets/main/native/4e/4eba7db3-b8e1-47d9-ab18-c8b8ce5711ab@d8281.bin",
+          "bytes": 20736,
+          "sha256": "8d0f1a290dc1a7348f2d1042c77b8381206deda2a59ce42041a6011fd35a2014"
+        },
+        {
+          "path": "assets/main/native/55/55871c05-b7fc-422d-ad7a-ae1352779ada@8b834.bin",
+          "bytes": 13080,
+          "sha256": "6e6af1929d55b1375dff9ad034d42ed1574181a3546ff8ed8ac4303946e909b5"
+        },
+        {
+          "path": "assets/main/native/57/574fb154-9848-4391-92c3-de6c54ffc283@92ea0.bin",
+          "bytes": 8736,
+          "sha256": "caf70e04b3a30569b18738f45238c249ded21e8b8373ac605765a4d91bfae374"
+        },
+        {
+          "path": "assets/main/native/57/57520716-48c8-4a19-8acf-41c9f8777fb0.png",
+          "bytes": 1633,
+          "sha256": "328da1766915cb2c5db06827a48effc993bcf876e67b8412719a8ecae36e5dff"
+        },
+        {
+          "path": "assets/main/native/57/578ed9f4-15af-4f06-9d7f-11f6f1767e69@88b23.bin",
+          "bytes": 2868,
+          "sha256": "8fe5b3e8d65293e524a4de66b75fe23dfaf2caec09b1cae58140c68a537bf16f"
+        },
+        {
+          "path": "assets/main/native/5d/5ddf2fba-d9e1-4baa-8fdb-33225cf0594d@cce37.bin",
+          "bytes": 14520,
+          "sha256": "fe10fc873ad520c9e2a8ca955130b78ac930ebe890dc17a23d9e2f522e455bad"
+        },
+        {
+          "path": "assets/main/native/60/60ea40f5-a37a-49e9-8769-4fcd303035b2.png",
+          "bytes": 1846,
+          "sha256": "5d289e2439416430152bef952832f2a14f6fe76beb13384c5206304580208577"
+        },
+        {
+          "path": "assets/main/native/61/61c9ff05-7b0d-45cc-9ae4-fcef25533334.png",
+          "bytes": 1834,
+          "sha256": "e0a329e2f07cd061db125bc69c5ddacac4572ef7449c2c019108903521b5403c"
+        },
+        {
+          "path": "assets/main/native/7d/7df29662-e04e-44cc-b82b-36a55bf8e26c@1ed8d.bin",
+          "bytes": 22128,
+          "sha256": "daa0ba58beaf74a6ca6a0e64255c0a18cca397720b63dfd37cac1bd0cedb0a64"
+        },
+        {
+          "path": "assets/main/native/7e/7e25b55d-379a-4b2f-9447-35a2236514f6@bbd92.bin",
+          "bytes": 24960,
+          "sha256": "b8c063fe36ea9c78486f3d1b7b84c60a4a80fa22d5dc29694b148e56b47d1496"
+        },
+        {
+          "path": "assets/main/native/81/81666f13-b5c1-4683-bd74-24c953b01c61@cfc7c.bin",
+          "bytes": 4692,
+          "sha256": "f36a276310b2dafcd03eb1bf434f8c62ac9665e5cef8e035b4f4b49176c7c093"
+        },
+        {
+          "path": "assets/main/native/89/891310fc-e275-4c86-8677-a33ec73f13f4.png",
+          "bytes": 20673,
+          "sha256": "a77f8dd0a68489c4cd202f496850c96afdeaa7771cee6cf187786b416e1e2843"
+        },
+        {
+          "path": "assets/main/native/92/920c53e8-6c84-4842-ae9a-98b58d51a5e6.png",
+          "bytes": 1783,
+          "sha256": "d871ff5208db087f65ba3d8425326cfc647fd086c186cbcbfe9cab8ccb475f82"
+        },
+        {
+          "path": "assets/main/native/92/928c8f21-574d-4861-970b-13be7c427b16@39e1f.bin",
+          "bytes": 410592,
+          "sha256": "75c9a545b00d8866887bd4413540bd8652e5e331f7907ec0e333ffd325e65090"
+        },
+        {
+          "path": "assets/main/native/93/93036868-f05e-4477-9f02-6cb016cfbe9b@07938.bin",
+          "bytes": 3432,
+          "sha256": "e86594b704bb1e5397d627d6a1f1f9c0550668e1c2c0104a2b0e7e2f370fed38"
+        },
+        {
+          "path": "assets/main/native/93/93036868-f05e-4477-9f02-6cb016cfbe9b@d297c.bin",
+          "bytes": 5928,
+          "sha256": "806d37686c4edeaa9589cc5a0e959db4de89481490467a2f939687ef766a8efa"
+        },
+        {
+          "path": "assets/main/native/9c/9c688a06-30bb-4d17-a633-6437b339cba6@b958d.bin",
+          "bytes": 47952,
+          "sha256": "e51e195aa9d493352ccc62f031f4a4b28f593de0926d285825aa7e6322f57fe2"
+        },
+        {
+          "path": "assets/main/native/9c/9ca0af40-788a-47ff-b225-383189771d96.png",
+          "bytes": 1615,
+          "sha256": "cc573f1030cd6f8f50cb2780b1d2e0a05c71dce4a6d5768c185fc50513c22833"
+        },
+        {
+          "path": "assets/main/native/9f/9f86b811-9593-46a7-9ef8-68466ddfe6f8@60082.bin",
+          "bytes": 7752,
+          "sha256": "e1e2c7e44bd874f964c6efa17202cc541b383afe5e8cfe59735a62a626ff7963"
+        },
+        {
+          "path": "assets/main/native/a1/a101a8aa-eadd-4e36-a58d-43c800ead140.png",
+          "bytes": 1984,
+          "sha256": "b582d3018fa03af3a854a3930a9b34e036f172fd33cb7ac7895c4883197d3613"
+        },
+        {
+          "path": "assets/main/native/a3/a34d050d-cf18-4a42-88b9-5539bebebf40@2772f.bin",
+          "bytes": 18552,
+          "sha256": "bef748be27560b35f810b0d56b61cfe942582fe068c2e68bc2d8eaded40c1f1d"
+        },
+        {
+          "path": "assets/main/native/ac/ac40bb5d-8e6c-414b-bcbd-2210f3cde052.png",
+          "bytes": 15458,
+          "sha256": "71695587e19ab831ebd728f7a8450c8511ab0bc9566599176d81dcecefcc7b85"
+        },
+        {
+          "path": "assets/main/native/af/af6fa88f-9ab7-4d11-a05d-69f3263cb8ba@a49e1.bin",
+          "bytes": 11568,
+          "sha256": "5c72594ca86d6e44e62bf0ea665fd0e6b85aa17a8c126a88dddbfc597e61f452"
+        },
+        {
+          "path": "assets/main/native/b0/b07d96c1-1b6e-42d5-a74b-b2c857767227@00870.bin",
+          "bytes": 23832,
+          "sha256": "98cfa56ffee82586ab5c5e3a06d9cdc56e988df44d22fec9769cce61069ca8f9"
+        },
+        {
+          "path": "assets/main/native/b6/b6bfaed3-3ceb-436b-8eb8-cdbe8e92ea9c@28204.bin",
+          "bytes": 13608,
+          "sha256": "2b4641c7d631b6de828f5d183faa8f4b7da106e019be8849a6470eaeac08cc92"
+        },
+        {
+          "path": "assets/main/native/b9/b93e0eea-7cb9-4a4c-aa8c-e01c4c881ecd@c4448.bin",
+          "bytes": 78792,
+          "sha256": "0cddf8b6a7a28e503498046c7adea71b85281dc9f1117357c84598e6d5ed9ef3"
+        },
+        {
+          "path": "assets/main/native/bc/bc57036a-047d-417e-bb7c-44c754b771df@9aa00.bin",
+          "bytes": 48960,
+          "sha256": "d23972708051f1ea3766e6e1f354ccd340d50e2f93f21ecd8c4eda465161d8e0"
+        },
+        {
+          "path": "assets/main/native/bc/bc57036a-047d-417e-bb7c-44c754b771df@dacae.bin",
+          "bytes": 7416,
+          "sha256": "35eaeeb2cbd6e7af6ab3807c4dce0e9e350ea9322f50a3fb92acc993f0fd7715"
+        },
+        {
+          "path": "assets/main/native/c1/c1f40b14-d66c-4ae6-82bb-400895e78af3@1ac18.bin",
+          "bytes": 11844,
+          "sha256": "4017446d13f2c7a442ba40cf4ef5a9061f512eb77084065668d998ce37876a12"
+        },
+        {
+          "path": "assets/main/native/c1/c1f40b14-d66c-4ae6-82bb-400895e78af3@2d9ae.bin",
+          "bytes": 15864,
+          "sha256": "5adfb5a933c74ab65e006be0bfde80988a5dc5b70d3f27a21711e89e94416c12"
+        },
+        {
+          "path": "assets/main/native/c1/c1f40b14-d66c-4ae6-82bb-400895e78af3@c7119.bin",
+          "bytes": 10920,
+          "sha256": "6db4b27d872e623091b7d070f34b0ebb0c3f3e625af7162ea6e5fe53b0fe3381"
+        },
+        {
+          "path": "assets/main/native/c2/c226346c-7905-4400-b916-79da4d13b2a4@8b834.bin",
+          "bytes": 13080,
+          "sha256": "6e6af1929d55b1375dff9ad034d42ed1574181a3546ff8ed8ac4303946e909b5"
+        },
+        {
+          "path": "assets/main/native/c6/c655716e-6692-4e81-9e40-4cc21ea2ba26@bcca5.bin",
+          "bytes": 4032,
+          "sha256": "49d327c9731a8acc73ec35bb8c43683e2a5949c216c6497aade4ddc055287ef5"
+        },
+        {
+          "path": "assets/main/native/ca/cadaf40d-dd31-47d6-9870-779f0040a07a@919dd.bin",
+          "bytes": 9408,
+          "sha256": "cf60beca1bcba6e5f70840f56dc492c146de6bb0cc306c67e94043a3a29b6cce"
+        },
+        {
+          "path": "assets/main/native/cb/cbc393fd-bdd2-45c8-8795-0fc7813e5e78@39e1f.bin",
+          "bytes": 472676,
+          "sha256": "11b520eb45e957f2a07f1d747f1a5833db7328cb17be2bea5587cc7026d65b62"
+        },
+        {
+          "path": "assets/main/native/cf/cfa53aee-9bcf-48a3-b777-9b549043847c@bcca5.bin",
+          "bytes": 229824,
+          "sha256": "9e7b014a5c9cea287d2f4f2891b124b5107081520d070360e87f26d4eb3e583a"
+        },
+        {
+          "path": "assets/main/native/d1/d1072aa3-23b9-4c84-a2d4-f3738a5087e8@8b7dc.bin",
+          "bytes": 12096,
+          "sha256": "466dec19abdb6d83cb6058b99f44cb10efd9eb2f00aa5be0247c0bb7ee50e152"
+        },
+        {
+          "path": "assets/main/native/dc/dc8ee3a1-6ff6-43bb-8e2e-b1c4992d4f96@39e1f.bin",
+          "bytes": 546120,
+          "sha256": "9e2bc3a9cdcf935b1639c2f2ad28db22f49e13f8306a4cb03b6df2410539e61e"
+        },
+        {
+          "path": "assets/main/native/de/de54b59d-5763-4c80-bea8-618e17cea9a4@286b3.bin",
+          "bytes": 265200,
+          "sha256": "e98a9c8bb77875ca61584ffbcb215701959aea818b056135e030a837687efd8e"
+        },
+        {
+          "path": "assets/main/native/e0/e00f2345-f931-4c0c-862b-96a407502f80@ebf4a.bin",
+          "bytes": 11808,
+          "sha256": "27fac3b2eb9c4d2410adc77fd8bd99e31005dc892237915bb65141afdb861e64"
+        },
+        {
+          "path": "assets/main/native/e0/e0108ae4-3a2c-4f8a-a76a-5a173b042c05@39e1f.bin",
+          "bytes": 426960,
+          "sha256": "f3a1f301c1a802064af8d61b4dfed37ffc977527a7c7ecb9afe28929fb580d91"
+        },
+        {
+          "path": "assets/main/native/e7/e72b8f4b-5bc7-4767-8da6-097b6ff6d000@bcca5.bin",
+          "bytes": 16680,
+          "sha256": "117acde8ad2394215df5dbce9d014e0ee41c83ed20b8611634b12e891dcc2e50"
+        },
+        {
+          "path": "assets/main/native/e8/e888890b-3f87-4b2c-a975-bb209ff3312a@bcca5.bin",
+          "bytes": 38304,
+          "sha256": "9d7a804495e30edcd804f16a3666b55f20fd9012126f3ad64606edc72014a22e"
+        },
+        {
+          "path": "assets/main/native/f2/f2b9020c-afe9-489f-8f67-60d151b2ba93.png",
+          "bytes": 1194,
+          "sha256": "67e1a992b72fd3f7c23353fdd0fd2ffd0092bec4b2ddc8655d1a0dcb7b859189"
+        },
+        {
+          "path": "assets/main/native/f4/f45e3c9c-3aa6-4db6-85e2-65d9e6ee206a@40339.bin",
+          "bytes": 16920,
+          "sha256": "e384c284ef69e752d2c2f5eb3ecba9b2ee3e8272d486e82581ec7b552c625797"
+        },
+        {
+          "path": "assets/main/native/f6/f6c7999c-f7b6-47e6-967f-55e5c6aa539e@41ac8.bin",
+          "bytes": 31860,
+          "sha256": "947e8044ed83c52801e861748c2de4c3110a78e43cf702eb6b6bf199c58ae03d"
+        },
+        {
+          "path": "assets/main/native/fa/fad3ffd7-280a-4232-a60b-97baac70631a@bcca5.bin",
+          "bytes": 114912,
+          "sha256": "80e41e27e36cc9c0b4ee2079e69da37fc08d2027af3fdb4549724822bfd32571"
+        },
+        {
+          "path": "assets/resources/config.json",
+          "bytes": 2655,
+          "sha256": "3c6cc6d15104fa8946faaa2e150f029c7510ac2e93fe642a929f45fa1ea2c1c9"
+        },
+        {
+          "path": "assets/resources/import/0f/0f397cb1-1dda-4404-a637-120794a144dc.json",
+          "bytes": 117,
+          "sha256": "d04ef24c4a72ec9ba111aa838107d6a698e22ae2e30071ba34752b4207961692"
+        },
+        {
+          "path": "assets/resources/import/2f/2f390aae-a5de-420b-9896-fe54befa2352.json",
+          "bytes": 116,
+          "sha256": "1c8cae7057916f7b642f95e56281696184ec68dd51aa3b8ca2b1a8bd647a98fd"
+        },
+        {
+          "path": "assets/resources/import/37/3710c5c8-094c-4b21-8853-2c4799e1e90d.json",
+          "bytes": 121,
+          "sha256": "c19283467f6853b3dc96aa8accc064d2be8f02de6251c5a741c5719523e590ae"
+        },
+        {
+          "path": "assets/resources/import/3c/3cc7cef3-cec0-4bdd-84ce-a46e485aadfa.json",
+          "bytes": 120,
+          "sha256": "3e9b0a6b496752b02af78204c0ce12aaf299384124bd7718315662056bc9b6aa"
+        },
+        {
+          "path": "assets/resources/import/4b/4baa4ebc-b500-4681-92f9-2e08ca94f533.json",
+          "bytes": 120,
+          "sha256": "9ecb3ccf157d83b56d614cd37815bc20408dd48ce494f5e859750a9c1c359993"
+        },
+        {
+          "path": "assets/resources/import/52/52c30b6c-9713-452b-aa07-7cdf0f055dc2.json",
+          "bytes": 116,
+          "sha256": "c859c226506269a20e6ec013aa531559e999492c88e8d646e47cdba1f588f896"
+        },
+        {
+          "path": "assets/resources/import/5c/5c7f1c06-f607-40ec-ab7a-c22051c029f1.json",
+          "bytes": 120,
+          "sha256": "357e6d0641ae64cddd937cc62b81b5235b9379b72d104622d9cefb32a7290ac9"
+        },
+        {
+          "path": "assets/resources/import/9e/9ed2bac5-421e-4ee3-8410-b9f45dc3a672.json",
+          "bytes": 117,
+          "sha256": "cda164f0bfdad0dc0f2a5c19c01b7bcb43a20fef8df99e167539089632f0a785"
+        },
+        {
+          "path": "assets/resources/import/ac/ac8ad726-c320-452f-b335-880f952f73cb.json",
+          "bytes": 119,
+          "sha256": "bedd81481b3ca93eacc0296c9013ab3c15e43928a42fd520ee9d1780911e139d"
+        },
+        {
+          "path": "assets/resources/import/b6/b6a61e59-a60a-43c2-888f-b1541e67da91.json",
+          "bytes": 116,
+          "sha256": "443b36c31f363b0a9c71eba16d761a4df08a31c52cec6c1de9e8047299e5ae04"
+        },
+        {
+          "path": "assets/resources/import/d6/d620b9d4-d552-4834-8ef0-dd508dff6162.json",
+          "bytes": 117,
+          "sha256": "132020531f5ab1253fea30b43d273bb524698b8c9bc1f9093c31b5c89720ab54"
+        },
+        {
+          "path": "assets/resources/import/e3/e3651de2-9f40-4bdd-b371-80e716e36fbe.json",
+          "bytes": 117,
+          "sha256": "6d6afabffcfc61be4209599befcd3fd6d8c63992e0d3ed0ab2e94b650e69a079"
+        },
+        {
+          "path": "assets/resources/import/f0/f061db92-7006-4bbf-8ef2-e07163c5f896.json",
+          "bytes": 122,
+          "sha256": "83ff9bb5df7edcd050338569e4e174fe10e51526825dfeb16249388c0944f3e3"
+        },
+        {
+          "path": "assets/resources/index.js",
+          "bytes": 624,
+          "sha256": "a8a8842dba5661964a271fa0d82e5d00ba102dcbfe02407a66ed1a15dd5335bf"
+        },
+        {
+          "path": "assets/resources/native/0f/0f397cb1-1dda-4404-a637-120794a144dc.wav",
+          "bytes": 16802,
+          "sha256": "a63de6f033a02a9d1a8c252ab56937e99726a16b6959c101ca658740090ac2ed"
+        },
+        {
+          "path": "assets/resources/native/2f/2f390aae-a5de-420b-9896-fe54befa2352.wav",
+          "bytes": 3572,
+          "sha256": "bef499db9804202054522ac365b9995c029b7fcf397ad1c86e6b22979cf85f7f"
+        },
+        {
+          "path": "assets/resources/native/37/3710c5c8-094c-4b21-8853-2c4799e1e90d.wav",
+          "bytes": 19888,
+          "sha256": "3d3d461f55c42066ec8cc617fa72a3a38237b65f172e9b43f81aca08bb3d693c"
+        },
+        {
+          "path": "assets/resources/native/3c/3cc7cef3-cec0-4bdd-84ce-a46e485aadfa.wav",
+          "bytes": 5776,
+          "sha256": "4f4f832a919a7a60e6c306511a78cd275d0a004485104ca3b5ab2a0354e64ee5"
+        },
+        {
+          "path": "assets/resources/native/4b/4baa4ebc-b500-4681-92f9-2e08ca94f533.wav",
+          "bytes": 4012,
+          "sha256": "45a29f576549595cf2dba4a82924c3943b89cf66774e8dadbb07d0bfe84b0f11"
+        },
+        {
+          "path": "assets/resources/native/52/52c30b6c-9713-452b-aa07-7cdf0f055dc2.wav",
+          "bytes": 13274,
+          "sha256": "c6611542e9c3c50dcfd9d9bf5c28da97bf67a9768cd1284cf750b31f33561d43"
+        },
+        {
+          "path": "assets/resources/native/5c/5c7f1c06-f607-40ec-ab7a-c22051c029f1.wav",
+          "bytes": 19888,
+          "sha256": "89c8a475316dde04c522d4d2c543032f2ef206ce441f12180586ebf8cbe4ad4b"
+        },
+        {
+          "path": "assets/resources/native/9e/9ed2bac5-421e-4ee3-8410-b9f45dc3a672.wav",
+          "bytes": 14156,
+          "sha256": "e3e5380739b7fcdeb8cacf40b34f01763304751c24ef0e7d9d40abb13ac6fd43"
+        },
+        {
+          "path": "assets/resources/native/ac/ac8ad726-c320-452f-b335-880f952f73cb.wav",
+          "bytes": 1586,
+          "sha256": "3d96186d676e655de4e475cf1501672a9e346bc76eea68284898ad5db535d9f6"
+        },
+        {
+          "path": "assets/resources/native/b6/b6a61e59-a60a-43c2-888f-b1541e67da91.wav",
+          "bytes": 26504,
+          "sha256": "13e8728684e4acf5aada75a086b3662978d7d0ba9311731708f51b32f5e39994"
+        },
+        {
+          "path": "assets/resources/native/d6/d620b9d4-d552-4834-8ef0-dd508dff6162.wav",
+          "bytes": 6218,
+          "sha256": "ca337269db063d10d5da5a739ac1d8302ab757a35327b49e58fb64f5af91ef28"
+        },
+        {
+          "path": "assets/resources/native/e3/e3651de2-9f40-4bdd-b371-80e716e36fbe.wav",
+          "bytes": 7982,
+          "sha256": "01b9924b79cfea11b3f221fa0f3fad980e99bf0c6e9dc1c9ff9b732ea5a03eac"
+        },
+        {
+          "path": "assets/resources/native/f0/f061db92-7006-4bbf-8ef2-e07163c5f896.wav",
+          "bytes": 31354,
+          "sha256": "af40d6b7f7617eeaf0d9369fa6ebb22c7928b906c99544cd66e040eee82c2d32"
+        },
+        {
+          "path": "cocos-js/cc.js",
+          "bytes": 5080454,
+          "sha256": "aa83f426643f850994854bec1723cf360eff708f9d5bd1c0f2661c7ecd6ba51e"
+        },
+        {
+          "path": "favicon.ico",
+          "bytes": 1150,
+          "sha256": "0ee6ea35321de21db85992f64e4b846def7abac1222fa2250318878396df988e"
+        },
+        {
+          "path": "index.html",
+          "bytes": 1765,
+          "sha256": "318b2d8ba6a1ae0de066285ead38888a821a036d91c13bd6c702fb2dd2e9101b"
+        },
+        {
+          "path": "index.js",
+          "bytes": 608,
+          "sha256": "3f45e362e55d72cf38698a6824c4750f86b1793e41f5c94dab5bf2e67752964b"
+        },
+        {
+          "path": "preview-application-cbcf6dc850a5.js",
+          "bytes": 3301,
+          "sha256": "cbcf6dc850a51e9603414f07be5f793b45174674a710c72fa0fa868cb8985a04"
+        },
+        {
+          "path": "preview-index-bf987c987467.js",
+          "bytes": 629,
+          "sha256": "bf987c9874676f88c7ae87c901e7becdf95a9e4320518aa012c9f096c4482b88"
+        },
+        {
+          "path": "preview-style-36240e8e771a.css",
+          "bytes": 614,
+          "sha256": "36240e8e771a712eaf80dc5cdebd4d640075e673cfe36c8bebdc9c49d6d4f760"
+        },
+        {
+          "path": "src/chunks/bundle.js",
+          "bytes": 6252,
+          "sha256": "92831b609777e6bc4bf4a3e5aea1d85604e8fd4ebe9e7e2b5471a019d2aa421c"
+        },
+        {
+          "path": "src/effect.bin",
+          "bytes": 5755,
+          "sha256": "b0d92f8307e3109abe8af8a863d68feb58cf4f49cf000b1d48fbb3dc3ad45556"
+        },
+        {
+          "path": "src/import-map.json",
+          "bytes": 54,
+          "sha256": "ae84a42bfd0fe767a4141f7cd4e120b85ced56a55baf02bd48835d20bc6996f4"
+        },
+        {
+          "path": "src/polyfills.bundle.js",
+          "bytes": 14750,
+          "sha256": "f1e4ced3322168d6b9915e782e4c1cf1055d75f66f2b38e7fcd60f48cf89082b"
+        },
+        {
+          "path": "src/settings.json",
+          "bytes": 22646,
+          "sha256": "10fa69322a9bf5fb20b50b8c4c1e91567231aa5f99ecc6919e42e35ef4d6d11d"
+        },
+        {
+          "path": "src/system.bundle.js",
+          "bytes": 37168,
+          "sha256": "e8cf7e3328a5de61f0599f0bbcb1314680e7435e148ed8d5a3bc9fb5f8c4d8c5"
+        },
+        {
+          "path": "style.css",
+          "bytes": 614,
+          "sha256": "36240e8e771a712eaf80dc5cdebd4d640075e673cfe36c8bebdc9c49d6d4f760"
+        }
+      ]
+    },
+    {
+      "directory": "D:\\codex-workspace-sync\\vultr-projects\\server-home-20260930\\project\\kitchen-chaos\\game\\build\\kitchen-chaos-p0-wechat-20261016",
+      "config": {
+        "buildPath": "project://build",
+        "outputName": "kitchen-chaos-p0-wechat-20261016",
+        "startScene": "52c145e4-a2d4-4aa7-a69e-22a04d973d0b",
+        "debug": false,
+        "platform": "wechatgame",
+        "scenes": [
+          {
+            "uuid": "52c145e4-a2d4-4aa7-a69e-22a04d973d0b",
+            "url": "db://assets/main.scene"
+          }
+        ],
+        "packages": {
+          "wechatgame": {
+            "appid": "wx40db4a5ae317a9a5",
+            "orientation": "landscapeRight"
+          }
+        },
+        "mainBundleCompressionType": "subpackage",
+        "mainBundleIsRemote": false,
+        "startSceneAssetBundle": false
+      },
+      "logSha256": "db2b3441c595ea862a102550368244b1ef15e3faa068cabb04973d6ae07f5b11",
+      "files": [
+        {
+          "path": "application.js",
+          "bytes": 3302,
+          "sha256": "359f85dd922e2568aa991af95a5c356a0102042c8918252987bfbd37f2153eb2"
+        },
+        {
+          "path": "assets/resources/config.json",
+          "bytes": 887,
+          "sha256": "caa414efe915f6d35fc509ca8d736d336a1d81bf5016ef8e3eb7ea7a880d5fbd"
+        },
+        {
+          "path": "assets/resources/import/0f/0f397cb1-1dda-4404-a637-120794a144dc.json",
+          "bytes": 117,
+          "sha256": "d04ef24c4a72ec9ba111aa838107d6a698e22ae2e30071ba34752b4207961692"
+        },
+        {
+          "path": "assets/resources/import/2f/2f390aae-a5de-420b-9896-fe54befa2352.json",
+          "bytes": 116,
+          "sha256": "1c8cae7057916f7b642f95e56281696184ec68dd51aa3b8ca2b1a8bd647a98fd"
+        },
+        {
+          "path": "assets/resources/import/37/3710c5c8-094c-4b21-8853-2c4799e1e90d.json",
+          "bytes": 121,
+          "sha256": "c19283467f6853b3dc96aa8accc064d2be8f02de6251c5a741c5719523e590ae"
+        },
+        {
+          "path": "assets/resources/import/3c/3cc7cef3-cec0-4bdd-84ce-a46e485aadfa.json",
+          "bytes": 120,
+          "sha256": "3e9b0a6b496752b02af78204c0ce12aaf299384124bd7718315662056bc9b6aa"
+        },
+        {
+          "path": "assets/resources/import/4b/4baa4ebc-b500-4681-92f9-2e08ca94f533.json",
+          "bytes": 120,
+          "sha256": "9ecb3ccf157d83b56d614cd37815bc20408dd48ce494f5e859750a9c1c359993"
+        },
+        {
+          "path": "assets/resources/import/52/52c30b6c-9713-452b-aa07-7cdf0f055dc2.json",
+          "bytes": 116,
+          "sha256": "c859c226506269a20e6ec013aa531559e999492c88e8d646e47cdba1f588f896"
+        },
+        {
+          "path": "assets/resources/import/5c/5c7f1c06-f607-40ec-ab7a-c22051c029f1.json",
+          "bytes": 120,
+          "sha256": "357e6d0641ae64cddd937cc62b81b5235b9379b72d104622d9cefb32a7290ac9"
+        },
+        {
+          "path": "assets/resources/import/9e/9ed2bac5-421e-4ee3-8410-b9f45dc3a672.json",
+          "bytes": 117,
+          "sha256": "cda164f0bfdad0dc0f2a5c19c01b7bcb43a20fef8df99e167539089632f0a785"
+        },
+        {
+          "path": "assets/resources/import/ac/ac8ad726-c320-452f-b335-880f952f73cb.json",
+          "bytes": 119,
+          "sha256": "bedd81481b3ca93eacc0296c9013ab3c15e43928a42fd520ee9d1780911e139d"
+        },
+        {
+          "path": "assets/resources/import/b6/b6a61e59-a60a-43c2-888f-b1541e67da91.json",
+          "bytes": 116,
+          "sha256": "443b36c31f363b0a9c71eba16d761a4df08a31c52cec6c1de9e8047299e5ae04"
+        },
+        {
+          "path": "assets/resources/import/d6/d620b9d4-d552-4834-8ef0-dd508dff6162.json",
+          "bytes": 117,
+          "sha256": "132020531f5ab1253fea30b43d273bb524698b8c9bc1f9093c31b5c89720ab54"
+        },
+        {
+          "path": "assets/resources/import/e3/e3651de2-9f40-4bdd-b371-80e716e36fbe.json",
+          "bytes": 117,
+          "sha256": "6d6afabffcfc61be4209599befcd3fd6d8c63992e0d3ed0ab2e94b650e69a079"
+        },
+        {
+          "path": "assets/resources/import/f0/f061db92-7006-4bbf-8ef2-e07163c5f896.json",
+          "bytes": 122,
+          "sha256": "83ff9bb5df7edcd050338569e4e174fe10e51526825dfeb16249388c0944f3e3"
+        },
+        {
+          "path": "assets/resources/index.js",
+          "bytes": 605,
+          "sha256": "51a07ab61ee49561d29734ff6ee095b0d8a47998bbe30a6f1973bf3c8b7faa25"
+        },
+        {
+          "path": "assets/resources/native/0f/0f397cb1-1dda-4404-a637-120794a144dc.wav",
+          "bytes": 16802,
+          "sha256": "a63de6f033a02a9d1a8c252ab56937e99726a16b6959c101ca658740090ac2ed"
+        },
+        {
+          "path": "assets/resources/native/2f/2f390aae-a5de-420b-9896-fe54befa2352.wav",
+          "bytes": 3572,
+          "sha256": "bef499db9804202054522ac365b9995c029b7fcf397ad1c86e6b22979cf85f7f"
+        },
+        {
+          "path": "assets/resources/native/37/3710c5c8-094c-4b21-8853-2c4799e1e90d.wav",
+          "bytes": 19888,
+          "sha256": "3d3d461f55c42066ec8cc617fa72a3a38237b65f172e9b43f81aca08bb3d693c"
+        },
+        {
+          "path": "assets/resources/native/3c/3cc7cef3-cec0-4bdd-84ce-a46e485aadfa.wav",
+          "bytes": 5776,
+          "sha256": "4f4f832a919a7a60e6c306511a78cd275d0a004485104ca3b5ab2a0354e64ee5"
+        },
+        {
+          "path": "assets/resources/native/4b/4baa4ebc-b500-4681-92f9-2e08ca94f533.wav",
+          "bytes": 4012,
+          "sha256": "45a29f576549595cf2dba4a82924c3943b89cf66774e8dadbb07d0bfe84b0f11"
+        },
+        {
+          "path": "assets/resources/native/52/52c30b6c-9713-452b-aa07-7cdf0f055dc2.wav",
+          "bytes": 13274,
+          "sha256": "c6611542e9c3c50dcfd9d9bf5c28da97bf67a9768cd1284cf750b31f33561d43"
+        },
+        {
+          "path": "assets/resources/native/5c/5c7f1c06-f607-40ec-ab7a-c22051c029f1.wav",
+          "bytes": 19888,
+          "sha256": "89c8a475316dde04c522d4d2c543032f2ef206ce441f12180586ebf8cbe4ad4b"
+        },
+        {
+          "path": "assets/resources/native/9e/9ed2bac5-421e-4ee3-8410-b9f45dc3a672.wav",
+          "bytes": 14156,
+          "sha256": "e3e5380739b7fcdeb8cacf40b34f01763304751c24ef0e7d9d40abb13ac6fd43"
+        },
+        {
+          "path": "assets/resources/native/ac/ac8ad726-c320-452f-b335-880f952f73cb.wav",
+          "bytes": 1586,
+          "sha256": "3d96186d676e655de4e475cf1501672a9e346bc76eea68284898ad5db535d9f6"
+        },
+        {
+          "path": "assets/resources/native/b6/b6a61e59-a60a-43c2-888f-b1541e67da91.wav",
+          "bytes": 26504,
+          "sha256": "13e8728684e4acf5aada75a086b3662978d7d0ba9311731708f51b32f5e39994"
+        },
+        {
+          "path": "assets/resources/native/d6/d620b9d4-d552-4834-8ef0-dd508dff6162.wav",
+          "bytes": 6218,
+          "sha256": "ca337269db063d10d5da5a739ac1d8302ab757a35327b49e58fb64f5af91ef28"
+        },
+        {
+          "path": "assets/resources/native/e3/e3651de2-9f40-4bdd-b371-80e716e36fbe.wav",
+          "bytes": 7982,
+          "sha256": "01b9924b79cfea11b3f221fa0f3fad980e99bf0c6e9dc1c9ff9b732ea5a03eac"
+        },
+        {
+          "path": "assets/resources/native/f0/f061db92-7006-4bbf-8ef2-e07163c5f896.wav",
+          "bytes": 31354,
+          "sha256": "af40d6b7f7617eeaf0d9369fa6ebb22c7928b906c99544cd66e040eee82c2d32"
+        },
+        {
+          "path": "cocos-js/cc.js",
+          "bytes": 1888613,
+          "sha256": "230c774a0350c945c477ed84a1999f9e194a2498be2ad65090770fd2d74aab5a"
+        },
+        {
+          "path": "engine-adapter.js",
+          "bytes": 20342,
+          "sha256": "5b649b336c4be870e7d40cad6b5231623032a77444644e42af34ad31fd9fd031"
+        },
+        {
+          "path": "first-screen.js",
+          "bytes": 18878,
+          "sha256": "757b19959fefd2013df220b77ee0ab4209de7d30ed3a0a1245281d4621b0a263"
+        },
+        {
+          "path": "game.js",
+          "bytes": 2984,
+          "sha256": "9779065412fcd5fb3e3eba08db978c748ba448ced9d26f19ff2e88e25f134301"
+        },
+        {
+          "path": "game.json",
+          "bytes": 405,
+          "sha256": "d22b4e37fd7a1be4c61de555eb932c9258645d92a6e99d516f3a2ae169b05b3a"
+        },
+        {
+          "path": "logo.png",
+          "bytes": 14496,
+          "sha256": "9e6a5832c6bc9c5f2da97dc54d916fd257a6ab35e9ffd57dbe88c435bd535940"
+        },
+        {
+          "path": "project.config.json",
+          "bytes": 453,
+          "sha256": "4bcd160e13d685d80330117c73871642db655c3b9ca7bff8debc4ca2cc69f16a"
+        },
+        {
+          "path": "slogan.png",
+          "bytes": 11482,
+          "sha256": "b3113554f80c03f9ce51d12ea7c17d68bf7914b89d092743cc54cd370d7f65a9"
+        },
+        {
+          "path": "src/chunks/bundle.js",
+          "bytes": 3082,
+          "sha256": "f3d7012f1ac7d4cc57a1aa570bfd51c2abfc8861c6cbd784370c85d35f0eaa82"
+        },
+        {
+          "path": "src/effect.bin",
+          "bytes": 5755,
+          "sha256": "b0d92f8307e3109abe8af8a863d68feb58cf4f49cf000b1d48fbb3dc3ad45556"
+        },
+        {
+          "path": "src/import-map.js",
+          "bytes": 210,
+          "sha256": "f3cf39bc861d3a2ffd0bfc7d2e7df4397e54d13f71d3f74fbe213219e728bbdc"
+        },
+        {
+          "path": "src/polyfills.bundle.js",
+          "bytes": 8394,
+          "sha256": "cb588d11797e0ca56123d979812db39c8b38dd01c5a6761b2aa5f79cb1d4c701"
+        },
+        {
+          "path": "src/settings.json",
+          "bytes": 2159,
+          "sha256": "864eb65385f22c3320d427b518ee4d3e9a2cf7dbfd3e01584d73ef9aa89f5d78"
+        },
+        {
+          "path": "src/system.bundle.js",
+          "bytes": 8319,
+          "sha256": "9e52437715d2e6a8acacb41f1c64d916e4b455d2a9d448f09cecd551dc084b84"
+        },
+        {
+          "path": "subpackages/internal/config.json",
+          "bytes": 2296,
+          "sha256": "aba0a44597d01bd713a0890a869d5da8cee88f9181f478bacd428d1c683e8f92"
+        },
+        {
+          "path": "subpackages/internal/game.js",
+          "bytes": 45110,
+          "sha256": "19bd675acfdd6f12d4bfec92fa4fa354b57c1dee7256325dce20ebfc5657b58c"
+        },
+        {
+          "path": "subpackages/internal/import/05/05de040c9.json",
+          "bytes": 10004,
+          "sha256": "eb49b006a2b85662bce08987b11b86f46dc1bb566042151c362120d68ab21f91"
+        },
+        {
+          "path": "subpackages/internal/import/0b/0ba503733.json",
+          "bytes": 66497,
+          "sha256": "d7a292f1ad2465dd7c08aeff030c16f23ac7555c72b5d00734668abc7612140b"
+        },
+        {
+          "path": "subpackages/internal/import/0d/0dfe1b9d0.json",
+          "bytes": 2095,
+          "sha256": "0bfb29423466306e5cd81c6596efb7a5405683395edd973e9b411b87f4ce511a"
+        },
+        {
+          "path": "subpackages/internal/import/0e/0e7a008af.json",
+          "bytes": 5916,
+          "sha256": "a3be17c38b37f34a3a7f537c39dd85f0cd8639fa903b9216b9666a18910789df"
+        },
+        {
+          "path": "subpackages/internal/import/1d/1d08ef62-a503-4ce2-8b9a-46c90873f7d3.json",
+          "bytes": 107585,
+          "sha256": "e942a7edfd4458d8ffa9f1e9033a12dac58addb0e1365ee7e8a26bc305775cf2"
+        },
+        {
+          "path": "subpackages/internal/import/51/511d2633-09a7-4bdd-ac42-f778032124b3.json",
+          "bytes": 14134,
+          "sha256": "d6f6d7c0c89f856faeb47192d188d8e07f1bbf66e6369d1db2bbdc484ddad27f"
+        },
+        {
+          "path": "subpackages/internal/import/5c/5c601d96-e4c7-4698-991b-7ee674b11079.json",
+          "bytes": 7309,
+          "sha256": "edded69beb89d3f71d8d091eb16f69e7e884fc2e606ac82b096d0ccf2cafa7b6"
+        },
+        {
+          "path": "subpackages/internal/import/5d/5d45aa00-e064-4938-b314-4265f0c2258c.json",
+          "bytes": 90119,
+          "sha256": "6fa433e22ce144c6e0a99a0023537fb625f11af276636e208ccd1befc07ed97f"
+        },
+        {
+          "path": "subpackages/internal/import/6a/6a2d0734-bd9e-4ddf-946e-caa52498cb75.json",
+          "bytes": 15682,
+          "sha256": "705dd4fc7e87f290c67efcaf3606e20ccc6c75dbcb06aace6e05206df8f1ea42"
+        },
+        {
+          "path": "subpackages/internal/import/87/871c3b6c-7379-419d-bda3-794b239ab90d.json",
+          "bytes": 5525,
+          "sha256": "eea6da905607dec584e5fba45a3d990ac8697449305397886f38e746dec0c23a"
+        },
+        {
+          "path": "subpackages/internal/import/93/9361fd90-ba52-4f84-aa93-6e878fd576ca.json",
+          "bytes": 27343,
+          "sha256": "045083c5e4943da2cd2f6e137e0d5e11d9c4baef924c2d871913316a84e0e3ef"
+        },
+        {
+          "path": "subpackages/internal/import/97/970b0598-bcb0-4714-91fb-2e81440dccd8.json",
+          "bytes": 3692,
+          "sha256": "7bcee959de0ca0bc6d5564c2a69c810dd7c879b3abd8ec83bfaf89b49ee21335"
+        },
+        {
+          "path": "subpackages/internal/import/d9/d930590d-bb92-4cc8-8bd1-23cd027f9edf.json",
+          "bytes": 308,
+          "sha256": "c32d16df8e06a6086d21018995a68ab5df8eff5cf05f8007b0b7007449e7e7d9"
+        },
+        {
+          "path": "subpackages/internal/import/dd/dd3a144d-ab7f-41f0-82b8-2e43a090d496.json",
+          "bytes": 333,
+          "sha256": "34e4870f9cb54b87e3afb3712177e873919f961019583cb5a344cf4b66f04650"
+        },
+        {
+          "path": "subpackages/internal/import/e9/e9aa9a3e-5b2b-4ac7-a2c7-073de2b2b24f.json",
+          "bytes": 273,
+          "sha256": "467203472f4bb302bd5e2b27fa8b600ab8d12ac3f4b6a441b8fdb0b2e190ce2e"
+        },
+        {
+          "path": "subpackages/internal/import/ef/efe8e2a3-eace-427b-b4f1-cb8a937ec77d.json",
+          "bytes": 324,
+          "sha256": "6b2521390036eff7e0f75f9cdbdd2e99c61715cccc274bba511fceb6c5b78401"
+        },
+        {
+          "path": "subpackages/internal/import/f9/f92806d7-1768-443f-afe8-12bcde84d0f0.json",
+          "bytes": 329,
+          "sha256": "85f072a7d9d164b60221bf1ccecf2205a79976883d89c5ce93d4a9459c18deeb"
+        },
+        {
+          "path": "subpackages/internal/import/fd/fda095cb-831d-4601-ad94-846013963de8.json",
+          "bytes": 320,
+          "sha256": "365d002a2cb7a9ae7b20eb9b264f549f7f3c8747b79892cd5933411a7666cd35"
+        },
+        {
+          "path": "subpackages/main/config.json",
+          "bytes": 7856,
+          "sha256": "6e4004e144406112057e783a4c93f749322c5f2089844f3de24badb041c39a41"
+        },
+        {
+          "path": "subpackages/main/game.js",
+          "bytes": 282594,
+          "sha256": "5db97828b63c520157a6122da56db9b2aecf5762ea68255d7dead61078aa9e85"
+        },
+        {
+          "path": "subpackages/main/import/03/037f583d-bbfd-49b1-b719-9dbab782c5bb.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "subpackages/main/import/04/04d0d5a9d.json",
+          "bytes": 2063,
+          "sha256": "055505e768f15de21ae2d9b101396202d372486d05379887f21610959d51e871"
+        },
+        {
+          "path": "subpackages/main/import/06/06a3d54a7.json",
+          "bytes": 562804,
+          "sha256": "e63c064a7e47d7e07aded01e9751a78c18ecb21be1351e151039d76f5af7b3a2"
+        },
+        {
+          "path": "subpackages/main/import/09/092b0bb6b.json",
+          "bytes": 1495,
+          "sha256": "98797dd626b3ad38b67d5ef6f99891e320b764869ccf588701752b23a89dbb97"
+        },
+        {
+          "path": "subpackages/main/import/09/09c4e9db2.json",
+          "bytes": 16711,
+          "sha256": "1f5383215204aeaedb503b56d1296d752e827332e44bef1c29c28aad786c71d6"
+        },
+        {
+          "path": "subpackages/main/import/0a/0ab35a3a0.json",
+          "bytes": 160505,
+          "sha256": "cb1f930e81c0d34ebdf572a96d72c9bd54dfd10705dafe495949af660bd5ee1c"
+        },
+        {
+          "path": "subpackages/main/import/0e/0e129e518.json",
+          "bytes": 2376,
+          "sha256": "70acea05e3a801477606ccba07f7203fac7c602e0d99c38739c79e00dbbcf4f0"
+        },
+        {
+          "path": "subpackages/main/import/0f/0f862547d.json",
+          "bytes": 4754,
+          "sha256": "2a9d3bf658609f66e381826cbf37fc0a04dd49f86f9db20bacbb445d49c1fd48"
+        },
+        {
+          "path": "subpackages/main/import/1f/1fd43565-8118-459b-97ce-a65a2dd758fd.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "subpackages/main/import/1f/1fe28d16-7041-49de-a021-8c0bb50feb6c.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "subpackages/main/import/29/29b88d95-ac50-4445-b6c9-0f2099272c60@1e57b.bin",
+          "bytes": 33364,
+          "sha256": "92dc109dda412b31001d3d3a81e642a2ec184129526f65fc1a1474be83bf1744"
+        },
+        {
+          "path": "subpackages/main/import/29/29b88d95-ac50-4445-b6c9-0f2099272c60@1f586.bin",
+          "bytes": 46308,
+          "sha256": "09c38fd9142cc311871735dfce0a70b082b12bb29409d262fc065b29c5b51b45"
+        },
+        {
+          "path": "subpackages/main/import/29/29b88d95-ac50-4445-b6c9-0f2099272c60@7f3dc.bin",
+          "bytes": 44812,
+          "sha256": "6e33f04faf41c3af31e8342443a5df8a15008d243b8b028a74f89e0936ec9909"
+        },
+        {
+          "path": "subpackages/main/import/39/39467792-665e-4914-bef9-b1f4a530fdaf.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "subpackages/main/import/57/57520716-48c8-4a19-8acf-41c9f8777fb0.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "subpackages/main/import/60/60ea40f5-a37a-49e9-8769-4fcd303035b2.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "subpackages/main/import/61/61c9ff05-7b0d-45cc-9ae4-fcef25533334.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "subpackages/main/import/89/891310fc-e275-4c86-8677-a33ec73f13f4.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "subpackages/main/import/92/920c53e8-6c84-4842-ae9a-98b58d51a5e6.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "subpackages/main/import/92/928c8f21-574d-4861-970b-13be7c427b16@1e57b.bin",
+          "bytes": 34320,
+          "sha256": "512cc8de84ac63b9e68084c2651dd2bd3eafbc62c4518f738997acf0ed78a213"
+        },
+        {
+          "path": "subpackages/main/import/92/928c8f21-574d-4861-970b-13be7c427b16@1f586.bin",
+          "bytes": 47264,
+          "sha256": "36685f4a7dc9047c326f265959a81fcc41f66455fc5988c0b1a4aab48f796fb8"
+        },
+        {
+          "path": "subpackages/main/import/92/928c8f21-574d-4861-970b-13be7c427b16@7f3dc.bin",
+          "bytes": 45768,
+          "sha256": "2fd35b0ac582ed61af9b55d5cf1418e9f3186ba2b7ba0c46a256ff606fe90b22"
+        },
+        {
+          "path": "subpackages/main/import/9c/9ca0af40-788a-47ff-b225-383189771d96.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "subpackages/main/import/a1/a101a8aa-eadd-4e36-a58d-43c800ead140.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "subpackages/main/import/ac/ac40bb5d-8e6c-414b-bcbd-2210f3cde052.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "subpackages/main/import/ba/ba21476f-2866-4f81-9c4d-6e359316e448.json",
+          "bytes": 192,
+          "sha256": "0a34e9263b215bb661d6334db6a255497c6cdac1f1c40b130f50bf9d91f4dd39"
+        },
+        {
+          "path": "subpackages/main/import/cb/cbc393fd-bdd2-45c8-8795-0fc7813e5e78@1e57b.bin",
+          "bytes": 32536,
+          "sha256": "343d1c886c476151213c8837038171f826edecafa765e4de10ee90ba92ec1b90"
+        },
+        {
+          "path": "subpackages/main/import/cb/cbc393fd-bdd2-45c8-8795-0fc7813e5e78@1f586.bin",
+          "bytes": 45488,
+          "sha256": "a958741ffc9d87daeae70c3dedfd39a10837c2143bb7bdeb8b9b14b6e4442f78"
+        },
+        {
+          "path": "subpackages/main/import/cb/cbc393fd-bdd2-45c8-8795-0fc7813e5e78@7f3dc.bin",
+          "bytes": 43992,
+          "sha256": "477e50c4468658c964acf49f3e7fa8f01751b0d56dcc9868a0f71f9a3af3116b"
+        },
+        {
+          "path": "subpackages/main/import/dc/dc8ee3a1-6ff6-43bb-8e2e-b1c4992d4f96@1e57b.bin",
+          "bytes": 32352,
+          "sha256": "79c901ff1cb3b18b92365ea4536773dfa3c091f507345c339eee4d902c84f2f1"
+        },
+        {
+          "path": "subpackages/main/import/dc/dc8ee3a1-6ff6-43bb-8e2e-b1c4992d4f96@1f586.bin",
+          "bytes": 45296,
+          "sha256": "1a8b29180eb916b71f970110a550df4b55f13a26b28095b7b56db6de62ece3cb"
+        },
+        {
+          "path": "subpackages/main/import/dc/dc8ee3a1-6ff6-43bb-8e2e-b1c4992d4f96@7f3dc.bin",
+          "bytes": 43800,
+          "sha256": "7dc48c518641afdac34090a009ca509c1d328b39085fdd39e5867f1562826f8d"
+        },
+        {
+          "path": "subpackages/main/import/e0/e0108ae4-3a2c-4f8a-a76a-5a173b042c05@1e57b.bin",
+          "bytes": 33276,
+          "sha256": "e0e7215455cfbb53dc9d4c6d9dafa5f7374b1c8005b9c413a9e28a4cf216f586"
+        },
+        {
+          "path": "subpackages/main/import/e0/e0108ae4-3a2c-4f8a-a76a-5a173b042c05@1f586.bin",
+          "bytes": 46220,
+          "sha256": "28e9c7051bedf89d4915631455db4001eb8b7c5e5707dd3d700f792877a96f72"
+        },
+        {
+          "path": "subpackages/main/import/e0/e0108ae4-3a2c-4f8a-a76a-5a173b042c05@7f3dc.bin",
+          "bytes": 44724,
+          "sha256": "29f264f11a26669d8fdf1fe6ae5d1c496e1af93f91b7f09e648ad79c397a7e53"
+        },
+        {
+          "path": "subpackages/main/import/f2/f2b9020c-afe9-489f-8f67-60d151b2ba93.json",
+          "bytes": 72,
+          "sha256": "60928632edcd22b5694a8c22de01de0d2cbb6f374103242a99a4394cc767f44d"
+        },
+        {
+          "path": "subpackages/main/import/fd/fd8ec536-a354-4a17-9c74-4f3883c378c8.json",
+          "bytes": 480,
+          "sha256": "c2eee4552a460ed97591f527e127b95c811d5f796b9448f3f705974af9beba9d"
+        },
+        {
+          "path": "subpackages/main/native/00/00a3b1e6-835f-451a-8cf9-ce88d72d0f42@faad7.bin",
+          "bytes": 13224,
+          "sha256": "f4435c8a51c7ddef8b006d18cece8f1cfa7694e2d32733ac986e5dce55606cd9"
+        },
+        {
+          "path": "subpackages/main/native/03/037f583d-bbfd-49b1-b719-9dbab782c5bb.png",
+          "bytes": 1296,
+          "sha256": "3b4d7fde0b43cfdad93b53f677a29163d02b7f6e9e37934df04909aed144c393"
+        },
+        {
+          "path": "subpackages/main/native/0e/0ee81e32-abb0-44ba-b48f-3e8e2e825193@e68fe.bin",
+          "bytes": 4032,
+          "sha256": "1e00b67b2f4a720dc09911357894bf2e178dacedc83a83a2819964dc5c70993b"
+        },
+        {
+          "path": "subpackages/main/native/12/1263d74c-8167-4928-91a6-4e2672411f47@17020.bin",
+          "bytes": 86744,
+          "sha256": "2c5520a0c27113096c9333d92b78d33d09dc7ab4d47af8d4e7e0974523eaaa12"
+        },
+        {
+          "path": "subpackages/main/native/12/1263d74c-8167-4928-91a6-4e2672411f47@2e76e.bin",
+          "bytes": 7976,
+          "sha256": "81d53223c37b4fc0e05f8106cde93a4e8fe2d70bdc55241bc0a93841c25002fb"
+        },
+        {
+          "path": "subpackages/main/native/12/1263d74c-8167-4928-91a6-4e2672411f47@801ec.bin",
+          "bytes": 86264,
+          "sha256": "fa6c08f756e281fd070ce61923eb1573ecc4b634d1274763e6d341103a23f1b6"
+        },
+        {
+          "path": "subpackages/main/native/12/1263d74c-8167-4928-91a6-4e2672411f47@a804a.bin",
+          "bytes": 1416,
+          "sha256": "12d1d971a062777e3883c44aa9810c446b575c41a5ab0447648778255b21a265"
+        },
+        {
+          "path": "subpackages/main/native/1f/1fd43565-8118-459b-97ce-a65a2dd758fd.png",
+          "bytes": 10715,
+          "sha256": "75baf74d9483a0fc56ac21ceba346fbe16fc24a2a1bf0524c53e6bbe802e1153"
+        },
+        {
+          "path": "subpackages/main/native/1f/1fe28d16-7041-49de-a021-8c0bb50feb6c.png",
+          "bytes": 2001,
+          "sha256": "0a87315fe729c64bbbd1536066a4aace95a064f7702238ff52f5da8ed9e62855"
+        },
+        {
+          "path": "subpackages/main/native/20/20bcb1d8-8010-470a-a230-0ce7a132d72e@9b742.bin",
+          "bytes": 49554,
+          "sha256": "ad04f77d93f56be40e5b26a61fb3e7bf6ca2b1a7c04d28f23f1c5d0116efb623"
+        },
+        {
+          "path": "subpackages/main/native/21/217121d8-7219-4bd4-a225-7cd80d5df8a3@83794.bin",
+          "bytes": 41820,
+          "sha256": "c5560b7cc2097ad10c1bf44783d9270a5cab79eda60c4fa2754320dbfd6bcb3c"
+        },
+        {
+          "path": "subpackages/main/native/28/284486ac-e960-4fed-b34e-57e33a60c8e6@bcca5.bin",
+          "bytes": 76608,
+          "sha256": "27e751bde0ee48122114dfdae33b32205a540fc30a2212259a39f07ecac5aa8f"
+        },
+        {
+          "path": "subpackages/main/native/29/29b88d95-ac50-4445-b6c9-0f2099272c60@39e1f.bin",
+          "bytes": 574012,
+          "sha256": "b773d70e453b01a59f01cab05fc860cb835c4ba340c2ae77bdd7fe4512e3a3d4"
+        },
+        {
+          "path": "subpackages/main/native/31/31cd005f-6dcf-4129-b217-8b00766becb1@8c58b.bin",
+          "bytes": 2640,
+          "sha256": "d7cd0cdd721a8213611a589e464803b9620cc175dfe882964cc3dc12ef396b90"
+        },
+        {
+          "path": "subpackages/main/native/32/3294e91b-fe42-4078-be74-5cf58750b465@bcca5.bin",
+          "bytes": 216840,
+          "sha256": "2488407728c5f36a70a6b52f4b2a6d7bc6c7748b7016ecdfdd70f8bcd9ba64e4"
+        },
+        {
+          "path": "subpackages/main/native/33/33196736-02dd-4769-bd9c-b698d6738283@fd38b.bin",
+          "bytes": 16848,
+          "sha256": "0edf7996a7844826ad40bcd06a40fb3fa912ac1cd4fa1466ed17c64c6f2e9c4f"
+        },
+        {
+          "path": "subpackages/main/native/34/344e66dd-2f50-440d-847b-6ad05a8c8115@bcca5.bin",
+          "bytes": 124992,
+          "sha256": "faffac4dddf7492b201d68b8231a645d0d4cd0e3f827f3a4f0e1c77a08bd50c0"
+        },
+        {
+          "path": "subpackages/main/native/39/39467792-665e-4914-bef9-b1f4a530fdaf.png",
+          "bytes": 1804,
+          "sha256": "88a941fee1c667210ae7d5655d450bc236d7a833d36f081641b0a4214731399f"
+        },
+        {
+          "path": "subpackages/main/native/49/49cb229a-01a1-4791-bbcd-5bfd16972fc5@45f73.bin",
+          "bytes": 8424,
+          "sha256": "7fbf0131ab38c10710fea056242fc3eb0ec38b9718e73e6c8a9ad87c2133a654"
+        },
+        {
+          "path": "subpackages/main/native/4e/4eba7db3-b8e1-47d9-ab18-c8b8ce5711ab@d8281.bin",
+          "bytes": 20736,
+          "sha256": "8d0f1a290dc1a7348f2d1042c77b8381206deda2a59ce42041a6011fd35a2014"
+        },
+        {
+          "path": "subpackages/main/native/55/55871c05-b7fc-422d-ad7a-ae1352779ada@8b834.bin",
+          "bytes": 13080,
+          "sha256": "6e6af1929d55b1375dff9ad034d42ed1574181a3546ff8ed8ac4303946e909b5"
+        },
+        {
+          "path": "subpackages/main/native/57/574fb154-9848-4391-92c3-de6c54ffc283@92ea0.bin",
+          "bytes": 8736,
+          "sha256": "caf70e04b3a30569b18738f45238c249ded21e8b8373ac605765a4d91bfae374"
+        },
+        {
+          "path": "subpackages/main/native/57/57520716-48c8-4a19-8acf-41c9f8777fb0.png",
+          "bytes": 1633,
+          "sha256": "328da1766915cb2c5db06827a48effc993bcf876e67b8412719a8ecae36e5dff"
+        },
+        {
+          "path": "subpackages/main/native/57/578ed9f4-15af-4f06-9d7f-11f6f1767e69@88b23.bin",
+          "bytes": 2868,
+          "sha256": "8fe5b3e8d65293e524a4de66b75fe23dfaf2caec09b1cae58140c68a537bf16f"
+        },
+        {
+          "path": "subpackages/main/native/5d/5ddf2fba-d9e1-4baa-8fdb-33225cf0594d@cce37.bin",
+          "bytes": 14520,
+          "sha256": "fe10fc873ad520c9e2a8ca955130b78ac930ebe890dc17a23d9e2f522e455bad"
+        },
+        {
+          "path": "subpackages/main/native/60/60ea40f5-a37a-49e9-8769-4fcd303035b2.png",
+          "bytes": 1846,
+          "sha256": "5d289e2439416430152bef952832f2a14f6fe76beb13384c5206304580208577"
+        },
+        {
+          "path": "subpackages/main/native/61/61c9ff05-7b0d-45cc-9ae4-fcef25533334.png",
+          "bytes": 1834,
+          "sha256": "e0a329e2f07cd061db125bc69c5ddacac4572ef7449c2c019108903521b5403c"
+        },
+        {
+          "path": "subpackages/main/native/7d/7df29662-e04e-44cc-b82b-36a55bf8e26c@1ed8d.bin",
+          "bytes": 22128,
+          "sha256": "daa0ba58beaf74a6ca6a0e64255c0a18cca397720b63dfd37cac1bd0cedb0a64"
+        },
+        {
+          "path": "subpackages/main/native/7e/7e25b55d-379a-4b2f-9447-35a2236514f6@bbd92.bin",
+          "bytes": 24960,
+          "sha256": "b8c063fe36ea9c78486f3d1b7b84c60a4a80fa22d5dc29694b148e56b47d1496"
+        },
+        {
+          "path": "subpackages/main/native/81/81666f13-b5c1-4683-bd74-24c953b01c61@cfc7c.bin",
+          "bytes": 4692,
+          "sha256": "f36a276310b2dafcd03eb1bf434f8c62ac9665e5cef8e035b4f4b49176c7c093"
+        },
+        {
+          "path": "subpackages/main/native/89/891310fc-e275-4c86-8677-a33ec73f13f4.png",
+          "bytes": 20673,
+          "sha256": "a77f8dd0a68489c4cd202f496850c96afdeaa7771cee6cf187786b416e1e2843"
+        },
+        {
+          "path": "subpackages/main/native/92/920c53e8-6c84-4842-ae9a-98b58d51a5e6.png",
+          "bytes": 1783,
+          "sha256": "d871ff5208db087f65ba3d8425326cfc647fd086c186cbcbfe9cab8ccb475f82"
+        },
+        {
+          "path": "subpackages/main/native/92/928c8f21-574d-4861-970b-13be7c427b16@39e1f.bin",
+          "bytes": 410592,
+          "sha256": "75c9a545b00d8866887bd4413540bd8652e5e331f7907ec0e333ffd325e65090"
+        },
+        {
+          "path": "subpackages/main/native/93/93036868-f05e-4477-9f02-6cb016cfbe9b@07938.bin",
+          "bytes": 3432,
+          "sha256": "e86594b704bb1e5397d627d6a1f1f9c0550668e1c2c0104a2b0e7e2f370fed38"
+        },
+        {
+          "path": "subpackages/main/native/93/93036868-f05e-4477-9f02-6cb016cfbe9b@d297c.bin",
+          "bytes": 5928,
+          "sha256": "806d37686c4edeaa9589cc5a0e959db4de89481490467a2f939687ef766a8efa"
+        },
+        {
+          "path": "subpackages/main/native/9c/9c688a06-30bb-4d17-a633-6437b339cba6@b958d.bin",
+          "bytes": 47952,
+          "sha256": "e51e195aa9d493352ccc62f031f4a4b28f593de0926d285825aa7e6322f57fe2"
+        },
+        {
+          "path": "subpackages/main/native/9c/9ca0af40-788a-47ff-b225-383189771d96.png",
+          "bytes": 1615,
+          "sha256": "cc573f1030cd6f8f50cb2780b1d2e0a05c71dce4a6d5768c185fc50513c22833"
+        },
+        {
+          "path": "subpackages/main/native/9f/9f86b811-9593-46a7-9ef8-68466ddfe6f8@60082.bin",
+          "bytes": 7752,
+          "sha256": "e1e2c7e44bd874f964c6efa17202cc541b383afe5e8cfe59735a62a626ff7963"
+        },
+        {
+          "path": "subpackages/main/native/a1/a101a8aa-eadd-4e36-a58d-43c800ead140.png",
+          "bytes": 1984,
+          "sha256": "b582d3018fa03af3a854a3930a9b34e036f172fd33cb7ac7895c4883197d3613"
+        },
+        {
+          "path": "subpackages/main/native/a3/a34d050d-cf18-4a42-88b9-5539bebebf40@2772f.bin",
+          "bytes": 18552,
+          "sha256": "bef748be27560b35f810b0d56b61cfe942582fe068c2e68bc2d8eaded40c1f1d"
+        },
+        {
+          "path": "subpackages/main/native/ac/ac40bb5d-8e6c-414b-bcbd-2210f3cde052.png",
+          "bytes": 15458,
+          "sha256": "71695587e19ab831ebd728f7a8450c8511ab0bc9566599176d81dcecefcc7b85"
+        },
+        {
+          "path": "subpackages/main/native/af/af6fa88f-9ab7-4d11-a05d-69f3263cb8ba@a49e1.bin",
+          "bytes": 11568,
+          "sha256": "5c72594ca86d6e44e62bf0ea665fd0e6b85aa17a8c126a88dddbfc597e61f452"
+        },
+        {
+          "path": "subpackages/main/native/b0/b07d96c1-1b6e-42d5-a74b-b2c857767227@00870.bin",
+          "bytes": 23832,
+          "sha256": "98cfa56ffee82586ab5c5e3a06d9cdc56e988df44d22fec9769cce61069ca8f9"
+        },
+        {
+          "path": "subpackages/main/native/b6/b6bfaed3-3ceb-436b-8eb8-cdbe8e92ea9c@28204.bin",
+          "bytes": 13608,
+          "sha256": "2b4641c7d631b6de828f5d183faa8f4b7da106e019be8849a6470eaeac08cc92"
+        },
+        {
+          "path": "subpackages/main/native/b9/b93e0eea-7cb9-4a4c-aa8c-e01c4c881ecd@c4448.bin",
+          "bytes": 78792,
+          "sha256": "0cddf8b6a7a28e503498046c7adea71b85281dc9f1117357c84598e6d5ed9ef3"
+        },
+        {
+          "path": "subpackages/main/native/bc/bc57036a-047d-417e-bb7c-44c754b771df@9aa00.bin",
+          "bytes": 48960,
+          "sha256": "d23972708051f1ea3766e6e1f354ccd340d50e2f93f21ecd8c4eda465161d8e0"
+        },
+        {
+          "path": "subpackages/main/native/bc/bc57036a-047d-417e-bb7c-44c754b771df@dacae.bin",
+          "bytes": 7416,
+          "sha256": "35eaeeb2cbd6e7af6ab3807c4dce0e9e350ea9322f50a3fb92acc993f0fd7715"
+        },
+        {
+          "path": "subpackages/main/native/c1/c1f40b14-d66c-4ae6-82bb-400895e78af3@1ac18.bin",
+          "bytes": 11844,
+          "sha256": "4017446d13f2c7a442ba40cf4ef5a9061f512eb77084065668d998ce37876a12"
+        },
+        {
+          "path": "subpackages/main/native/c1/c1f40b14-d66c-4ae6-82bb-400895e78af3@2d9ae.bin",
+          "bytes": 15864,
+          "sha256": "5adfb5a933c74ab65e006be0bfde80988a5dc5b70d3f27a21711e89e94416c12"
+        },
+        {
+          "path": "subpackages/main/native/c1/c1f40b14-d66c-4ae6-82bb-400895e78af3@c7119.bin",
+          "bytes": 10920,
+          "sha256": "6db4b27d872e623091b7d070f34b0ebb0c3f3e625af7162ea6e5fe53b0fe3381"
+        },
+        {
+          "path": "subpackages/main/native/c2/c226346c-7905-4400-b916-79da4d13b2a4@8b834.bin",
+          "bytes": 13080,
+          "sha256": "6e6af1929d55b1375dff9ad034d42ed1574181a3546ff8ed8ac4303946e909b5"
+        },
+        {
+          "path": "subpackages/main/native/c6/c655716e-6692-4e81-9e40-4cc21ea2ba26@bcca5.bin",
+          "bytes": 4032,
+          "sha256": "49d327c9731a8acc73ec35bb8c43683e2a5949c216c6497aade4ddc055287ef5"
+        },
+        {
+          "path": "subpackages/main/native/ca/cadaf40d-dd31-47d6-9870-779f0040a07a@919dd.bin",
+          "bytes": 9408,
+          "sha256": "cf60beca1bcba6e5f70840f56dc492c146de6bb0cc306c67e94043a3a29b6cce"
+        },
+        {
+          "path": "subpackages/main/native/cb/cbc393fd-bdd2-45c8-8795-0fc7813e5e78@39e1f.bin",
+          "bytes": 472676,
+          "sha256": "11b520eb45e957f2a07f1d747f1a5833db7328cb17be2bea5587cc7026d65b62"
+        },
+        {
+          "path": "subpackages/main/native/cf/cfa53aee-9bcf-48a3-b777-9b549043847c@bcca5.bin",
+          "bytes": 229824,
+          "sha256": "9e7b014a5c9cea287d2f4f2891b124b5107081520d070360e87f26d4eb3e583a"
+        },
+        {
+          "path": "subpackages/main/native/d1/d1072aa3-23b9-4c84-a2d4-f3738a5087e8@8b7dc.bin",
+          "bytes": 12096,
+          "sha256": "466dec19abdb6d83cb6058b99f44cb10efd9eb2f00aa5be0247c0bb7ee50e152"
+        },
+        {
+          "path": "subpackages/main/native/dc/dc8ee3a1-6ff6-43bb-8e2e-b1c4992d4f96@39e1f.bin",
+          "bytes": 546120,
+          "sha256": "9e2bc3a9cdcf935b1639c2f2ad28db22f49e13f8306a4cb03b6df2410539e61e"
+        },
+        {
+          "path": "subpackages/main/native/de/de54b59d-5763-4c80-bea8-618e17cea9a4@286b3.bin",
+          "bytes": 265200,
+          "sha256": "e98a9c8bb77875ca61584ffbcb215701959aea818b056135e030a837687efd8e"
+        },
+        {
+          "path": "subpackages/main/native/e0/e00f2345-f931-4c0c-862b-96a407502f80@ebf4a.bin",
+          "bytes": 11808,
+          "sha256": "27fac3b2eb9c4d2410adc77fd8bd99e31005dc892237915bb65141afdb861e64"
+        },
+        {
+          "path": "subpackages/main/native/e0/e0108ae4-3a2c-4f8a-a76a-5a173b042c05@39e1f.bin",
+          "bytes": 426960,
+          "sha256": "f3a1f301c1a802064af8d61b4dfed37ffc977527a7c7ecb9afe28929fb580d91"
+        },
+        {
+          "path": "subpackages/main/native/e7/e72b8f4b-5bc7-4767-8da6-097b6ff6d000@bcca5.bin",
+          "bytes": 16680,
+          "sha256": "117acde8ad2394215df5dbce9d014e0ee41c83ed20b8611634b12e891dcc2e50"
+        },
+        {
+          "path": "subpackages/main/native/e8/e888890b-3f87-4b2c-a975-bb209ff3312a@bcca5.bin",
+          "bytes": 38304,
+          "sha256": "9d7a804495e30edcd804f16a3666b55f20fd9012126f3ad64606edc72014a22e"
+        },
+        {
+          "path": "subpackages/main/native/f2/f2b9020c-afe9-489f-8f67-60d151b2ba93.png",
+          "bytes": 1194,
+          "sha256": "67e1a992b72fd3f7c23353fdd0fd2ffd0092bec4b2ddc8655d1a0dcb7b859189"
+        },
+        {
+          "path": "subpackages/main/native/f4/f45e3c9c-3aa6-4db6-85e2-65d9e6ee206a@40339.bin",
+          "bytes": 16920,
+          "sha256": "e384c284ef69e752d2c2f5eb3ecba9b2ee3e8272d486e82581ec7b552c625797"
+        },
+        {
+          "path": "subpackages/main/native/f6/f6c7999c-f7b6-47e6-967f-55e5c6aa539e@41ac8.bin",
+          "bytes": 31860,
+          "sha256": "947e8044ed83c52801e861748c2de4c3110a78e43cf702eb6b6bf199c58ae03d"
+        },
+        {
+          "path": "subpackages/main/native/fa/fad3ffd7-280a-4232-a60b-97baac70631a@bcca5.bin",
+          "bytes": 114912,
+          "sha256": "80e41e27e36cc9c0b4ee2079e69da37fc08d2027af3fdb4549724822bfd32571"
+        },
+        {
+          "path": "web-adapter.js",
+          "bytes": 90055,
+          "sha256": "699ad028d891e2671b6be8c46bd7835d9dadbda23758b072e3db22085edea34f"
+        },
+        {
+          "path": "wechat-system-info.js",
+          "bytes": 461,
+          "sha256": "b9cedf196bae74d9bd4a2f48c5e170aa864fa727eb9d1cda057ff7d92e33db00"
+        }
+      ]
+    }
+  ],
+  "wechatSize": {
+    "main": {
+      "bytes": 2253432,
+      "files": 45
+    },
+    "subpackages": [
+      {
+        "name": "internal",
+        "root": "subpackages/internal",
+        "bytes": 405194,
+        "files": 20
+      },
+      {
+        "name": "main",
+        "root": "subpackages/main",
+        "bytes": 6076128,
+        "files": 105
+      }
+    ],
+    "totalBytes": 8734754,
+    "mainLimit": 4194304,
+    "safeLimit": 3984384,
+    "totalLimit": 31457280,
+    "withinBudget": true,
+    "withinSafetyMargin": true,
+    "orientation": "landscapeRight",
+    "launchScene": "db://assets/main.scene",
+    "remoteBundles": [],
+    "debug": false
+  },
+  "archive": {
+    "path": "game/build/packages/kitchen-chaos-p0-wechat-20261016.zip",
+    "bytes": 2565978,
+    "sha256": "6fb03a2fc5dabf2e5b0765e0a035a757a6746a1e042600ce5451dde3610c7150",
+    "filesChecked": 170,
+    "contentsEqual": true
+  },
+  "pending": [
+    "WeChat phone performance and touch feel",
+    "Human first-order/icon comprehension",
+    "Thumb occlusion/sound/lifecycle on real devices",
+    "Full shifts and day 5-to-6 balance"
+  ],
+  "pushed": false,
+  "deployed": false,
+  "uploaded": false,
+  "localCleanup": {
+    "completed": false,
+    "reason": "Automatic approval rejected temporary verification directory cleanup: blocked by policy",
+    "directories": [
+      "game/temp/p0/ui-before",
+      "game/temp/p0/feedback"
+    ],
+    "gitIgnored": true
+  }
+}

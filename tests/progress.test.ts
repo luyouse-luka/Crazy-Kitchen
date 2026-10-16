@@ -10,11 +10,11 @@ describe('progress · 存档', () => {
   })
 
   it('v1 旧档照样读进来，金币从 0 开始', () => {
-    expect(parseProgress('{"v":1,"day":3,"best":[3,2]}')).toEqual({ day: 3, best: [3, 2], coins: 0, owned: [], decor: newDecor(), layout: newProgress().layout })
+    expect(parseProgress('{"v":1,"day":3,"best":[3,2]}')).toEqual({ day: 3, best: [3, 2], coins: 0, owned: [], decor: newDecor(), layout: newProgress().layout, regular: newProgress().regular })
   })
 
   it('坏的金币字段归零，不连累整份存档', () => {
-    expect(parseProgress('{"v":2,"day":3,"best":[],"coins":"lots"}')).toEqual({ day: 3, best: [], coins: 0, owned: [], decor: newDecor(), layout: newProgress().layout })
+    expect(parseProgress('{"v":2,"day":3,"best":[],"coins":"lots"}')).toEqual({ day: 3, best: [], coins: 0, owned: [], decor: newDecor(), layout: newProgress().layout, regular: newProgress().regular })
     expect(parseProgress('{"v":2,"day":3,"best":[],"coins":-5}').coins).toBe(0)
   })
 

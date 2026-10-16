@@ -7,6 +7,8 @@ import { createKitchen, discard, DEFAULT_WASH, DRINK_SEC, FIRE_SEC, FRY_SEC, gri
 import type { InteractRequest } from '../game/assets/logic/kitchen'
 import { judge } from '../game/assets/logic/order'
 import { dayFlow, newProgress } from '../game/assets/logic/progress'
+import { GAMEPLAY_RULES, gameplayDeliveryEnabled, gameplayShiftConfig } from '../game/assets/logic/gameplay'
+import type { GameplayParams } from '../game/assets/logic/gameplay'
 import { DEFAULT_COOK } from '../game/assets/logic/recipe'
 import { createShift, settleServe, settleSide, shiftResult, starsForShift, stepShift } from '../game/assets/logic/shift'
 import { fridgeCap, shelfCap, flowFactor, FAST_GRILL, FAST_WASH, BIG_TRAY, FRIES_CHANCE, DRINK_CHANCE } from '../game/assets/logic/shop'
@@ -24,7 +26,7 @@ interface Snapshot {
   schema: number
   hashes: Record<string, string>
   normalizedHashes: Record<string, string>
-  params: Record<string, number>
+  params: GameplayParams & Record<string, number>
   stations: Array<{ kind: Kind; name: string; center: { x: number; z: number }; halfX: number; halfZ: number }>
   distances: number[]
   layout: string
@@ -33,11 +35,13 @@ const input = process.argv[2] ?? 'docs/difficulty-layout-2026-10-14.json'
 const output = process.argv[3] ?? 'docs/difficulty-results-2026-10-14.json'
 const sourceInput = fs.readFileSync(input, 'utf8')
 const snapshot = JSON.parse(sourceInput) as Snapshot
+const currentGameplay = process.argv[4] === 'p0'
+if (!currentGameplay) console.log('Historical two-hand calibration experiment; current gameplay: pnpm sim:p0')
 const required = ['fridge', 'grill', 'assembly', 'serve', 'register', 'delivery', 'storeroom', 'sink', 'rack', 'shelf', 'fryer', 'drinks', 'extinguisher']
 if (snapshot.schema !== 1 || required.some(kind => !snapshot.stations.some(s => s.kind === kind)) || snapshot.distances.length !== required.length ** 2 ||
   snapshot.distances.some(n => !Number.isFinite(n) || n < 0)) throw new Error('Invalid calibration layout')
 for (const [file, hash] of Object.entries(snapshot.normalizedHashes)) {
-  if (!file.startsWith('game/assets/logic/') || file.endsWith('scene-layout.ts')) continue
+  if (!(currentGameplay || file.startsWith('game/assets/logic/')) || file.endsWith('scene-layout.ts')) continue
   const local = crypto.createHash('sha256').update(fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n')).digest('hex')
   if (local !== hash) throw new Error(`Logic drift since capture: ${file}; recapture and recalibrate`)
 }
@@ -46,7 +50,7 @@ const stations = Object.fromEntries(snapshot.stations.map(s => [s.kind, { id: s.
 const route = (a: Kind, b: Kind) => snapshot.distances[snapshot.stations.findIndex(s => s.kind === a) * required.length + snapshot.stations.findIndex(s => s.kind === b)]!
 const SEEDS = Array.from({ length: 32 }, (_, s) => 1000 + (s + (process.argv[4] === 'confirm' ? 32 : 0)) * 7919)
 const DT = 0.05
-type Variant = 'current' | 'patience-only' | 'flow-only' | 'staged'
+type Variant = 'current' | 'patience-only' | 'flow-only' | 'staged' | 'single-item'
 interface PolicyPatch { customers?: number; intervalSec?: number; intervalJitter?: number; maxConcurrent?: number; doubleChance?: number; deliveryEnabled?: boolean }
 interface Profile { name: string; actionSec: number; routeFactor: number; readSec: number; initialReadSec: number }
 const PROFILES: Profile[] = [
@@ -65,6 +69,11 @@ const OWNERSHIP = [[], ['fridge-1', 'shelf-1'], ['fryer', 'drinks', 'fast-grill'
 function config(day: number, variant: Variant, seed: number, owned: string[], patch: PolicyPatch = {}) {
   if (day >= 6 && Object.keys(patch).length) throw new Error('Sensitivity patches cannot alter day 6 or later')
   const p = snapshot.params, progress = { ...newProgress(), owned }, d = dayFlow(day, p.arrivalSec!)
+  if (variant === 'single-item') {
+    if (Object.keys(patch).length) throw new Error('Current gameplay cannot use experimental patches')
+    return { ...gameplayShiftConfig(day, seed, progress, p),
+      deliveryEnabled: gameplayDeliveryEnabled(day), progress }
+  }
   const early = day <= EARLY.length && variant !== 'current' && variant !== 'patience-only' ? EARLY[day - 1] : undefined
   return { seed, customers: patch.customers ?? (variant === 'staged' && day <= 2 ? [6, 8][day - 1]! : p.customersPerShift!),
     flow: { ...d.flow, intervalSec: (patch.intervalSec ?? early?.intervalSec ?? d.flow.intervalSec) * flowFactor(progress),
@@ -80,13 +89,14 @@ function play(day: number, variant: Variant, seed: number, profile: Profile, own
   const cfg = config(day, variant, seed, owned, patch), params = snapshot.params
   const shift = createShift(cfg)
   const g = owned.includes('fast-grill') ? FAST_GRILL : 1, wash = owned.includes('fast-wash') ? FAST_WASH : 1
-  const k = createKitchen({ stations: Object.values(stations), cook: { rareAt: DEFAULT_COOK.rareAt * g, mediumAt: DEFAULT_COOK.mediumAt * g,
+  const k = createKitchen({ ...(variant === 'single-item' ? GAMEPLAY_RULES : {}), stations: Object.values(stations), cook: { rareAt: DEFAULT_COOK.rareAt * g, mediumAt: DEFAULT_COOK.mediumAt * g,
     wellAt: DEFAULT_COOK.wellAt * g, burntAt: DEFAULT_COOK.burntAt * g }, grillSlots: 2, fridgeCap: fridgeCap(cfg.progress),
     plates: shelfCap(cfg.progress), shelfCap: shelfCap(cfg.progress), sparePlates: params.sparePlates!, fireSec: FIRE_SEC, doublePatty: true,
     wash: { soakSec: DEFAULT_WASH.soakSec * wash, scrubSec: DEFAULT_WASH.scrubSec * wash, drySec: DEFAULT_WASH.drySec * wash, returnSec: DEFAULT_WASH.returnSec },
     stackMax: owned.includes('big-tray') ? BIG_TRAY.max : undefined, stackSlow: owned.includes('big-tray') ? BIG_TRAY.slow : undefined,
     fryerSec: owned.includes('fryer') ? FRY_SEC : undefined, drinkSec: owned.includes('drinks') ? DRINK_SEC : undefined })
-  const desk = createDesk({ intervalSec: params.deliveryIntervalSec!, offerSec: params.deliveryOfferSec!, deadlineSec: params.deliveryDeadlineSec!, maxOffers: 2, maxActive: 2 }, cfg.orders, (seed ^ 0x5bd1e995) >>> 0 || 1)
+  const desk = createDesk({ intervalSec: params.deliveryIntervalSec!, offerSec: params.deliveryOfferSec!, deadlineSec: params.deliveryDeadlineSec!, maxOffers: 2, maxActive: 2 },
+    variant === 'single-item' ? dayFlow(day, params.arrivalSec!).orders : cfg.orders, (seed ^ 0x5bd1e995) >>> 0 || 1)
   let t = 0, at: Kind = 'assembly', idle = 0, walking = 0, acting = 0, washing = 0, restocking = 0, discarded = 0
   let fires = 0, lastFire = false
   let firstPaidServeSec: number | null = null, washBatches = 0, restockTrips = 0
@@ -94,6 +104,7 @@ function play(day: number, variant: Variant, seed: number, profile: Profile, own
   const known = new Set<number>()
   const blocks: Record<string, number> = {}
   const tick = (dt = DT) => {
+    if (k.cfg.singleItem && k.carry.kind === 'ingredient' && k.carry.second !== null) throw new Error('Single-item carry invariant failed')
     t += dt
     if (t > 1800) throw new Error(`Script never closed day=${day} variant=${variant} profile=${profile.name}`)
     stepKitchen(k, dt); stepShift(shift, dt)
@@ -263,7 +274,28 @@ function forcedFireProbe() {
   return { burntAtSec: DEFAULT_COOK.burntAt, fireAtSec: DEFAULT_COOK.burntAt + FIRE_SEC, recoveryTravelSec,
     recoveryActionSec: 2 * PROFILES[0]!.actionSec, forced: true, incidenceEstimated: false }
 }
-if (process.argv[4] === 'sensitivity' || process.argv[4] === 'confirm') {
+if (currentGameplay) {
+  if (!snapshot.normalizedHashes['game/assets/logic/gameplay.ts'] || !snapshot.normalizedHashes['tools/difficulty-calibrate.ts']) throw new Error('Recapture current gameplay sources')
+  const rows = PROFILES.flatMap(profile => Array.from({ length: LAST_DAY }, (_, i) => aggregate(i + 1, 'single-item', profile, [], true, {}, true)))
+  const upgrades = OWNERSHIP.slice(1).flatMap(owned => [1, 5, 6, 10, 20].map(day => aggregate(day, 'single-item', PROFILES[1]!, owned, true, {}, true)))
+  const probe = play(1, 'single-item', SEEDS[0]!, PROFILES[2]!)
+  if (JSON.stringify(probe) !== JSON.stringify(play(1, 'single-item', SEEDS[0]!, PROFILES[2]!))) throw new Error('Non-deterministic current gameplay')
+  const result = { schema: 2, mode: 'single-item', snapshotSha256: crypto.createHash('sha256').update(sourceInput).digest('hex'),
+    layout: snapshot.layout, seeds: SEEDS, timestepSec: DT, profiles: PROFILES, kitchenRules: GAMEPLAY_RULES,
+    limitations: ['Scripted routes and reaction delays are assumptions, not human measurements.',
+      'Default scene layout only; custom saved layouts need a separate capture.',
+      'Serial cooking does not optimize parallel tasks; no joystick mistakes or icon reading model.',
+      'No rant/witness/review side effects; serial bot priorities are not an optimal-player upper bound.',
+      'Completed-order waits exclude failures; wash/restock totals overlap travel/action.'],
+    rows, upgrades, fireProbe: forcedFireProbe(), runs: (rows.length + upgrades.length) * SEEDS.length + 2,
+    checks: { accounting: true, plates: true, singleItem: true, repeatable: true, sharedRuntimePolicy: true,
+      firstDaySingleConcurrent: rows.filter(r => r.day === 1).every(r => r.peak === 1) } }
+  if (!result.checks.firstDaySingleConcurrent) throw new Error('First-day concurrency drift')
+  fs.writeFileSync(output, JSON.stringify(result, null, 2) + '\n')
+  console.log(JSON.stringify({ output, runs: result.runs, checks: result.checks }))
+  for (const profile of PROFILES) console.log(JSON.stringify({ profile: profile.name, days: rows.filter(r => r.profile === profile.name && [1, 3, 5, 6, 20].includes(r.day))
+    .map(r => ({ day: r.day, goodRate: r.goodRate, passRate: r.passRate, threeStarRate: r.threeStarRate, durationSec: r.durationSec })) }))
+} else if (process.argv[4] === 'sensitivity' || process.argv[4] === 'confirm') {
   const short = (day: number): PolicyPatch => day <= 3 ? { customers: [4, 6, 8][day - 1], intervalSec: [35, 36, 36][day - 1] } : {}
   const ramp = (day: number): PolicyPatch => day === 5 ? { intervalSec: 28.5, intervalJitter: 0.35, maxConcurrent: 4, doubleChance: 0.2 } : {}
   const candidates: Array<{ id: string; variant: Variant; patch: (day: number) => PolicyPatch }> = [
@@ -328,7 +360,7 @@ const cookCaptureAblation = [1, 2, 3, 4, 5].flatMap(day => [2.5, 3.5, 5].map(act
 const core = Array.from({ length: LAST_DAY }, (_, i) => {
   const day = i + 1, d = difficultyForDay(day), coreKinds = ['fridge', 'grill', 'assembly', 'serve'] as Kind[]
   const layout = { ...defaultSimConfig().layout, ...Object.fromEntries(coreKinds.map(kind => [kind, stations[kind].pos])), routeDistances: coreKinds.flatMap(a => coreKinds.map(b => route(a, b))) }
-  const runs = SEEDS.map(seed => runDay({ ...defaultSimConfig(), seed, layout, flow: d.flow, orders: d.orders }))
+  const runs = SEEDS.map(seed => runDay({ ...defaultSimConfig(), singleItem: false, seed, layout, flow: d.flow, orders: d.orders }))
   return { day, served: mean(runs.map(r => r.served)), completion: mean(runs.map(r => r.completionRate)), burnt: mean(runs.map(r => r.burnt)), idleSec: mean(runs.map(r => r.idleSec)), stars: d.stars }
 })
 for (const profile of PROFILES) for (const day of [6, 10, 14, 18, 20]) {

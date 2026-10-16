@@ -1,5 +1,6 @@
 import { Color, Graphics, Label, Node, Tween, tween, UIOpacity, UITransform } from 'cc'
 import { FEEL } from './Feel'
+import { buttonFeedback, drawButton, drawPanel, UI_THEME, uiColor, uiNode } from './ui/UiTheme'
 
 /** Placeholder avatars until the character art has portraits: a coloured disc with the first glyph */
 const AVATAR = [
@@ -10,8 +11,7 @@ const AVATAR = [
   new Color(69, 123, 157, 255),
   new Color(230, 57, 70, 255),
 ]
-const BG = new Color(20, 22, 28, 215)
-const NAME = new Color(255, 215, 120, 255)
+const NAME = uiColor(UI_THEME.accent)
 
 export interface ReviewLine {
   name: string
@@ -37,6 +37,7 @@ function addLabel(parent: Node, name: string, size: number, x: number, y: number
   l.fontSize = size
   l.lineHeight = size + 4
   l.overflow = Label.Overflow.SHRINK
+  l.color = uiColor(UI_THEME.text)
   if (left) l.horizontalAlign = Label.HorizontalAlign.LEFT
   return l
 }
@@ -87,7 +88,7 @@ export class NameTab {
 export const TOAST_W = 1000
 const W = TOAST_W
 /** One row so it fits the strip above the order cards */
-export const TOAST_H = 54
+export const TOAST_H = 64
 const H = TOAST_H
 const SHOW_SEC = 4.5
 const QUEUE_MAX = 4
@@ -112,9 +113,12 @@ export class Toast {
     this.opacity = this.node.addComponent(UIOpacity)
     this.g = this.node.addComponent(Graphics)
     this.initial = addLabel(this.node, 'Initial', 24, -W / 2 + 32, 0, 44, false)
+    this.initial.color = uiColor(UI_THEME.inkLight)
     this.name = addLabel(this.node, 'Name', 22, -W / 2 + 64, 0, 280, true)
     this.name.color = NAME
     this.text = addLabel(this.node, 'Text', 24, -W / 2 + 356, 0, W - 372, true)
+    this.text.fontSize = 22; this.text.lineHeight = 24; this.text.enableWrapText = true
+    this.text.node.getComponent(UITransform)!.height = 50
     this.node.active = false
   }
 
@@ -149,10 +153,7 @@ export class Toast {
 
   private show(r: ReviewLine): void {
     const g = this.g
-    g.clear()
-    g.fillColor = BG
-    g.roundRect(-W / 2, -H / 2, W, H, H / 2)
-    g.fill()
+    drawPanel(g, W, H)
     drawAvatar(g, -W / 2 + 32, 0, 22, r.avatar)
     this.initial.string = r.name.charAt(0)
     const stars = starsText(r.stars)
@@ -166,13 +167,13 @@ export class Toast {
   }
 }
 
-const BW = 640
-const BH = 560
+const BW = 760
+const BH = 700
 const ROWS = 5
-const BTN_W = 84
-const BTN_H = 40
-const OK = new Color(60, 160, 90, 255)
-const NO = new Color(170, 70, 60, 255)
+const BTN_W = 104
+const BTN_H = 88
+const OFFER_H = 96
+const REVIEW_H = 72
 
 export interface OfferRow {
   /** 订单内容，已拼好 */
@@ -195,6 +196,7 @@ export class ComputerPanel {
   readonly node: Node
   readonly buttons: PanelButton[] = []
   private g: Graphics
+  private backdrop: Graphics
   private title: Label
   private offerTexts: Label[] = []
   private offerNone: Label
@@ -208,33 +210,42 @@ export class ComputerPanel {
     this.node.layer = parent.layer
     parent.addChild(this.node)
     this.node.addComponent(UITransform).setContentSize(BW, BH)
-    this.g = this.node.addComponent(Graphics)
+    this.backdrop = uiNode(this.node, 'Dimmer').addComponent(Graphics)
+    this.g = uiNode(this.node, 'Paper').addComponent(Graphics)
     this.title = addLabel(this.node, 'Title', 24, 0, BH / 2 - 28, BW - 40, false)
     const sub = addLabel(this.node, 'OffersTitle', 18, -BW / 2 + 24, BH / 2 - 64, 200, true)
     sub.string = '外卖单'
     sub.color = NAME
     for (let i = 0; i < maxOffers; i++) {
-      const y = BH / 2 - 104 - i * 56
+      const y = BH / 2 - 116 - i * OFFER_H
       this.offerTexts.push(addLabel(this.node, `Offer_${i}`, 18, -BW / 2 + 24, y, BW - 2 * BTN_W - 72, true))
+      const offer = this.offerTexts[i]!
+      offer.fontSize = 20; offer.lineHeight = 26; offer.enableWrapText = true; offer.node.getComponent(UITransform)!.height = 58
       this.buttons.push({ id: `accept${i}`, x: BW / 2 - BTN_W * 1.5 - 30, y, w: BTN_W, h: BTN_H })
       this.buttons.push({ id: `reject${i}`, x: BW / 2 - BTN_W / 2 - 20, y, w: BTN_W, h: BTN_H })
       addLabel(this.node, `Accept_${i}`, 18, BW / 2 - BTN_W * 1.5 - 30, y, BTN_W, false).string = '接单'
       addLabel(this.node, `Reject_${i}`, 18, BW / 2 - BTN_W / 2 - 20, y, BTN_W, false).string = '拒单'
+      for (const prefix of ['Accept_', 'Reject_']) {
+        const n = this.node.getChildByName(prefix + i)!
+        n.getComponent(UITransform)!.height = BTN_H; buttonFeedback(n, BTN_W, BTN_H)
+      }
     }
-    this.offerNone = addLabel(this.node, 'OffersNone', 18, 0, BH / 2 - 104, BW, false)
+    this.offerNone = addLabel(this.node, 'OffersNone', 18, 0, BH / 2 - 116, BW, false)
     this.offerNone.string = '暂时没有外卖单'
-    const sub2 = addLabel(this.node, 'ReviewsTitle', 18, -BW / 2 + 24, BH / 2 - 104 - maxOffers * 56 + 6, 200, true)
+    const sub2 = addLabel(this.node, 'ReviewsTitle', 18, -BW / 2 + 24, BH / 2 - 116 - maxOffers * OFFER_H + 6, 200, true)
     sub2.string = '顾客评价'
     sub2.color = NAME
-    const top = BH / 2 - 150 - maxOffers * 56
+    const top = BH / 2 - 162 - maxOffers * OFFER_H
     for (let i = 0; i < ROWS; i++) {
-      const y = top - i * 52
+      const y = top - i * REVIEW_H
       this.rows.push({
         initial: addLabel(this.node, `Initial_${i}`, 18, -BW / 2 + 36, y, 36, false),
-        name: addLabel(this.node, `Name_${i}`, 16, -BW / 2 + 62, y + 12, BW - 80, true),
-        text: addLabel(this.node, `Text_${i}`, 18, -BW / 2 + 62, y - 10, BW - 80, true),
+        name: addLabel(this.node, `Name_${i}`, 18, -BW / 2 + 62, y + 18, BW - 80, true),
+        text: addLabel(this.node, `Text_${i}`, 20, -BW / 2 + 62, y - 19, BW - 80, true),
       })
       this.rows[i]!.name.color = NAME
+      this.rows[i]!.initial.color = uiColor(UI_THEME.inkLight)
+      this.rows[i]!.text.enableWrapText = true; this.rows[i]!.text.node.getComponent(UITransform)!.height = 48
     }
     this.empty = addLabel(this.node, 'Empty', 18, 0, top - 40, BW, false)
     this.empty.string = '还没有评价'
@@ -267,10 +278,9 @@ export class ComputerPanel {
     if (key === this.offerKey) return
     this.offerKey = key
     const g = this.g
-    g.clear()
-    g.fillColor = BG
-    g.roundRect(-BW / 2, -BH / 2, BW, BH, 18)
-    g.fill()
+    drawPanel(g, BW, BH)
+    const dim = this.backdrop
+    dim.clear(); dim.fillColor = uiColor(UI_THEME.shadow, 140); dim.rect(-4096, -4096, 8192, 8192); dim.fill()
     let any = false
     for (let i = 0; i < this.offerTexts.length; i++) {
       const o = offers[i] ?? null
@@ -283,18 +293,15 @@ export class ComputerPanel {
       label.string = `${o.text}  （${o.sec}s）`
       const a = this.buttons[i * 2]!
       const r = this.buttons[i * 2 + 1]!
-      g.fillColor = OK
-      g.roundRect(a.x - a.w / 2, a.y - a.h / 2, a.w, a.h, 8)
-      g.fill()
-      g.fillColor = NO
-      g.roundRect(r.x - r.w / 2, r.y - r.h / 2, r.w, r.h, 8)
-      g.fill()
+      drawButton(g, a.x, a.y, a.w, a.h)
+      drawButton(g, r.x, r.y, r.w, r.h, false)
+      this.node.getChildByName(`Accept_${i}`)!.getComponent(Label)!.color = uiColor(UI_THEME.inkLight)
     }
     this.offerNone.node.active = !any
-    const top = BH / 2 - 150 - this.offerTexts.length * 56
+    const top = BH / 2 - 162 - this.offerTexts.length * OFFER_H
     for (let i = 0; i < ROWS; i++) {
       const r = this.reviewLines[i]
-      if (r) drawAvatar(g, -BW / 2 + 36, top - i * 52, 18, r.avatar)
+      if (r) drawAvatar(g, -BW / 2 + 36, top - i * REVIEW_H, 18, r.avatar)
     }
   }
 

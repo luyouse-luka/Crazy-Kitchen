@@ -1,4 +1,4 @@
-import { Camera, Color, game, Label, Node, Tween, tween, UIOpacity, Vec3 } from 'cc'
+import { Camera, Color, game, Label, Node, Tween, tween, UIOpacity, UITransform, Vec3 } from 'cc'
 
 /**
  * Every timing and amount for interaction feedback lives here; components reference it and never
@@ -22,6 +22,11 @@ export const FEEL = {
   scrubTickSec: 0.35,
   throwSec: 0.35,
   throwArc: 80,
+  fridgeOpenSec: 0.28,
+  fridgeCloseSec: 0.24,
+  fridgeStockHoldSec: 0.22,
+  fridgeSlamSec: 0.1,
+  fridgeAngle: 100,
 } as const
 
 const ONE = new Vec3(1, 1, 1)
@@ -53,6 +58,7 @@ interface Floater {
   node: Node
   label: Label
   op: UIOpacity
+  channel?: string
 }
 
 /** Short text that pops up over a spot and drifts away: "+★★★★★", "糊了", hints. Pooled, oldest reused */
@@ -82,10 +88,10 @@ export class Floaters {
   }
 
   /** Over a world point */
-  spawn(cam: Camera, x: number, y: number, z: number, text: string, color: Readonly<Color>, size = 30): void {
+  spawn(cam: Camera, x: number, y: number, z: number, text: string, color: Readonly<Color>, size = 30, channel?: string, bounds?: { halfW: number; halfH: number }): void {
     this.world.set(x, y, z)
     cam.convertToUINode(this.world, this.parent, this.ui)
-    this.spawnAt(this.ui.x, this.ui.y, text, color, size)
+    this.spawnAt(this.ui.x, this.ui.y, text, color, size, channel, bounds)
   }
 
   /** Lob `text` from one world point to another along an arc; `onHit` fires as it lands */
@@ -97,6 +103,7 @@ export class Floaters {
     const x1 = this.ui.x
     const y1 = this.ui.y
     const f = this.pool[this.next++ % this.pool.length]!
+    f.channel = undefined
     Tween.stopAllByTarget(f.node)
     Tween.stopAllByTarget(f.op)
     f.label.string = text
@@ -127,19 +134,28 @@ export class Floaters {
   }
 
   /** At a canvas point */
-  spawnAt(x: number, y: number, text: string, color: Readonly<Color>, size = 30): void {
+  spawnAt(x: number, y: number, text: string, color: Readonly<Color>, size = 30, channel?: string, bounds?: { halfW: number; halfH: number }): void {
     // Wall clock, not the shift's: that one restarts at 0 every day
     const now = game.totalTime / 1000
     if (text === this.lastText && now - this.lastAt < FEEL.hintRepeatSec) return
     this.lastText = text
     this.lastAt = now
-    const f = this.pool[this.next++ % this.pool.length]!
+    const f = (channel ? this.pool.find(f => f.channel === channel) : undefined) ?? this.pool[this.next++ % this.pool.length]!
+    f.channel = channel
     Tween.stopAllByTarget(f.node)
     Tween.stopAllByTarget(f.op)
     f.label.string = text
     f.label.color = color
     f.label.fontSize = size
     f.label.lineHeight = size + 4
+    if (bounds) {
+      f.label.updateRenderData(true)
+      const t = f.node.getComponent(UITransform)!
+      // Leave room for the pop overshoot and the full upward float.
+      const padX = t.width * .58 + 12, padY = t.height * .58 + 12
+      x = Math.max(-bounds.halfW + padX, Math.min(bounds.halfW - padX, x))
+      y = Math.max(-bounds.halfH + padY, Math.min(bounds.halfH - padY - FEEL.floatRise, y))
+    }
     f.node.setPosition(x, y, 0)
     f.node.setScale(0.6, 0.6, 1)
     f.op.opacity = 255

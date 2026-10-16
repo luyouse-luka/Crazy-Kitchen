@@ -68,6 +68,7 @@ describe('cardLines.ts 与手写卡同步', () => {
       expect(CARD_LINES[i]!.praise).toBe(c.lines.praise)
       expect(CARD_LINES[i]!.complain).toBe(c.lines.complain)
       expect(CARD_LINES[i]!.greet).toBe(c.lines.greet)
+      expect(CARD_LINES[i]!.wait_nudge).toBe(c.lines.wait_nudge)
       expect(CARD_LINES[i]!.argue).toEqual(c.lines.argue)
     })
   })

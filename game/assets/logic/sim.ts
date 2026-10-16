@@ -66,6 +66,7 @@ export type { FlowParams, OrderDifficulty } from './customer'
 
 export interface SimConfig {
   seed: number
+  singleItem: boolean
   /** 局长。一天 = 一关，3–4 分钟 */
   durationSec: number
   layout: KitchenLayout
@@ -101,6 +102,7 @@ export interface DayResult {
 export function defaultSimConfig(): SimConfig {
   return {
     seed: 1,
+    singleItem: true,
     durationSec: 210,
     layout: {
       fridge: { x: -3, z: 2 },
@@ -442,7 +444,7 @@ function finishAction(st: InternalState): void {
       st.carryCustomer = st.actionCustomer
       // Same fridge visit, one more tap: grab the order's next missing topping too
       const next = firstMissingIngredient(st.customers[st.actionCustomer]!, st.actionIng)
-      if (next !== null) {
+      if (!st.cfg.singleItem && next !== null) {
         st.actionIng = next
         st.phaseLeft = st.cfg.chef.interactSec
         return

@@ -1,0 +1,235 @@
+{
+  "recordedAt": "2026-10-16T08:34:46.066Z",
+  "preview": "http://127.0.0.1:4196/?ui=fridge-banter-20261016",
+  "unit": {
+    "files": 51,
+    "tests": 654,
+    "passed": true
+  },
+  "cards": {
+    "total": 50,
+    "passed": 50
+  },
+  "build": {
+    "platform": "web-desktop",
+    "editor": "3.8.8",
+    "bundle": "game/build/fridge-banter-web/assets/main/index.js",
+    "sha256": "8da22250e3a12143f23905a2a46df84423271da92ea671b4f322b98951649d1e",
+    "finished": "2026-10-16 16:32:26 - debug: ================================ build Task (fridge-banter-web) Finished in (44 s)ms ================================"
+  },
+  "focused": {
+    "checks": [
+      "Actual action opens both hinged doors; ingredient click closes them and preserves single-item pick",
+      "Actual click outside the inventory cancels it and closes both doors",
+      "12 interrupted open/close cycles restore the exact hinge pose without position drift",
+      "Restock opens, holds, and closes without opening the picker",
+      "Actual long press vents once and completes a door slam",
+      "Restart cancels an in-flight opening tween and closes the picker",
+      "Six real taps speak the captured role/reason/task lines; exit and highlight quote the same encounter",
+      "Result closes the door and picker"
+    ],
+    "closed": [
+      0,
+      0
+    ],
+    "opening": [
+      0,
+      0.3085228601082467,
+      0.46433004634598185,
+      0.5610240000184434,
+      0.6554225880714522,
+      0.7347719844145439,
+      0.8008963704901603,
+      0.8561810056854768,
+      0.8999180029154519,
+      0.9339207376041104,
+      0.9589363750076012,
+      0.9766763848396501,
+      0.9883910302527247,
+      0.9954197966016763,
+      0.9987944792277669,
+      0.9998854110788679,
+      1
+    ],
+    "slam": [
+      0,
+      0.10456316199711561,
+      0.2043411529798101,
+      0.28690758929564797,
+      0.3606240959122469,
+      0.4232751436452958,
+      0.4761603406964007,
+      0.5193916909620993,
+      0.5555585399646359,
+      0.5841931962349672,
+      0.606706086290543,
+      0.6227241820337563,
+      0.6346684558348885,
+      0.6422742288958267,
+      0.6469453757829969,
+      0.6491598849193696,
+      0.649927148152788,
+      0.65,
+      0.6494904433869186,
+      0.6250299037215654,
+      0.5657605578985516,
+      0.46879121816981484,
+      0.3351306785238334,
+      0.167022735824979,
+      0
+    ],
+    "match": {
+      "complaint": "这饭屎山级别，重写都嫌浪费。",
+      "chef": [
+        "菜没糊，你先炸锅了！",
+        "嘴这么能炒，你上灶啊！",
+        "不糊锅已经黄了，你也想炸？",
+        "不吃拉倒，别在这儿喷粪！",
+        "饿不死，废话倒先撑满了！",
+        "别嚷嚷，锅都让你吵聋了！"
+      ],
+      "customer": [
+        "嘴硬不能当热修复",
+        "等这顿饭，我都快进化了！",
+        "这破饭编译都过不了"
+      ],
+      "exit": "差评，永久关单！"
+    },
+    "evidence": {
+      "spoken": [
+        "🔥 糊了",
+        "💢 狂点对骂！",
+        "菜没糊，你先炸锅了！",
+        "嘴硬不能当热修复",
+        "嘴这么能炒，你上灶啊！",
+        "不糊锅已经黄了，你也想炸？",
+        "等这顿饭，我都快进化了！",
+        "不吃拉倒，别在这儿喷粪！",
+        "饿不死，废话倒先撑满了！",
+        "这破饭编译都过不了",
+        "别嚷嚷，锅都让你吵聋了！",
+        "差评，永久关单！"
+      ],
+      "match": {
+        "complaint": "这饭屎山级别，重写都嫌浪费。",
+        "chef": [
+          "菜没糊，你先炸锅了！",
+          "嘴这么能炒，你上灶啊！",
+          "不糊锅已经黄了，你也想炸？",
+          "不吃拉倒，别在这儿喷粪！",
+          "饿不死，废话倒先撑满了！",
+          "别嚷嚷，锅都让你吵聋了！"
+        ],
+        "customer": [
+          "嘴硬不能当热修复",
+          "等这顿饭，我都快进化了！",
+          "这破饭编译都过不了"
+        ],
+        "exit": "差评，永久关单！"
+      },
+      "highlight": {
+        "score": 160,
+        "title": "和「实习程序员」对骂了 6 回合",
+        "quote": "你：「别嚷嚷，锅都让你吵聋了！」\n对方：「差评，永久关单！」然后摔门走了"
+      },
+      "arguing": null,
+      "retorts": 1,
+      "review": {
+        "customerId": 30,
+        "kind": "complain",
+        "stars": 1,
+        "t": 1.8172000000029807
+      },
+      "rant": false
+    },
+    "errors": []
+  },
+  "viewports": [
+    {
+      "width": 587,
+      "height": 652,
+      "scrollWidth": 587,
+      "scrollHeight": 652,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "w": 587,
+        "h": 652
+      },
+      "headerVisible": false,
+      "profilerVisible": false
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "scrollWidth": 1280,
+      "scrollHeight": 720,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "w": 1280,
+        "h": 720
+      },
+      "headerVisible": false,
+      "profilerVisible": false
+    },
+    {
+      "width": 780,
+      "height": 360,
+      "scrollWidth": 780,
+      "scrollHeight": 360,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "w": 780,
+        "h": 360
+      },
+      "headerVisible": false,
+      "profilerVisible": false
+    }
+  ],
+  "gameplay": {
+    "served": 1,
+    "wrong": 0,
+    "wash": true,
+    "singleItem": true,
+    "dropPickThrow": true,
+    "viewports": [
+      {
+        "width": 1024,
+        "height": 768,
+        "visibleText": []
+      },
+      {
+        "width": 1280,
+        "height": 720,
+        "visibleText": []
+      },
+      {
+        "width": 1560,
+        "height": 720,
+        "visibleText": []
+      },
+      {
+        "width": 780,
+        "height": 360,
+        "visibleText": []
+      }
+    ],
+    "errors": [],
+    "failed": []
+  },
+  "sources": {
+    "pipeline/handwritten/banter.json": "d14e3fc57528b7df73143dab1bfbf87640a112f01d2ef906fb2095204c6291be",
+    "tools/export-card-lines.mjs": "219fc3647b1da353475cb881076992130e6e9c32624e28b91e0624937727539c",
+    "game/assets/logic/banter.ts": "4fa9a2d59bdb0d3cb16b3c46e524afa9a317fa2a0737645a84af826a4b71dbd8",
+    "game/assets/logic/banterLines.ts": "5ab29de508045a63b2328bbe2d264da26072f300f896c7c08a53ed0a1ae14371",
+    "game/assets/scripts/FridgeDoor.ts": "f7f214e581058ecdaa227286606fffd9e0daf7ff459fb02fe35a149c5a321975",
+    "game/assets/scripts/Feel.ts": "f321e12eba58d9659f8289323fff719dd6621a71586bc820c95e31cba9647291",
+    "game/assets/scripts/StationView.ts": "33b300dbd98e93c8fb0d39ad8e99108f1413d4e0a870563925567025da55cfba",
+    "tests/banter.test.ts": "731ffd958e8b05959f27c7150ec154591356c19bf4d856249194840af72e4d91",
+    "tools/verify-fridge-banter.cjs": "0806eebe6f636c2daa22b2abaad3231b64cea7521560d0795bef57800f696843",
+    "tools/verify-player-feedback.cjs": "13ebd212f9d31e61a304ad4fa8d0d05a07e71fffb8b824b22a95a8a0ec7b0c62",
+    "tools/verify-player-preview.cjs": "ad2cf1bc8b272d521fc5aaf662b9fa20fd839753daf2352fae37501ec96c85d4"
+  }
+}

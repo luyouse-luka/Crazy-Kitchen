@@ -67,13 +67,13 @@ describe('starsFor', () => {
   })
 })
 
-describe('曲线的目标带 —— M1 的验收判据', () => {
+describe('历史双持曲线的目标带 —— M1 回归，非当前单件难度验收', () => {
   // 少跑几个 seed 保持测试轻快；`pnpm sim curve` 用 32 个 seed 做正式标定
   const SEEDS = 8
 
   function idealCompletion(day: number): number {
     const d = difficultyForDay(day)
-    const base = { ...defaultSimConfig(), durationSec: 210, flow: d.flow, orders: d.orders }
+    const base = { ...defaultSimConfig(), singleItem: false, durationSec: 210, flow: d.flow, orders: d.orders }
     let sum = 0
     for (let s = 0; s < SEEDS; s++) sum += runDay({ ...base, seed: 1000 + s * 7919 }).completionRate
     return sum / SEEDS
@@ -100,7 +100,7 @@ describe('曲线的目标带 —— M1 的验收判据', () => {
   it('三星线定在理想玩家够得着、但要打起精神的位置', () => {
     for (const day of [1, 10, LAST_DAY]) {
       const d = difficultyForDay(day)
-      const base = { ...defaultSimConfig(), durationSec: 210, flow: d.flow, orders: d.orders }
+      const base = { ...defaultSimConfig(), singleItem: false, durationSec: 210, flow: d.flow, orders: d.orders }
       let served = 0
       for (let s = 0; s < SEEDS; s++) served += runDay({ ...base, seed: 1000 + s * 7919 }).served
       served /= SEEDS

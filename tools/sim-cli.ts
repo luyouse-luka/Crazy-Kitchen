@@ -14,6 +14,8 @@ declare const console: { log(...args: unknown[]): void }
 
 /** 每个参数点跑多少个 seed 取平均。单局几毫秒，跑满不心疼。 */
 const SEEDS = 32
+const legacy = process.argv.includes('--legacy')
+const simConfig = (): SimConfig => ({ ...defaultSimConfig(), singleItem: !legacy })
 
 export interface Agg {
   arrived: number
@@ -55,7 +57,7 @@ const num = (x: number, w = 5, d = 1) => x.toFixed(d).padStart(w)
  * 这样 maxConcurrent 就等于「玩家同时要盯几单」，不掺客流节奏的干扰。
  */
 function cmdCrash(): void {
-  const base = defaultSimConfig()
+  const base = simConfig()
   console.log('同时在场上限 → 理想玩家还撑不撑得住（客流压满，其余取基准值）\n')
   console.log('同时单数  完成率  差评率  烤糊  空闲(s)  实际峰值')
   let prev = 1
@@ -131,7 +133,7 @@ function cmdSweep(name: string): void {
     process.exit(1)
     return
   }
-  const base = { ...defaultSimConfig(), durationSec: 210 }
+  const base = { ...simConfig(), durationSec: 210 }
   console.log(`扫「${dim.label}」，其余取基准值，每点 ${SEEDS} 局取平均\n`)
   console.log(dim.label.padEnd(16), '完成率  差评率  到店  完成  超时  烤糊  空闲(s)')
   for (const v of dim.values) {
@@ -152,7 +154,7 @@ function cmdSweep(name: string): void {
 // ─────────────────────────── day：单局细节 ───────────────────────────
 
 function cmdDay(): void {
-  const r = runDay({ ...defaultSimConfig(), durationSec: 210, trace: true })
+  const r = runDay({ ...simConfig(), durationSec: 210, trace: true })
   for (const line of r.trace) console.log(line)
   console.log(
     `\n到店 ${r.arrived} · 完成 ${r.served} · 超时 ${r.timedOut} · 上错 ${r.wrong} · 烤糊 ${r.burnt}`,
@@ -170,7 +172,7 @@ function cmdDay(): void {
  * 高于 98% 说明这一天没有任何压力，白过一天。
  */
 function cmdCurve(): void {
-  const base = { ...defaultSimConfig(), durationSec: 210 }
+  const base = { ...simConfig(), durationSec: 210 }
   console.log('第 1→20 天难度曲线 · 理想玩家表现（每天 32 局取平均）\n')
   console.log('天  间隔  耐心  同时  配料  禁料   完成率  差评率   完成  超时  烤糊  空闲   星级线(1/2/3)')
 
@@ -179,8 +181,8 @@ function cmdCurve(): void {
     const d = difficultyForDay(day)
     const a = runMany({ ...base, flow: d.flow, orders: d.orders })
     // 第 1–3 天是教学关，理想玩家接近满分本来就应该，只卡下界
-    const tooEasy = day > 3 && a.completion > 0.98
-    const tooHard = a.completion < (day <= 3 ? 0.92 : 0.78)
+    const tooEasy = legacy && day > 3 && a.completion > 0.98
+    const tooHard = legacy && a.completion < (day <= 3 ? 0.92 : 0.78)
     const flag = tooEasy || tooHard ? ' ⚠' : ''
     if (flag) outOfBand++
     console.log(
@@ -201,15 +203,16 @@ function cmdCurve(): void {
     )
   }
   console.log(
-    outOfBand === 0
+    !legacy ? '\n单件核心模型不套用历史目标带；当前完整营业模拟请跑 pnpm sim:p0' : outOfBand === 0
       ? '\n✅ 全 20 天都落在目标带内（教学期 1–3 天 ≥92%，之后 78%–98%）'
-      : `\n⚠ 有 ${outOfBand} 天落在目标带外，调 difficulty.ts 的曲线参数`,
+      : `\n⚠ 有 ${outOfBand} 天落在目标带外，需复核；单件模式不套用历史目标带，完整结果见 pnpm sim:p0`,
   )
 }
 
 // ─────────────────────────── 入口 ───────────────────────────
 
 const [, , cmd, arg] = process.argv
+console.log(legacy ? '历史双持 M1 模型（仅回归）' : '单件核心模型（限时/无限库存，完整营业规则请跑 pnpm sim:p0）')
 
 switch (cmd) {
   case 'crash':

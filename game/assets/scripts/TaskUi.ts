@@ -1,16 +1,16 @@
 import { Color, Graphics, Label, Node, UITransform } from 'cc'
 import type { TaskStatus } from '../logic/tasks'
+import { drawPanel, UI_THEME, uiColor } from './ui/UiTheme'
 
 export const TASK_CARD_W = 300
 const LINE_H = 28
 const HEAD_H = 32
 const PAD = 8
-const BG = new Color(20, 22, 28, 200)
-const HEAD = new Color(255, 215, 120, 255)
+const HEAD = uiColor(UI_THEME.accent)
 const COLOR: Record<TaskStatus, Color> = {
-  open: new Color(255, 255, 255, 255),
-  done: new Color(120, 220, 120, 255),
-  failed: new Color(150, 150, 156, 255),
+  open: uiColor(UI_THEME.text),
+  done: uiColor(UI_THEME.accent),
+  failed: uiColor(UI_THEME.muted),
 }
 const MARK: Record<TaskStatus, string> = { open: '○', done: '✔', failed: '✘' }
 
@@ -25,6 +25,7 @@ function addLabel(parent: Node, size: number, w: number, anchorX: number): Label
   l.fontSize = size
   l.lineHeight = size + 4
   l.overflow = Label.Overflow.SHRINK
+  l.color = uiColor(UI_THEME.text)
   l.horizontalAlign = anchorX === 0 ? Label.HorizontalAlign.LEFT : Label.HorizontalAlign.RIGHT
   return l
 }
@@ -44,9 +45,7 @@ export class TaskCard {
     parent.addChild(this.node)
     this.node.addComponent(UITransform).setContentSize(W, h)
     const g = this.node.addComponent(Graphics)
-    g.fillColor = BG
-    g.roundRect(-W / 2, -h / 2, W, h, 10)
-    g.fill()
+    drawPanel(g, W, h)
     const left = -W / 2 + PAD + 4
     const right = W / 2 - PAD - 4
     const headY = h / 2 - PAD - HEAD_H / 2
@@ -89,24 +88,22 @@ export class HighlightCard {
   private title: Label
   private quote: Label
 
-  constructor(parent: Node) {
-    this.node = new Node('UI_Highlight')
+  constructor(parent: Node, heading = '🎬 今日名场面', name = 'UI_Highlight') {
+    this.node = new Node(name)
     this.node.layer = parent.layer
     parent.addChild(this.node)
     this.node.addComponent(UITransform).setContentSize(HL_W, HL_H)
     const g = this.node.addComponent(Graphics)
-    g.fillColor = new Color(20, 22, 28, 235)
-    g.roundRect(-HL_W / 2, -HL_H / 2, HL_W, HL_H, 14)
-    g.fill()
+    drawPanel(g, HL_W, HL_H, UI_THEME.raised)
     const head = addLabel(this.node, 22, HL_W - 24, 0)
     head.node.setPosition(-HL_W / 2 + 14, HL_H / 2 - 22, 0)
-    head.string = '🎬 今日名场面'
+    head.string = heading
     head.color = HEAD
     this.title = addLabel(this.node, 20, HL_W - 28, 0)
     this.title.node.setPosition(-HL_W / 2 + 14, HL_H / 2 - 58, 0)
     this.quote = addLabel(this.node, 18, HL_W - 28, 0)
-    this.quote.node.setPosition(-HL_W / 2 + 14, -18, 0)
-    this.quote.node.getComponent(UITransform)!.setContentSize(HL_W - 28, 84)
+    this.quote.node.setPosition(-HL_W / 2 + 14, -32, 0)
+    this.quote.node.getComponent(UITransform)!.setContentSize(HL_W - 28, 88)
     this.quote.overflow = Label.Overflow.SHRINK
     this.quote.enableWrapText = true
     this.quote.color = COLOR.open

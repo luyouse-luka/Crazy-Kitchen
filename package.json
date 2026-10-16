@@ -12,6 +12,7 @@
     "check": "pnpm run check:no-engine && pnpm run typecheck && pnpm run test",
     "presim": "node tools/ensure-cocos-tsconfig.mjs",
     "sim": "vite-node tools/sim-cli.ts --",
+    "sim:p0": "node tools/ensure-cocos-tsconfig.mjs && vite-node tools/difficulty-capture.ts . docs/p0-single-item-layout.json integrated-kitchen-single-item && vite-node tools/difficulty-calibrate.ts docs/p0-single-item-layout.json docs/p0-single-item-results.json p0",
     "size": "node tools/check-wechat-package.mjs",
     "prea7": "node tools/ensure-cocos-tsconfig.mjs",
     "a7": "vite-node tools/a7-expect.ts",

@@ -68,13 +68,13 @@ import {
 import type { BlockReason, CarryKind, InteractKind, InteractResult, KitchenState } from '../logic/kitchen'
 import { createShift, resetShift, settleServe, settleSide, shiftResult, starsForShift, stepShift } from '../logic/shift'
 import type { ShiftConfig, ShiftState } from '../logic/shift'
-import { angriest, DOUBLE_CHANCE, DOUBLE_FROM_DAY, giftCustomer, giftTarget, matchCustomer, matchSide, stormOff, moodTier, orderPatienceLeft, patienceRatio, queueIndex, takeReadyOrders } from '../logic/customer'
+import { angriest, giftCustomer, giftTarget, matchCustomer, matchSide, stormOff, moodTier, orderPatienceLeft, patienceRatio, queueIndex, takeReadyOrders } from '../logic/customer'
 import type { Customer, Side } from '../logic/customer'
 import type { OrderSpec } from '../logic/types'
 import { bank, dayFlow, finishDay, parseProgress, SAVE_KEY, serializeProgress } from '../logic/progress'
 import { createLedger, earn, ledgerTotal, resetLedger } from '../logic/economy'
 import type { Progress } from '../logic/progress'
-import { BIG_TRAY, buy, DRINK_CHANCE, FAST_GRILL, FAST_WASH, flowFactor, FRIES_CHANCE, fridgeCap, owns, SHELF_CAPS, shelfCap, shopItems } from '../logic/shop'
+import { BIG_TRAY, buy, FAST_GRILL, FAST_WASH, fridgeCap, owns, SHELF_CAPS, shelfCap, shopItems } from '../logic/shop'
 import { ListPanel } from './ShopUi'
 import type { ListRow } from './ShopUi'
 import { COLOR_PRICE, DECOR_ITEMS, DECOR_SLOTS, FLOOR_COLORS, paint, place, WALL_COLORS } from '../logic/decor'
@@ -87,6 +87,10 @@ import { Bubble } from './Bubble'
 import { Ring } from './Ring'
 import { WallCutaway } from './WallCutaway'
 import { WorkstationEffects } from './WorkstationEffects'
+import { FridgeDoor } from './FridgeDoor'
+import { FridgeContents } from './FridgeContents'
+import { BanterDeck, banterBubble } from '../logic/banter'
+import type { BanterMatch, BanterReason } from '../logic/banter'
 import { ARGUE_TAPS, argueTap, createVent, endArgue, rantStars, ranting, rantsLeft, resetVent, startRant, stepVent, throwAt, vent, VENT_HOLD_SEC, ventSpeedFactor } from '../logic/vent'
 import type { Rant, VentSpot, VentState } from '../logic/vent'
 import { witnessMishap } from '../logic/witness'
@@ -97,6 +101,10 @@ import type { SfxName } from './Sfx'
 import { addReview, averageStars, createReviewLog, customerCardIndex, REJECT_STARS, serveReview, WALKOUT_STARS } from '../logic/reviews'
 import type { Review, ReviewKind, ReviewLog } from '../logic/reviews'
 import { CARD_LINES } from './cardLines'
+import { REGULAR, finishRegularVisit, nextRegularVisit, regularLines } from '../logic/regular'
+import type { RegularVisit, VisitOutcome } from '../logic/regular'
+import { dayRecap, serviceReason, witnessResponse } from '../logic/recap'
+import type { OrderVerdict } from '../logic/order'
 import { ComputerPanel, NameTab, Toast, TOAST_H, TOAST_W } from './ReviewUi'
 import { Controls } from './Controls'
 import { LayoutRuntime } from './LayoutRuntime'
@@ -105,7 +113,7 @@ import { buildLayoutGeometry, safeLayoutPosition, validateLayout, warehouseGate 
 import { LAYOUT_FIXTURES } from '../logic/scene-layout'
 import type { LayoutConfig } from '../logic/scene-layout'
 import { persistProgress, progressWithLayout } from '../logic/progress'
-import { earlyShiftPolicyForDay } from '../logic/difficulty'
+import { GAMEPLAY_RULES, gameplayDeliveryEnabled, gameplayShiftConfig } from '../logic/gameplay'
 import { FirstOrderUi } from './ui/FirstOrderUi'
 import { InventorySkin, OrderCardView } from './ui/KitchenPanels'
 import { actionPresentation } from './ui/UiModel'
@@ -113,6 +121,7 @@ import { ChefActions } from './ChefActions'
 import { approachFacingYaw } from './ChefMotion'
 import { BurgerStack } from './BurgerStack'
 import { LooseItemsView } from './LooseItemsView'
+import { buttonFeedback, drawButton, drawPanel, UI_THEME, uiColor, uiSurface } from './ui/UiTheme'
 import { canSetLooseItem, clearLooseItem, createLooseItems, nearestLooseItem, pickLooseItem, putLooseItem, resetLooseItems, stepLooseItems } from '../logic/loose-items'
 import type { LooseItem, LooseResult, LooseWorld } from '../logic/loose-items'
 import type { OfferRow, ReviewLine } from './ReviewUi'
@@ -195,21 +204,10 @@ const MOOD_FACE = ['😀', '🙂', '😐', '😡', '🤬'] as const
 const RING_OK = new Color(110, 210, 110, 255)
 const RING_WARN = new Color(245, 200, 70, 255)
 const ASK_COLOR = new Color(255, 215, 80, 255)
-/**
- * Placeholder until cards carry lines.witness (ROADMAP M4). `burnt` is copy from the V0.2 design brief;
- * the other two have no copy yet, so they are stage directions in brackets, not invented dialogue.
- */
-const WITNESS_LINES: Record<Mishap, readonly string[]> = {
-  burnt: ['这东西是煤炭吗？', '我突然没那么饿了。', '这家店卫生评级多少来着？'],
-  stained: ['（盘子没洗干净，被看见了）'],
-  crash: ['（盘子摔了一地，被看见了）'],
-  vent: ['（厨师在发火，被看见了）'],
-}
 /** ⏳ Shouting-match copy: the first two lines are the user's, the rest are placeholders to review */
 /** 🚧 Placeholder hurry-up shouts (overhead, short); the card's own wait_nudge still goes up top */
 const URGE_ANGRY = ['快点行不行！', '还要多久啊！', '我赶时间！', '饿死了……']
 const URGE_LATE = ['都超时了！', '我的汉堡呢？！', '还做不做了！']
-const ARGUE_CHEF = ['催什么催！', '不买就滚！', '嫌慢你自己来做！', '爱吃不吃！', '门在那边！', '下次别来了！'] as const
 /** What a chef can throw at a ranting customer, as it flies */
 const THROWN: Partial<Record<CarryKind, string>> = { ingredient: '🥬', patty: '🥩', plate: '🍔', fries: '🍟', drink: '🥤' }
 const HINT: Partial<Record<BlockReason, string>> = {
@@ -504,13 +502,18 @@ export class StationView extends Component {
   private seenBurnt = 0
   private seenBurntFries = 0
   private seenFires = 0
-  private witnessLine = 0
   /** 各圈上的顾客已经催过单了（id），同一位只催一次 */
   private nudged: number[] = []
   /** Delivery riders; `id` = the accepted delivery's id */
   private riders: Figure[] = []
   private riderRings: Ring[] = []
   private highlightCard!: HighlightCard
+  private recapCard!: HighlightCard
+  private regularCard!: HighlightCard
+  private regularVisit: RegularVisit | null = null
+  private regularOutcome: VisitOutcome | null = null
+  private reviewReasons = new Map<number, string>()
+  private wrongDetail = ''
   /** The day's most outrageous moment so far; a bigger score replaces it. null = a quiet day */
   private highlight: { score: number; title: string; quote: string } | null = null
   /** Lines traded in the current shouting match, for the highlight */
@@ -627,6 +630,10 @@ export class StationView extends Component {
   private spawn = { x: 0, z: 0 }
   private cutaway: WallCutaway | null = null
   private workstationEffects: WorkstationEffects | null = null
+  private fridgeDoor: FridgeDoor | null = null
+  private fridgeContents: FridgeContents | null = null
+  private readonly banterDeck = new BanterDeck(Date.now())
+  private readonly banterMatches = new Map<number, BanterMatch>()
   private venting = createVent()
   private ledger = createLedger()
   private tasks: Task[] = []
@@ -687,6 +694,8 @@ export class StationView extends Component {
     StationView.flattenPlaceholders(this.node)
     this.resultNode = result
     this.highlightCard = new HighlightCard(result)
+    this.recapCard = new HighlightCard(result, '明天试一件事', 'UI_Recap')
+    this.regularCard = new HighlightCard(result, '熟客手记', 'UI_Regular')
     this.againNode = again
     this.resultTitle = resultTitle
     this.resultBody = resultBody
@@ -876,13 +885,12 @@ export class StationView extends Component {
     this.pickupX = this.queueX
 
     this.kitchen = createKitchen({
-      singleItem: true,
+      ...GAMEPLAY_RULES,
       stations,
       cook: { ...DEFAULT_COOK },
       grillSlots: 2,
       sparePlates: this.sparePlates,
       fireSec: FIRE_SEC,
-      doublePatty: true,
     })
     const initialGeometry = buildLayoutGeometry(this.progress.layout)
     this.kitchen.cfg.stations = initialGeometry.stations
@@ -913,6 +921,7 @@ export class StationView extends Component {
     this.buildDecor(kitchenRoot)
     this.fryerServing = kitchenRoot.getChildByPath('Props/Prop_Fryer/fries')
     this.workstationEffects = new WorkstationEffects(kitchenRoot, this.grillPanModel)
+    this.fridgeDoor = new FridgeDoor(kitchenRoot.getChildByPath('Props/Prop_Fridge')!, this.fridgeContents?.node)
     const blockers = this.need(NODES.blockers)
     this.cutaway = new WallCutaway(blockers ? [kitchenRoot, blockers] : [kitchenRoot])
     this.movement = createMovement({ stations, boxes: blockers ? StationView.readBoxes(blockers) : [], x: player.worldPosition.x, z: player.worldPosition.z })
@@ -953,6 +962,8 @@ export class StationView extends Component {
     for (const c of this.modernOrders) c.destroy()
     this.cutaway?.destroy()
     this.workstationEffects?.destroy()
+    this.fridgeDoor?.destroy()
+    this.fridgeContents?.destroy()
     this.chefActions?.destroy()
     this.looseView?.destroy()
     input.off(Input.EventType.TOUCH_START, this.onTouchStart, this)
@@ -1026,32 +1037,11 @@ export class StationView extends Component {
   }
 
   private shiftConfig(day: number, seed: number): ShiftConfig {
-    const d = dayFlow(day, this.arrivalSec)
-    const early = earlyShiftPolicyForDay(day)
-    return {
-      seed,
-      customers: early?.customers ?? this.customersPerShift,
-      flow: {
-        ...d.flow,
-        intervalSec: (early?.intervalSec ?? d.flow.intervalSec) * flowFactor(this.progress),
-        intervalJitter: early?.intervalJitter ?? this.arrivalJitter,
-        maxConcurrent: early?.maxConcurrent ?? d.flow.maxConcurrent,
-        patienceSec: d.flow.patienceSec * this.patienceScale,
-        lateLeaveSec: this.lateLeaveSec * this.patienceScale,
-        // 走进来要多久由场景几何算，不是拍的：接单的时机要和小人真走到柜台对上
-        takeOrder: {
-          walkInSec: Math.hypot(this.queueX - this.doorX, this.queueZ - this.doorZ) / CUSTOMER_SPEED,
-          patienceSec: this.orderPatienceSec * this.patienceScale,
-        },
-      },
-      orders: {
-        ...d.orders,
-        bannedChance: early?.bannedChance ?? d.orders.bannedChance,
-        friesChance: owns(this.progress, 'fryer') ? FRIES_CHANCE : 0,
-        drinkChance: owns(this.progress, 'drinks') ? DRINK_CHANCE : 0,
-        doubleChance: early?.doubleChance ?? (day >= DOUBLE_FROM_DAY ? DOUBLE_CHANCE : 0),
-      },
-    }
+    return gameplayShiftConfig(day, seed, this.progress, {
+      arrivalSec: this.arrivalSec, arrivalJitter: this.arrivalJitter, customersPerShift: this.customersPerShift,
+      patienceScale: this.patienceScale, lateLeaveSec: this.lateLeaveSec, orderPatienceSec: this.orderPatienceSec,
+      walkInSec: Math.hypot(this.queueX - this.doorX, this.queueZ - this.doorZ) / CUSTOMER_SPEED,
+    })
   }
 
   /** Bought upgrades → kitchen config. Read at the start of every day */
@@ -1103,6 +1093,24 @@ export class StationView extends Component {
     }
     this.nextNode = clone('Btn_Next', '下一天')
     this.shopNode = clone('Btn_Shop', '商店')
+    const panel = again.parent!
+    panel.getComponent(UITransform)!.setContentSize(640, 560)
+    panel.setPosition(-158, 0, 0)
+    drawPanel(uiSurface(panel), 640, 560)
+    this.resultTitle.node.setPosition(0, 218, 0); this.resultTitle.color = uiColor(UI_THEME.accent)
+    this.resultTitle.fontSize = 36; this.resultTitle.enableOutline = false
+    this.resultBody.node.setPosition(0, 20, 0); this.resultBody.color = uiColor(UI_THEME.text)
+    this.resultBody.fontSize = 24; this.resultBody.lineHeight = 34; this.resultBody.enableOutline = false
+    this.resultBody.node.getComponent(UITransform)!.setContentSize(590, 320)
+    for (const n of [again, this.nextNode, this.shopNode]) {
+      n.getComponent(UITransform)!.setContentSize(RESULT_BTN_W, 88)
+      n.setPosition(0, -214, 0)
+      drawButton(uiSurface(n), 0, 0, RESULT_BTN_W, 88, n === this.nextNode)
+      const l = n.getChildByName('Label')!.getComponent(Label)!
+      l.fontSize = 24; l.color = uiColor(n === this.nextNode ? UI_THEME.inkLight : UI_THEME.accent); l.enableOutline = false
+      l.node.getComponent(UITransform)!.setContentSize(RESULT_BTN_W - 8, 60)
+      buttonFeedback(n, RESULT_BTN_W, 88)
+    }
   }
 
   /**
@@ -1128,7 +1136,7 @@ export class StationView extends Component {
     }
   }
 
-  private deliveryEnabled(): boolean { return earlyShiftPolicyForDay(this.day)?.delivery ?? true }
+  private deliveryEnabled(): boolean { return gameplayDeliveryEnabled(this.day) }
 
   private cacheLayoutStations(): void {
     const stations = this.kitchen.cfg.stations
@@ -1146,6 +1154,8 @@ export class StationView extends Component {
   }
 
   private applyLayout(layout: LayoutConfig): void {
+    this.closePanel()
+    this.fridgeDoor?.destroy()
     this.workstationEffects?.hide()
     this.workstationEffects?.destroy()
     this.workstationEffects = null
@@ -1155,6 +1165,7 @@ export class StationView extends Component {
     this.cacheLayoutStations()
     const root = this.playerNode.scene.getChildByName('Kitchen')!
     this.workstationEffects = new WorkstationEffects(root, this.grillPanModel)
+    this.fridgeDoor = new FridgeDoor(root.getChildByPath('Props/Prop_Fridge')!, this.fridgeContents?.node)
     if (this.shift.cfg.flow.takeOrder) this.shift.cfg.flow.takeOrder.walkInSec = Math.hypot(this.queueX - this.doorX, this.queueZ - this.doorZ) / CUSTOMER_SPEED
   }
 
@@ -1175,7 +1186,7 @@ export class StationView extends Component {
     if (this.looseItems.items.length) {
       this.closeMenu(); this.floaters.spawnAt(0, 60, '先收起或清理地面物品，再调整工位', HINT_COLOR, 30); return
     }
-    this.closeMenu(); this.clearLayoutInput(); this.workstationEffects?.hide()
+    this.closeMenu(); this.closePanel(); this.fridgeDoor?.reset(); this.clearLayoutInput(); this.workstationEffects?.hide()
     this.editorHud = this.node.children.filter(n => n.active && !n.getComponent(Camera) && n.name !== 'UI_LayoutEditor').map(node => ({ node, active: node.active }))
     for (const h of this.editorHud) h.node.active = false
     this.layoutEditor = new LayoutEditor(this.node, this.cameraComp, this.progress.layout, this.progress.owned, {
@@ -1223,7 +1234,7 @@ export class StationView extends Component {
     })
     for (const card of this.modernOrders) if (card.node.active) {
       const p = card.node.position, k = card.node.scale.x
-      obstacles.push({ x: p.x - 140 * k, y: p.y - 80 * k, w: 280 * k, h: 160 * k })
+      obstacles.push({ x: p.x - 140 * k, y: p.y - 98 * k, w: 280 * k, h: 196 * k })
     }
     ui.layout(this.uiHalfW * 2, this.uiHalfH * 2, modal, this.inset, obstacles)
     const target = this.kitchen.cfg.stations.find(s => s.kind === ui.currentHint?.target)
@@ -1238,11 +1249,11 @@ export class StationView extends Component {
     const cols = Math.max(1, Math.min(3, active.length)), scale = Math.min(1, available / (cols * 292))
     for (let i = 0; i < this.modernOrders.length; i++) {
       const card = this.modernOrders[i]!, c = active[i] ?? null
-      card.sync(c, c ? this.nameOf(c.id) : undefined)
+      card.sync(c, c ? this.nameOf(c.id) : undefined, c ? this.linesOf(c.id) : undefined)
       card.node.active = card.node.active && !modal
       card.node.setScale(scale, scale, 1)
       card.node.setPosition(-this.uiHalfW + Math.max(20, this.inset.left) + (140 + (i % cols) * 292) * scale,
-        this.uiHalfH - Math.max(20, this.inset.top) - (80 + Math.floor(i / cols) * 172) * scale, 0)
+        this.uiHalfH - Math.max(20, this.inset.top) - (98 + Math.floor(i / cols) * 208) * scale, 0)
     }
   }
 
@@ -1366,11 +1377,8 @@ export class StationView extends Component {
   }
 
   private onTouchCancel(): void {
-    this.groundPress = false
     this.layoutEditor?.cancelPointer()
-    this.chefActions?.reset()
-    this.mouseDown = false
-    this.router.cancelAll()
+    this.clearLayoutInput()
   }
 
   private onMouseDown(e: EventMouse): void {
@@ -1519,9 +1527,19 @@ export class StationView extends Component {
       if (this.menuKind) this.tickMenu()
       else if (this.reviewsOpen) this.tickComputer()
       else if (this.panelOpen) this.tickPanel()
-      else this.tickPlay()
+      else {
+        for (let i = 0; i < this.shift.flow.customers.length; i++) {
+          const c = this.shift.flow.customers[i]!
+          if (!c.active || !c.ordered || !this.router.zone(`customer-card-${c.id}`)?.tapped) continue
+          const lines = this.linesOf(c.id)
+          this.say(c.id, c.late || patienceRatio(this.shift.flow, c) <= .5 ? lines.wait_nudge : lines.greet, ASK_COLOR)
+          pop(this.customerRings[i]!.node, 1.15); this.sfx.play('tap', .5)
+        }
+        this.tickPlay()
+      }
     }
     this.router.tick(dt)
+    this.fridgeContents?.sync(this.kitchen.stock)
     this.workstationEffects?.update(
       this.kitchen,
       this.scrubbing && this.router.action.holding && !this.panelOpen && !this.reviewsOpen && !this.menuKind,
@@ -1580,6 +1598,7 @@ export class StationView extends Component {
       e.w.updateAlignment()
     }
     this.layoutHud()
+    if (this.menuKind) this.refreshMenu()
     if (this.panelOpen) {
       this.inventorySkin?.layout(this.designH, this.inset.bottom)
       this.inventorySkin?.sync(this.kitchen, this.panelStation?.kind === 'storeroom')
@@ -1729,7 +1748,7 @@ export class StationView extends Component {
       const cs = this.shift.flow.customers
       for (let i = 0; i < cs.length; i++) this.waitingIds[i] = cs[i]!.active && !cs[i]!.ordered ? cs[i]!.id : -1
       if (takeReadyOrders(this.shift.flow) > 0) {
-        for (let i = 0; i < cs.length; i++) if (cs[i]!.ordered && cs[i]!.id === this.waitingIds[i]) this.say(cs[i]!.id, CARD_LINES[this.cardIndex(cs[i]!.id)]!.greet, ASK_COLOR)
+        for (let i = 0; i < cs.length; i++) if (cs[i]!.ordered && cs[i]!.id === this.waitingIds[i]) this.say(cs[i]!.id, this.linesOf(cs[i]!.id).greet, ASK_COLOR)
         return this.sfx.play('pick')
       }
       if (this.throwFood()) return
@@ -1743,6 +1762,9 @@ export class StationView extends Component {
       if (r.kind === 'serve' && d && r.verdict) {
         const rv = serveReview(r.verdict.ok, false, d.max > 0 ? d.left / d.max : 0)
         const line = CARD_LINES[this.cardIndex(DELIVERY_ID_BASE + d.id)]!
+        const detail = serviceReason(r.verdict.ok, false, d.max > 0 ? d.left / d.max : 0, r.verdict)
+        this.reviewReasons.set(DELIVERY_ID_BASE + d.id, detail)
+        if (!r.verdict.ok) this.wrongDetail = detail
         this.review(DELIVERY_ID_BASE + d.id, rv.kind, rv.stars, rv.kind === 'praise' ? line.praise : line.complain)
         settleDelivery(this.desk, d, r.verdict.ok)
         return this.served(station, r.verdict.ok, false, rv.stars)
@@ -1763,7 +1785,7 @@ export class StationView extends Component {
         if ((r.kind === 'serve-fries' || r.kind === 'serve-drink') && c) {
           const v = c.burgerVerdict
           const otherDue = side === 'fries' ? c.drinkDue : c.friesDue
-          if (v && !otherDue) return this.finishOrder(c, v.ok, station, () => settleSide(this.shift, c, side))
+          if (v && !otherDue) return this.finishOrder(c, v, station, () => settleSide(this.shift, c, side))
           settleSide(this.shift, c, side)
           return this.halfServed(station, `${SIDE_ICON[side]} 到了，还差${StationView.stillDue(c)}`)
         }
@@ -1778,7 +1800,7 @@ export class StationView extends Component {
           settleServe(this.shift, c, v)
           return this.halfServed(station, `🍔 到了，还差${StationView.stillDue(c)}`)
         }
-        return this.finishOrder(c, v.ok, station, () => settleServe(this.shift, c, v))
+        return this.finishOrder(c, v, station, () => settleServe(this.shift, c, v))
       }
       return this.act(r, r.reason === 'hands-empty' ? '先端上做好的汉堡' : undefined)
     }
@@ -1804,10 +1826,14 @@ export class StationView extends Component {
   }
 
   /** A diner's order is complete: review (or rant), then `settle` releases them. Review is read before settling */
-  private finishOrder(c: Customer, ok: boolean, station: Station, settle: () => void): void {
+  private finishOrder(c: Customer, verdict: OrderVerdict, station: Station, settle: () => void): void {
+    const ok = verdict.ok
+    const reason = serviceReason(ok, c.late, patienceRatio(this.shift.flow, c), verdict)
+    this.reviewReasons.set(c.id, reason)
+    if (!ok) this.wrongDetail = reason
     this.firstOrderUi?.guide.delivered({ run: this.uiRun, orderId: c.id, ok, complete: true })
     const rv = serveReview(ok, c.late, patienceRatio(this.shift.flow, c), c.gifted)
-    const line = CARD_LINES[this.cardIndex(c.id)]!
+    const line = this.linesOf(c.id)
     const upset = rv.kind !== 'praise'
     if (upset) this.rant(c.id, rv.kind, rv.stars, line.complain)
     else this.review(c.id, rv.kind, rv.stars, line.praise)
@@ -1845,6 +1871,7 @@ export class StationView extends Component {
   private interactAt(station: Station, options?: Parameters<typeof interact>[3]): InteractResult {
     const k = this.kitchen
     const result = interact(k, this.movement.pos, station, options)
+    if (station.kind === 'fridge' && result.kind === 'restock') this.fridgeDoor?.pulse()
     let target = this.workstationEffects?.actionTarget(station.kind, Math.max(0, result.slot)) ?? null
     if (station.kind === 'assembly') {
       const plate = this.playerNode.scene.getChildByPath('Kitchen/Props/Prop_AssemblyPlate/plate')
@@ -1896,6 +1923,7 @@ export class StationView extends Component {
   private openPanel(station: Station): void {
     this.panelStation = station
     const fridge = station.kind === 'fridge'
+    this.fridgeDoor?.setOpen(fridge)
     this.panelTitle.string = fridge ? '冰柜' : '冷库 · 抱一箱回冰柜补满'
     // Stock only moves on a pick or a restock, never while the panel is up — draw it once here
     const stock = this.kitchen.stock
@@ -1928,6 +1956,7 @@ export class StationView extends Component {
 
   private closePanel(): void {
     this.panelOpen = false
+    this.fridgeDoor?.setOpen(false)
     this.router.cancelAll()
   }
 
@@ -1956,7 +1985,8 @@ export class StationView extends Component {
           : carrying
             ? 'discard'
             : 'none'
-    const key = `${mode}|${this.reviewsOpen ? this.offerMask : ''}|${this.panelStation?.kind}|${this.passed}|${this.menuKind}:${this.menuRows.length}|${this.screenW}x${this.screenH}|${this.firstOrderUi?.zoneRevision}`
+    const cards = this.modernOrders.filter(c => c.node.active)
+    const key = `${mode}|${this.reviewsOpen ? this.offerMask : ''}|${this.panelStation?.kind}|${this.passed}|${this.menuKind}:${this.menuRows.length}|${this.screenW}x${this.screenH}|${this.firstOrderUi?.zoneRevision}|${cards.map(c => `${c.customerId}:${c.node.position.x},${c.node.position.y},${c.node.scale.x}`).join(';')}`
     if (key === this.zonesKey) return
     this.zonesKey = key
 
@@ -2026,7 +2056,13 @@ export class StationView extends Component {
         )
       }
     }
-    if (!this.menuKind && !this.resultOpen && !this.panelOpen && !this.reviewsOpen) zones.unshift(...this.firstOrderUi?.captureZones(this.screenW, this.screenH, this.designH) ?? [])
+    if (!this.menuKind && !this.resultOpen && !this.panelOpen && !this.reviewsOpen) {
+      for (const card of cards) {
+        const p = card.node.position, k = card.node.scale.x
+        zones.unshift(uiRectToCaptureZone(`customer-card-${card.customerId}`, p.x, p.y, 280 * k, 196 * k, this.screenW, this.screenH, this.designH))
+      }
+      zones.unshift(...this.firstOrderUi?.captureZones(this.screenW, this.screenH, this.designH) ?? [])
+    }
     this.router.setCaptureZones(zones)
   }
 
@@ -2101,7 +2137,7 @@ export class StationView extends Component {
       if (!c.active || !c.ordered) continue
       if (this.nudged[i] !== c.id && moodTier(this.shift.flow, c) >= 3) {
         this.nudged[i] = c.id
-        this.review(c.id, 'witness', 0, CARD_LINES[this.cardIndex(c.id)]!.wait_nudge)
+        this.review(c.id, 'witness', 0, this.linesOf(c.id).wait_nudge)
         this.urge(c.id, URGE_ANGRY)
       }
       if (this.urgedLate[i] !== c.id && c.late) {
@@ -2116,19 +2152,23 @@ export class StationView extends Component {
   }
 
   /** A line over a customer's head. False = their figure is not on stage */
-  private say(id: number, text: string, color: Readonly<Color>, dx = 0): boolean {
+  private say(id: number, text: string, color: Readonly<Color>, dx = 0, channel?: string): boolean {
     const f = this.figureOf(id)
     if (!f) return false
     const p = f.node.position
     const head = p.y + (p.y > 0 ? this.headSitY : this.headStandY)
-    this.floaters.spawn(this.cameraComp, p.x + dx, head + 0.45, p.z, text, color, 26)
+    this.floaters.spawn(this.cameraComp, p.x + dx, head + 0.45, p.z, banterBubble(text), color, 26, channel,
+      { halfW: this.uiHalfW, halfH: this.uiHalfH })
     return true
   }
 
   private mishap(kind: Mishap): void {
     const who = witnessMishap(this.shift.flow, kind)
-    const lines = WITNESS_LINES[kind]
-    if (who) this.review(who.id, 'witness', 0, lines[this.witnessLine++ % lines.length]!)
+    if (who) {
+      const text = witnessResponse(kind, this.cardIndex(who.id))
+      this.review(who.id, 'witness', 0, text)
+      this.markHighlight(kind === 'burnt' ? 25 : 55, `${this.nameOf(who.id)}看见了厨房事故`, `「${text}」\n在场顾客因此减少耐心。`)
+    }
   }
 
   private shake(amp: number): void {
@@ -2137,14 +2177,19 @@ export class StationView extends Component {
   }
 
   private readonly onWalkOut = (c: Customer): void => {
-    const line = CARD_LINES[this.cardIndex(c.id)]!.complain
+    const line = this.linesOf(c.id).complain
+    this.reviewReasons.set(c.id, c.ordered ? '接单后等餐太久，离店未取餐' : '等不到接单，离店未取餐')
     this.rant(c.id, 'walkout', WALKOUT_STARS, line)
-    this.markHighlight(30, `「${this.nameOf(c.id)}」没人接单，气走了`, `临走前说：「${line}」`)
+    this.markHighlight(30, `「${this.nameOf(c.id)}」${c.ordered ? '等餐太久' : '没人接单'}，气走了`, `临走前说：「${this.rantReview.get(c.id)!.text}」`)
   }
 
   /** An upset customer: rant at the desk first, review on the way out (logic/vent.ts) */
-  private rant(id: number, kind: ReviewKind, stars: number, text: string): void {
-    this.rantReview.set(id, { kind, text })
+  private rant(id: number, kind: ReviewKind, stars: number, text: string, reasonOverride?: BanterReason): void {
+    const c = this.shift.flow.customers.find(c => c.id === id)
+    const reason: BanterReason = reasonOverride ?? (kind === 'walkout' ? c?.ordered && c.late ? 'late' : 'walkout' : c?.late && stars > 1 ? 'late' : 'wrong')
+    const match = this.banterDeck.match({ card: this.cardIndex(id), reason })
+    this.banterMatches.set(id, match)
+    this.rantReview.set(id, { kind, text: id === 1 && this.regularVisit ? text : match.complaint || text })
     startRant(this.venting, id, stars)
   }
 
@@ -2168,8 +2213,9 @@ export class StationView extends Component {
     // Nobody ranting yet: a 😡 diner still waiting takes the chef on, and storms off without their food
     const c = r === null && spot === 'register' ? angriest(this.shift.flow) : null
     if (c) {
+      this.reviewReasons.set(c.id, '等餐中被厨师怼走，未完成交餐')
       stormOff(this.shift.flow, c)
-      this.rant(c.id, 'walkout', WALKOUT_STARS, CARD_LINES[this.cardIndex(c.id)]!.complain)
+      this.rant(c.id, 'walkout', WALKOUT_STARS, this.linesOf(c.id).complain, 'provoked')
       r = vent(this.venting, spot)
     }
     const m = this.movement.pos
@@ -2178,7 +2224,10 @@ export class StationView extends Component {
       return true
     }
     this.floaters.spawn(this.cameraComp, m.x, BUBBLE_Y.carry, m.z, r === true ? '💢 砰！' : '💢 狂点对骂！', BAD_COLOR, 30)
-    if (r === true) this.markHighlight(60, '狠狠摔了一下冰柜门', '「砰！」整个后厨都听见了')
+    if (r === true) {
+      this.fridgeDoor?.pulse(true)
+      this.markHighlight(60, '狠狠摔了一下冰柜门', '「砰！」整个后厨都听见了')
+    }
     this.sfx.play(r === true ? 'trash' : 'wrong')
     this.shake(FEEL.shakeSmall)
     return true
@@ -2194,6 +2243,8 @@ export class StationView extends Component {
     }
     if (!r) return false
     const id = r.id
+    // Settlement may have failed a task after the complaint started; read it when the match begins.
+    if (this.arguing !== id) this.banterFor(id).chef[2] = this.banterDeck.taskLine(this.banterTask()) ?? this.banterFor(id).chef[2]!
     this.arguing = id
     if (stationInReach(this.kitchen, this.movement.pos)?.kind !== 'register') {
       endArgue(this.venting)
@@ -2205,9 +2256,10 @@ export class StationView extends Component {
     const m = this.movement.pos
     // Alternate sides so rapid taps do not stack on one spot
     const dx = i % 2 === 0 ? -0.35 : 0.35
-    this.floaters.spawn(this.cameraComp, m.x + dx, BUBBLE_Y.carry + 0.2, m.z, ARGUE_CHEF[i % ARGUE_CHEF.length]!, HINT_COLOR, 28)
+    const match = this.banterFor(id)
+    this.floaters.spawn(this.cameraComp, m.x + dx, BUBBLE_Y.carry + 0.2, m.z, banterBubble(match.chef[i]!), HINT_COLOR, 25, 'argue-chef')
     const back = this.comeback(id, i)
-    if (back) this.say(id, back, BAD_COLOR, -dx)
+    if (back) this.say(id, banterBubble(back), BAD_COLOR, -dx, `argue-customer:${id}`)
     this.sfx.play('wrong', 0.6)
     this.shake(FEEL.shakeSmall)
     return true
@@ -2216,21 +2268,37 @@ export class StationView extends Component {
   private argueEnded(id: number): void {
     const n = this.argueCount
     this.argueCount = 0
-    const exit = CARD_LINES[this.cardIndex(id)]!.argue[3]!
+    const match = this.banterFor(id)
+    const exit = match.exit
     if (n > 0) {
       const last = n - 1
-      this.markHighlight(100 + n * 10, `和「${this.nameOf(id)}」对骂了 ${n} 回合`, `你：「${ARGUE_CHEF[last % ARGUE_CHEF.length]}」\n对方：「${exit}」然后摔门走了`)
+      this.markHighlight(100 + n * 10, `和「${this.nameOf(id)}」对骂了 ${n} 回合`, `你：「${match.chef[last]}」\n对方：「${exit}」然后摔门走了`)
     }
     // A full match already ended on this line
-    if (n < ARGUE_TAPS) this.say(id, exit, BAD_COLOR)
+    if (n < ARGUE_TAPS) this.say(id, banterBubble(exit), BAD_COLOR, 0, `argue-customer:${id}`)
     this.sfx.play('trash')
   }
 
   /** The customer's side of tap `i`: their card's comebacks on every other tap, their exit line on the last */
   private comeback(id: number, i: number): string | null {
-    const a = CARD_LINES[this.cardIndex(id)]!.argue
-    if (i >= ARGUE_TAPS - 1) return a[3]!
-    return i % 2 === 0 ? a[Math.min(2, i / 2)]! : null
+    const match = this.banterFor(id)
+    if (i >= ARGUE_TAPS - 1) return match.exit
+    return i % 2 === 0 ? match.customer[Math.min(2, i / 2)]! : null
+  }
+
+  private banterFor(id: number): BanterMatch {
+    let match = this.banterMatches.get(id)
+    if (!match) {
+      match = this.banterDeck.match({ card: this.cardIndex(id), reason: 'walkout' })
+      this.banterMatches.set(id, match)
+    }
+    return match
+  }
+
+  private banterTask() {
+    const stats = collectStats(shiftResult(this.shift), this.kitchen, this.desk, this.ledger)
+    const tasks = this.tasks.map(t => ({ id: t.id, status: taskStatus(t, stats, false) }))
+    return tasks.find(t => t.status === 'failed') ?? tasks.find(t => t.status === 'open') ?? tasks[0]
   }
 
   /** Register tap with food in hand while someone rants: lob it at them (logic/vent.ts throwAt) */
@@ -2251,7 +2319,7 @@ export class StationView extends Component {
       const to = new Vec3(p.x, p.y + this.headStandY, p.z)
       this.floaters.fly(this.cameraComp, from, to, icon, () => {
         this.floaters.spawn(this.cameraComp, to.x, to.y + 0.3, to.z, '💥', BAD_COLOR, 44)
-        this.say(id, CARD_LINES[this.cardIndex(id)]!.argue[3]!, BAD_COLOR, 0.4)
+        this.say(id, banterBubble(this.banterFor(id).exit), BAD_COLOR, 0.4, `argue-customer:${id}`)
         this.sfx.play('crash')
         this.shake(FEEL.shakeBig)
       })
@@ -2278,10 +2346,17 @@ export class StationView extends Component {
   }
 
   private cardIndex(customerId: number): number {
+    if (customerId === 1 && this.regularVisit) return REGULAR.cardIndex
     return customerCardIndex(customerId, this.day, this.shift.cfg.customers, CARD_LINES.length)
   }
 
+  private linesOf(customerId: number) {
+    const base = CARD_LINES[this.cardIndex(customerId)]!
+    return customerId === 1 && this.regularVisit ? { ...base, ...regularLines(this.regularVisit) } : base
+  }
+
   private nameOf(customerId: number): string {
+    if (customerId === 1 && this.regularVisit) return REGULAR.identity
     return CARD_LINES[this.cardIndex(customerId)]!.identity
   }
 
@@ -2303,10 +2378,15 @@ export class StationView extends Component {
   }
 
   private review(customerId: number, kind: ReviewKind, stars: number, text: string): void {
+    if (kind !== 'witness') {
+      const reason = this.reviewReasons.get(customerId)
+      if (reason) text += `（${reason}）`
+      if (customerId === 1 && this.regularVisit) this.regularOutcome = kind === 'praise' ? 'good' : 'bad'
+    }
     const card = this.cardIndex(customerId)
     const r: Review = { customerId, kind, stars, t: this.shift.t }
     addReview(this.reviews, r)
-    const name = CARD_LINES[card]!.identity + (customerId >= DELIVERY_ID_BASE ? '（外卖）' : '')
+    const name = this.nameOf(customerId) + (customerId >= DELIVERY_ID_BASE ? '（外卖）' : '')
     const line: ReviewLine = { name, avatar: card, stars, text }
     this.reviewLines.push(line)
     if (this.reviewLines.length > this.reviews.cap) this.reviewLines.shift()
@@ -2505,9 +2585,9 @@ export class StationView extends Component {
     if (s) {
       const sink = k.sink
       const w = k.cfg.wash ?? DEFAULT_WASH
-      if (sink.stage === 'soaking') this.sinkRing.show(1 - sink.left / w.soakSec, ASK_COLOR, '💧')
-      else if (sink.stage === 'soaked') this.sinkRing.show(sink.scrub, RING_OK, '🧽')
-      else if (k.dirty > 0) this.sinkRing.show(-1, RING_OK, `脏${k.dirty}`, LATE_BAR_COLOR)
+      if (sink.stage === 'soaking') this.sinkRing.showDish(1 - sink.left / w.soakSec, ASK_COLOR, 'soaking')
+      else if (sink.stage === 'soaked') this.sinkRing.showDish(sink.scrub, RING_OK, 'scrub')
+      else if (k.dirty > 0) this.sinkRing.showDish(-1, RING_OK, 'dirty', k.dirty)
       else this.sinkRing.hide()
       if (sink.stage !== 'empty' || k.dirty > 0) this.sinkRing.follow(cam, s.pos.x, BUBBLE_Y.bench, s.pos.z, this.uiHalfW, this.uiHalfH)
     }
@@ -2750,6 +2830,7 @@ export class StationView extends Component {
     })
     this.chefActions.bindBurger(this.burgerStack)
     this.looseView = new LooseItemsView(kitchenRoot.scene, { ...art as { [K in keyof typeof art]: Node }, ...toppings })
+    this.fridgeContents = new FridgeContents(kitchenRoot.getChildByPath('Props/Prop_Fridge')!, { ...art as { [K in keyof typeof art]: Node }, ...toppings })
     for (const n of Object.values(toppings)) n.destroy()
     // Sits on the bench's decor plate
     this.benchTopY = benchPlate!.worldPosition.y + 0.02
@@ -2911,7 +2992,8 @@ export class StationView extends Component {
         if (f.leaving && ranting(this.venting, f.id)) {
           if (!f.shouted) {
             f.shouted = true
-            this.floaters.spawn(this.cameraComp, p.x, this.headStandY + 0.3, p.z, '😡 投诉！', BAD_COLOR, 28)
+            const complaint = this.rantReview.get(f.id)?.text ?? '投诉！'
+            this.floaters.spawn(this.cameraComp, p.x, this.headStandY + 0.3, p.z, banterBubble(complaint), BAD_COLOR, 25, `argue-customer:${f.id}`)
           }
           f.body.setRotationFromEuler(0, 180, 0)
           if (f.clip !== 'idle') {
@@ -2996,12 +3078,16 @@ export class StationView extends Component {
   }
 
   private showResult(): void {
+    if (this.resultOpen) return
     // The HUD stops syncing once the result is up; without this the last order card stays frozen behind it
     this.syncHud()
     this.resultOpen = true
+    this.firstOrderUi?.layout(this.uiHalfW * 2, this.uiHalfH * 2, true, this.inset)
+    for (const card of this.modernOrders) card.node.active = false
     this.workstationEffects?.hide()
     this.chefActions?.reset()
     this.panelOpen = false
+    this.fridgeDoor?.setOpen(false)
     if (this.reviewsOpen) this.closeReviews()
     this.toast.clear()
     this.router.cancelAll()
@@ -3014,17 +3100,28 @@ export class StationView extends Component {
     const done = states.filter((x) => x === 'done').length
     const reward = taskReward(states)
     bank(this.progress, takings + reward)
-    StationView.save(this.progress)
+    finishRegularVisit(this.progress.regular, this.regularVisit, this.regularOutcome)
+    const saved = StationView.save(this.progress)
     this.resultTitle.string = `第 ${this.day} 天  ${stars > 0 ? '★'.repeat(stars) : '打烊'}`
     this.resultHead =
-      `来客 ${r.arrived}    好评 ${r.served}\n` +
-      `超时免单 ${r.lateServed}    上错 ${r.wrong}\n` +
-      `没人接单走了 ${r.walkedOut}    等太久走了 ${r.leftLate}` + (r.provoked > 0 ? `    被骂走 ${r.provoked}` : '') + `    摔碎盘子 ${this.kitchen.broken}\n` +
-      `外卖 送达 ${this.desk.delivered}  做错 ${this.desk.wrong}  超时 ${this.desk.late}  拒 ${this.desk.rejected}\n` +
-      `好评率 ${Math.round(r.goodRate * 100)}%` + (stars === 0 ? '    拿到一颗星才能进下一天' : '') +
-      `\n今日收入 ¥${takings}（小费 ¥${this.ledger.tips}）` +
-      `\n今日任务 完成 ${done}/${states.length}  奖励 ¥${reward}` + (done === states.length ? '（含全部完成奖励）' : '')
+      `堂食  来客 ${r.arrived} · 好评 ${r.served} · 好评率 ${Math.round(r.goodRate * 100)}%\n` +
+      `超时免单 ${r.lateServed} · 错单 ${r.wrong} · 摔盘 ${this.kitchen.broken}\n` +
+      `离店  未接单 ${r.walkedOut} · 等太久 ${r.leftLate}` + (r.provoked > 0 ? ` · 被怼走 ${r.provoked}` : '') + '\n' +
+      `外卖  送达 ${this.desk.delivered} · 错单 ${this.desk.wrong} · 超时 ${this.desk.late} · 拒单 ${this.desk.rejected}\n` +
+      `餐费 ¥${this.ledger.sales} + 小费 ¥${this.ledger.tips} = 收入 ¥${takings}\n` +
+      '错单／超时餐点不收款；及时送齐有更多小费\n' +
+      `任务 ${done}/${states.length} · 奖励 ¥${reward}` + (done === states.length ? '（含全部完成奖励）' : '') +
+      (stars === 0 ? '\n拿到一颗星，即可进入下一天' : '') +
+      (saved ? '' : '\n存档失败，请保留当前页面后重试')
     this.syncResultMoney()
+    const recap = dayRecap({ shift: r, wrongDelivery: this.desk.wrong, lateDelivery: this.desk.late,
+      burnt: this.kitchen.burnt, broken: this.kitchen.broken, stained: this.kitchen.stainedServed,
+      vents: this.venting.vents, wrongDetail: this.wrongDetail })
+    this.recapCard.show(recap.evidence, recap.action)
+    const visit = this.regularVisit
+    const chapter = visit ? regularLines(visit) : null
+    this.regularCard.show(chapter && this.regularOutcome ? `${REGULAR.identity} · ${visit!.chapter}/3 ${chapter.title}` : '今天没有新的熟客章节',
+      chapter && this.regularOutcome ? `${chapter.recap}\n${this.regularOutcome === 'good' ? '这次准时吃到了合要求的餐点。' : '这次没吃痛快，他会记得这次接待。'}\n${chapter.next}` : '章节只在实际接待并打烊后记录；重玩同一天与休息不会跳章。')
     const again = this.againNode
     const againLabel = again.getChildByName('Label')?.getComponent(Label)
     if (againLabel) againLabel.string = this.passed ? '重打这一天' : '再来一局'
@@ -3032,10 +3129,13 @@ export class StationView extends Component {
     const row = [again, this.passed ? this.nextNode : null, this.shopNode].filter((n): n is Node => !!n)
     for (let i = 0; i < row.length; i++) row[i]!.setPosition((i - (row.length - 1) / 2) * RESULT_BTN_GAP, again.position.y, 0)
     const h = this.highlight
-    this.highlightCard.show(h ? h.title : '今天风平浪静', h ? h.quote : '没吵架、没着火、没摔盘子，难得的一天')
+    this.highlightCard.show(h ? h.title : '今日接待记录', h ? h.quote : `准时正确 ${r.served} 位 · 错单 ${r.wrong} 位\n没有记录到可展示的事故或对骂。`)
     const panel = again.parent
     const pw = panel?.getComponent(UITransform)?.width ?? 520
-    this.highlightCard.node.setPosition((panel?.position.x ?? 0) + pw / 2 + 16 + this.highlightCard.width / 2, panel?.position.y ?? 0, 0)
+    const sideX = (panel?.position.x ?? 0) + pw / 2 + 16 + this.highlightCard.width / 2
+    this.highlightCard.node.setPosition(sideX, 190, 0)
+    this.recapCard.node.setPosition(sideX, 0, 0)
+    this.regularCard.node.setPosition(sideX, -190, 0)
     this.resultNode.active = true
     if (again.parent) popIn(again.parent)
     this.sfx.play('result')
@@ -3045,11 +3145,12 @@ export class StationView extends Component {
   }
 
   private syncResultMoney(): void {
-    this.resultBody.string = `${this.resultHead}    存款 ¥${this.progress.coins}`
+    this.resultBody.string = `${this.resultHead}\n当前存款 ¥${this.progress.coins}`
   }
 
   private openMenu(kind: string): void {
     this.sfx.play('tap')
+    if (kind !== this.menuKind) this.menu.resetPage()
     this.menuKind = kind
     this.refreshMenu()
     popIn(this.menu.node)
@@ -3072,6 +3173,12 @@ export class StationView extends Component {
   }
 
   private tickMenu(): void {
+    if (this.router.zone('menu-close')?.tapped) { this.closeMenu(); return }
+    for (const [id, delta] of [['menu-prev', -1], ['menu-next', 1]] as const) {
+      if (this.router.zone(id)?.tapped) {
+        this.menu.turnPage(delta); this.zonesKey = ''; this.router.cancelAll(); this.sfx.play('tap'); return
+      }
+    }
     for (let i = 0; i < this.menuRows.length; i++) {
       if (!this.router.zone(`row${i}`)?.tapped) continue
       const r = this.menuRows[i]!
@@ -3105,6 +3212,7 @@ export class StationView extends Component {
           return {
             name: `${it.name}  ¥${it.price}`,
             desc: it.desc,
+            icon: it.id === 'fryer' ? 'fryer' : it.id === 'drinks' ? 'drink' : it.id.startsWith('fridge') ? 'fridge' : it.id.includes('wash') ? 'wash' : it.id.includes('grill') ? 'pan-in' : 'plate',
             btn: have ? '已拥有' : coins >= it.price ? '购买' : '钱不够',
             on: !have && coins >= it.price,
             run: () => {
@@ -3119,7 +3227,7 @@ export class StationView extends Component {
       return {
         title: `第 ${this.day} 天 · 还没开门`,
         rows: [
-          { name: '开门营业', desc: '顾客开始上门', btn: '开门', on: true, run: () => this.openForBusiness() },
+          { name: '开门营业', desc: this.regularVisit ? `熟客预告：${REGULAR.identity} · ${regularLines(this.regularVisit).title}` : '顾客开始上门', btn: '开门', on: true, run: () => this.openForBusiness() },
           { name: '今天打烊休息', desc: '今天不开门，可以装修店面；不算天数', btn: '休息', on: true, run: () => this.startRest() },
         ],
       }
@@ -3211,6 +3319,10 @@ export class StationView extends Component {
 
   /** The day's opening banner */
   private openDay(): void {
+    this.regularVisit = nextRegularVisit(this.progress.regular, this.day)
+    this.regularOutcome = null
+    this.reviewReasons.clear()
+    this.wrongDetail = ''
     this.phase = 'closed'
     this.taskCard.node.active = true
     this.floaters.spawnAt(0, 60, `第 ${this.day} 天 · 去前台开门`, GOOD_COLOR, 44)
@@ -3239,6 +3351,9 @@ export class StationView extends Component {
 
   /** Start `day` over: the same day replays the same orders (seed unchanged), a new day tightens the flow */
   private restart(day: number): void {
+    this.closePanel()
+    this.fridgeDoor?.reset()
+    this.banterMatches.clear()
     this.uiRun++; this.uiPoll = 0
     this.sfx.play('tap')
     this.day = day

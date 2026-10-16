@@ -13,7 +13,8 @@ const output = process.argv[3]
 if (!root || !output) throw new Error('Usage: vite-node tools/difficulty-capture.ts SOURCE_ROOT OUTPUT_JSON')
 const files = ['game/assets/main.scene', 'tools/scene-spec.ts', 'tools/layout-navigation.ts', 'game/assets/logic/scene-layout.ts',
   'game/assets/scripts/StationView.ts', 'game/assets/logic/difficulty.ts', 'game/assets/logic/progress.ts', 'game/assets/logic/customer.ts',
-  'game/assets/logic/shift.ts', 'game/assets/logic/kitchen.ts', 'game/assets/logic/shop.ts', 'game/assets/logic/recipe.ts', 'game/assets/logic/movement.ts']
+  'game/assets/logic/shift.ts', 'game/assets/logic/kitchen.ts', 'game/assets/logic/shop.ts', 'game/assets/logic/recipe.ts', 'game/assets/logic/movement.ts',
+  'game/assets/logic/gameplay.ts', 'game/assets/logic/sim.ts', 'tools/difficulty-calibrate.ts']
 const hash = (file: string) => crypto.createHash('sha256').update(fs.readFileSync(`${root}/${file}`, 'utf8')).digest('hex')
 const hashes = Object.fromEntries(files.map(file => [file, hash(file)]))
 const normalizedHashes = Object.fromEntries(files.map(file => [file, crypto.createHash('sha256').update(fs.readFileSync(`${root}/${file}`, 'utf8').replace(/\r\n/g, '\n')).digest('hex')]))
@@ -109,7 +110,7 @@ const speed = Number(source.match(/const CUSTOMER_SPEED = ([\d.]+)/)?.[1])
 if (!(speed > 0)) throw new Error('Missing customer speed')
 params.walkInSec = Math.hypot(queueX - doorX, queueZ - doorZ) / speed
 for (const file of files) if (hashes[file] !== hash(file)) throw new Error(`Source changed during capture: ${file}`)
-const snapshot = { schema: 1, sourceRoot: root, capturedAt: new Date().toISOString(), confirmationThread: '01a13a52-f1f9-79f2-a16e-9a65097ba4f5',
+const snapshot = { schema: 1, sourceRoot: root, capturedAt: new Date().toISOString(),
   layout: process.argv[4] ?? 'open-centre / left-middle fridge / 2026-10-14', hashes, normalizedHashes, params, stations: stations.map(({ access, ...station }) => station), distances: matrix,
   navigation: { gridStep: 0.1, cost: 'centre-to-centre via reachable interaction ports; no joystick errors', sceneSpecAnchorsChecked: true } }
 fs.writeFileSync(output, JSON.stringify(snapshot, null, 2) + '\n')

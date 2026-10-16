@@ -157,8 +157,10 @@ describe('open-centre scene integration', () => {
       expect(Number.isFinite(routes[a * 4 + b])).toBe(true)
       expect(routes[a * 4 + b]).toBe(routes[b * 4 + a])
     }
-    const cfg = defaultSimConfig()
+    const cfg = { ...defaultSimConfig(), durationSec: 90,
+      flow: { intervalSec: 999, intervalJitter: 0, maxConcurrent: 1, patienceSec: 180 } }
     const scaled = runDay({ ...cfg, layout: { ...cfg.layout, routeDistances: routes, spread: 2 } })
+    expect(scaled.served).toBe(1)
     expect(scaled).toEqual(runDay({ ...cfg, layout: { ...cfg.layout, routeDistances: routes.map(d => d * 2), spread: 1 } }))
     const slower = runDay({ ...cfg, layout: { ...cfg.layout, routeDistances: routes, spread: 10 } })
     expect(slower.completionRate).toBeLessThan(scaled.completionRate)

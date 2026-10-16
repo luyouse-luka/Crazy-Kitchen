@@ -1,4 +1,6 @@
 import { Camera, Color, Graphics, Label, Node, UITransform, Vec3 } from 'cc'
+import { drawDishGlyph } from './ui/FoodGlyphs'
+import { uiLabel, uiNode } from './ui/UiTheme'
 
 const R = 22
 const W = 5
@@ -16,6 +18,9 @@ export class Ring {
   readonly node: Node
   private g: Graphics
   private label: Label
+  private dish: Graphics
+  private count: Label
+  private dishKey = ''
   private step = -2
   private color = new Color()
   private text = ''
@@ -33,13 +38,20 @@ export class Ring {
     t.layer = parent.layer
     this.node.addChild(t)
     this.label = t.addComponent(Label)
+    this.label.string = ''
     this.label.fontSize = fontSize
     this.label.lineHeight = fontSize + 2
+    this.dish = uiNode(this.node, 'DishIcon').addComponent(Graphics)
+    this.dish.node.active = false
+    this.count = uiLabel(this.node, 'DishCount', 16, 34, 24)
+    this.count.node.setPosition(24, -18, 0); this.count.color = Color.WHITE; this.count.enableOutline = true
+    this.count.outlineColor = Color.BLACK; this.count.outlineWidth = 3; this.count.node.active = false
     this.node.active = false
   }
 
   /** `fill` 0–1 is the arc left (clockwise from 12 o'clock); below 0 draws no arc. */
   show(fill: number, color: Readonly<Color>, text: string, textColor: Readonly<Color> = Color.WHITE): void {
+    this.dish.node.active = false; this.count.node.active = false
     if (!this.node.active) this.node.active = true
     const step = fill < 0 ? -1 : Math.round(Math.min(1, fill) * STEPS)
     if (step !== this.step || !this.color.equals(color)) {
@@ -52,6 +64,14 @@ export class Ring {
       this.label.string = text
     }
     if (!this.label.color.equals(textColor)) this.label.color = textColor
+  }
+
+  showDish(fill: number, color: Readonly<Color>, stage: 'dirty' | 'soaking' | 'scrub', count = 0): void {
+    this.show(fill, color, '')
+    this.dish.node.active = true
+    if (stage !== this.dishKey) { drawDishGlyph(this.dish, stage); this.dishKey = stage }
+    this.count.node.active = count > 0
+    if (count > 0 && this.count.string !== `${count}`) this.count.string = `${count}`
   }
 
   hide(): void {

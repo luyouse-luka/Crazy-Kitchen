@@ -1,0 +1,260 @@
+{
+  "date": "2026-10-16",
+  "build": "Cocos Creator 3.8.8 web-desktop story-ui-web",
+  "unitTests": {
+    "files": 50,
+    "passed": 649
+  },
+  "cardsValidation": {
+    "passed": 50,
+    "rejected": 0
+  },
+  "ui": {
+    "url": "http://127.0.0.1:4195",
+    "setup": "Presentation states use diagnostic fixtures; purchases and pagination use actual pointer events.",
+    "checks": [
+      {
+        "width": 1280,
+        "height": 720,
+        "shopBounds": {
+          "x": 280,
+          "y": 47,
+          "w": 720,
+          "h": 626,
+          "vw": 1280,
+          "vh": 720
+        },
+        "shopRows": 7,
+        "bought": {
+          "coins": 350,
+          "enabled": false
+        },
+        "dish": {
+          "text": "",
+          "count": "2",
+          "visible": true,
+          "stage": "dirty"
+        },
+        "foodGlyphs": 9,
+        "customer": {
+          "identity": "相声演员",
+          "arrival": "今儿来段吃的",
+          "waiting": "包袱没响，肚子响了",
+          "orderText": [
+            "面包 · 肉饼 · 芝士",
+            "五分",
+            "不要 洋葱"
+          ]
+        },
+        "touchPurchaseAndResize": true
+      },
+      {
+        "width": 1024,
+        "height": 768,
+        "shopBounds": {
+          "x": 280,
+          "y": 59,
+          "w": 720,
+          "h": 842,
+          "vw": 1280,
+          "vh": 960
+        },
+        "shopRows": 7,
+        "bought": {
+          "coins": 350,
+          "enabled": false
+        },
+        "dish": {
+          "text": "",
+          "count": "2",
+          "visible": true,
+          "stage": "dirty"
+        },
+        "foodGlyphs": 9,
+        "customer": {
+          "identity": "相声演员",
+          "arrival": "今儿来段吃的",
+          "waiting": "包袱没响，肚子响了",
+          "orderText": [
+            "面包 · 肉饼 · 芝士",
+            "五分",
+            "不要 洋葱"
+          ]
+        },
+        "touchPurchaseAndResize": false
+      },
+      {
+        "width": 1560,
+        "height": 720,
+        "shopBounds": {
+          "x": 420,
+          "y": 47,
+          "w": 720,
+          "h": 626,
+          "vw": 1560,
+          "vh": 720
+        },
+        "shopRows": 7,
+        "bought": {
+          "coins": 350,
+          "enabled": false
+        },
+        "dish": {
+          "text": "",
+          "count": "2",
+          "visible": true,
+          "stage": "dirty"
+        },
+        "foodGlyphs": 9,
+        "customer": {
+          "identity": "相声演员",
+          "arrival": "今儿来段吃的",
+          "waiting": "包袱没响，肚子响了",
+          "orderText": [
+            "面包 · 肉饼 · 芝士",
+            "五分",
+            "不要 洋葱"
+          ]
+        },
+        "touchPurchaseAndResize": false
+      },
+      {
+        "width": 780,
+        "height": 360,
+        "shopBounds": {
+          "x": 420,
+          "y": 47,
+          "w": 720,
+          "h": 626,
+          "vw": 1560,
+          "vh": 720
+        },
+        "shopRows": 7,
+        "bought": {
+          "coins": 350,
+          "enabled": false
+        },
+        "dish": {
+          "text": "",
+          "count": "2",
+          "visible": true,
+          "stage": "dirty"
+        },
+        "foodGlyphs": 9,
+        "customer": {
+          "identity": "相声演员",
+          "arrival": "今儿来段吃的",
+          "waiting": "包袱没响，肚子响了",
+          "orderText": [
+            "面包 · 肉饼 · 芝士",
+            "五分",
+            "不要 洋葱"
+          ]
+        },
+        "touchPurchaseAndResize": false
+      },
+      {
+        "width": 587,
+        "height": 652,
+        "shopBounds": {
+          "x": 280,
+          "y": 235.8688245315161,
+          "w": 720,
+          "h": 950,
+          "vw": 1280,
+          "vh": 1421.7376490630322
+        },
+        "shopRows": 7,
+        "bought": {
+          "coins": 350,
+          "enabled": false
+        },
+        "dish": {
+          "text": "",
+          "count": "2",
+          "visible": true,
+          "stage": "dirty"
+        },
+        "foodGlyphs": 9,
+        "customer": {
+          "identity": "相声演员",
+          "arrival": "今儿来段吃的",
+          "waiting": "包袱没响，肚子响了",
+          "orderText": [
+            "面包 · 肉饼 · 芝士",
+            "五分",
+            "不要 洋葱"
+          ]
+        },
+        "touchPurchaseAndResize": false
+      }
+    ],
+    "errors": []
+  },
+  "preview": [
+    {
+      "width": 587,
+      "height": 652,
+      "scrollWidth": 587,
+      "scrollHeight": 652,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "w": 587,
+        "h": 652
+      },
+      "headerVisible": false,
+      "profilerVisible": false
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "scrollWidth": 1280,
+      "scrollHeight": 720,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "w": 1280,
+        "h": 720
+      },
+      "headerVisible": false,
+      "profilerVisible": false
+    },
+    {
+      "width": 780,
+      "height": 360,
+      "scrollWidth": 780,
+      "scrollHeight": 360,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "w": 780,
+        "h": 360
+      },
+      "headerVisible": false,
+      "profilerVisible": false
+    }
+  ],
+  "gameplay": {
+    "singleItem": true,
+    "dropPickThrow": true,
+    "served": 1,
+    "wrong": 0,
+    "wash": true,
+    "errors": [],
+    "failed": []
+  },
+  "hashes": {
+    "game/assets/scripts/ui/UiTheme.ts": "5050d5ab9a05dadc46e46de4293fce621f89fca679acd0d6ddf19101fde4d2b5",
+    "game/assets/scripts/ui/KitchenPanels.ts": "e254d412a0478b3149b6862f4756eaceb10ee8c1aa5d52ec35548f9cd0574679",
+    "game/assets/scripts/ui/FoodGlyphs.ts": "3903c7bb0b2c1aadbf7b4d81bfd63ee5639659060827b0a905ef996a918beed7",
+    "game/assets/scripts/Ring.ts": "e1462c9949e5d71718cfff985487537b2a70cbb69ec770c74ac006c9b5902afa",
+    "game/assets/scripts/ShopUi.ts": "179d1a403cd31665262b194d08d9eef3fef99124873063590795d2aa66e48e25",
+    "game/assets/scripts/ReviewUi.ts": "25a15cc4a751a6cdd97f031894bcfd459709a688fdf2ac3cc9c8c27c84d81169",
+    "game/assets/scripts/TaskUi.ts": "9887b14b56f9671249b58cf0883b08c2bf9c76b84bdc4b2655da009d57a5101d",
+    "game/assets/scripts/StationView.ts": "5d01cb50c782abf2a3bfbb14087fc94bb77cd0f06c5fee92048bd459076dedc1",
+    "game/assets/scripts/cardLines.ts": "0f2284b677f8540dde3dc9e5743e2717d67bee2e7738d89d9a5dce74752b2c73",
+    "pipeline/handwritten/cards.json": "54d42a1b00c72591b25b342d1e8ac61d6ced3648e1f4605b754c5baeeae08a97",
+    "game/build/story-ui-web/assets/main/index.js": "6d0bc6b58b319bd10bb00989b7d4c06e431d70aa535cdaa40892366743d592a3"
+  }
+}

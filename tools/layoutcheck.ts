@@ -90,7 +90,7 @@ function runCurve(layout: KitchenLayout, seeds: number): Curve {
   let out = 0
   for (let day = 1; day <= LAST_DAY; day++) {
     const d = difficultyForDay(day)
-    const a = average({ ...defaultSimConfig(), layout, flow: d.flow, orders: d.orders }, seeds)
+    const a = average({ ...defaultSimConfig(), singleItem: false, layout, flow: d.flow, orders: d.orders }, seeds)
     sum += a.completion
     idle += a.idle
     if (day >= LAST_DAY - 2) late += a.completion
@@ -107,7 +107,7 @@ function main(): void {
   if (bad.length === 0) console.log('   OK：边界、通道 ≥1.5m、动线不穿模，全部通过')
   else for (const f of bad) console.log(`   ✗ [${f.rule}] ${f.detail}`)
 
-  console.log('\n── 难度判据：跑 20 天曲线，与 M1 标定布局对比')
+  console.log('\n── 历史双持回归：跑 20 天曲线，与 M1 标定布局对比；当前单件玩法请跑 pnpm sim:p0')
   const mine = runCurve(asLayout(), 32)
   const base = runCurve(BASELINE, 32)
   const row = (n: string, c: Curve): void =>
