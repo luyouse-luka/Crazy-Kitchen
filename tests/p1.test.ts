@@ -10,6 +10,13 @@ import { gameplayShiftConfig } from '../game/assets/logic/gameplay'
 import { CARD_LINES } from '../game/assets/scripts/cardLines'
 
 describe('P1 recurring diner', () => {
+  it('uses the requested playful tone in a food-focused regular visit', () => {
+    const visit = nextRegularVisit(newRegularMemory(), 1)!
+    const lines = regularLines(visit)
+    expect(lines.greet).toMatch(/规矩立住.*不烧心/)
+    expect(REGULAR.identity).toBe('阿星')
+    expect(REGULAR.chapters.map(c => c.title)).toEqual(['第一次来', '又见面了', '老位置见'])
+  })
   it('starts chapter one in an existing late-game save without skipping chapters', () => {
     const p = parseProgress('{"v":3,"day":20,"best":[3],"coins":351,"owned":["fryer"]}')
     expect(nextRegularVisit(p.regular, p.day)).toEqual({ chapter: 1, day: 20, previous: null })
@@ -46,7 +53,7 @@ describe('P1 recurring diner', () => {
     expect(parseRegularMemory(regular)).toEqual(newRegularMemory())
   })
   it('reuses an existing identity without changing the rolled orders, timings, seed or normal card rotation', () => {
-    expect(CARD_LINES[REGULAR.cardIndex]!.identity).toBe('选秀练习生')
+    expect(CARD_LINES[REGULAR.cardIndex]!.identity).toBe('阿星')
     const p = newProgress(), cfg = gameplayShiftConfig(1, 1234, p, { arrivalSec: 30, arrivalJitter: .2, customersPerShift: 10, patienceScale: 1, lateLeaveSec: 60, orderPatienceSec: 30, walkInSec: 2 })
     const run = (withStory: boolean) => {
       const st = createShift(cfg), specs = [], times = []

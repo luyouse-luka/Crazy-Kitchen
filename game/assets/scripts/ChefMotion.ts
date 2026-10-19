@@ -20,19 +20,31 @@ export interface ChefFrame {
   scrubbing: boolean
   holding: boolean
   sinkInReach: boolean
+  throwCharge?: number
 }
 
 const PICK: readonly InteractKind[] = ['take-ingredient', 'take-patty', 'pick-plate', 'take-crate', 'take-stack', 'take-fries', 'take-drink', 'take-extinguisher']
 const PLACE: readonly InteractKind[] = ['place-patty', 'add-to-burger', 'put-plate', 'serve', 'serve-fries', 'serve-drink', 'shelve', 'restock', 'soak', 'return-extinguisher']
 export const REACH_SEC = .3
+const THROW_SEC = .28
 
 export class ChefMotion {
-  action: 'pick' | 'place' | 'scrub' | null = null
+  action: 'pick' | 'place' | 'scrub' | 'windup' | 'throw' | null = null
   target: Point3 | null = null
   reach = 0
   clock = 0
   carryWeight = 0
+  throwProgress = 0
+  throwOneHanded = false
   private elapsed = 0
+
+  releaseThrow(oneHanded: boolean): void {
+    this.action = 'throw'
+    this.target = null
+    this.reach = 1
+    this.elapsed = this.throwProgress = 0
+    this.throwOneHanded = oneHanded
+  }
 
   notify(kind: InteractKind, target: Point3 | null): void {
     if (kind === 'blocked') return
@@ -52,6 +64,24 @@ export class ChefMotion {
     dt = Math.max(0, dt)
     this.clock += dt
     this.carryWeight += ((frame.carrying ? 1 : 0) - this.carryWeight) * (1 - Math.exp(-dt * 20))
+    if (this.action === 'throw') {
+      this.elapsed += dt
+      const p = this.throwProgress = Math.min(1, this.elapsed / THROW_SEC)
+      this.reach = 1 - p * p * (3 - 2 * p)
+      if (p === 1) this.action = null
+      return
+    }
+    if (frame.carrying && Number.isFinite(frame.throwCharge) && frame.throwCharge! > 0) {
+      const p = Math.min(1, frame.throwCharge!)
+      this.action = 'windup'
+      this.target = null
+      this.reach = p * p * (3 - 2 * p)
+      return
+    }
+    if (this.action === 'windup') {
+      this.action = null
+      this.reach = 0
+    }
     const scrub = frame.scrubbing && frame.holding && frame.sinkInReach && !frame.moving
     if (scrub) {
       this.action = 'scrub'
@@ -77,6 +107,8 @@ export class ChefMotion {
     this.action = null
     this.target = null
     this.reach = this.clock = this.elapsed = this.carryWeight = 0
+    this.throwProgress = 0
+    this.throwOneHanded = false
   }
 }
 

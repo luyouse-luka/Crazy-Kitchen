@@ -249,15 +249,11 @@ export const UI_SPEC: Record<string, UiSpec> = {
    */
   UI_FridgePanel: { size: [560, 288], sizeMode: 0, pos: [0, 60, 0], active: false },
 
-  /**
-   * 结算面板。打烊后盖住一切，只有「再来一局」可点。
-   * 这三个尺寸必须进判据 —— `Btn_Again` 的捕获区是按它们算出来的，
-   * 在编辑器里随手拖一下位置，真机上按钮就点不中，而画面看起来完全正常。
-   */
+  // Result capture zones depend on these authored dimensions.
   UI_Result: { size: [1280, 720], pos: [0, 0, 0], active: false, fullscreen: true },
   Mask: { fullscreen: true },
   Panel: { size: [540, 380], sizeMode: 0, pos: [0, 0, 0], parent: 'UI_Result' },
-  Btn_Again: { size: [260, 76], sizeMode: 0, pos: [0, -132, 0], parent: 'Panel' },
+  Btn_NextDay: { size: [260, 76], sizeMode: 0, pos: [0, -132, 0], parent: 'Panel' },
 
   ...FRIDGE_SLOTS,
 }

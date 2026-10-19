@@ -73,6 +73,8 @@ fs.mkdirSync(out, { recursive: true })
       })
       await settle(); await shot('customer-arrival')
       const customerLines = lines[cardIndex].lines
+      assert.equal(await page.evaluate(() => sv.modernOrders[0].heading.string), `${lines[cardIndex].identity} · 点单`)
+      assert(Array.from(lines[cardIndex].identity).length <= 4, 'Customer cards must show a short nickname')
       assert.equal(await page.evaluate(() => sv.modernOrders[0].story.string), `“${customerLines.greet}”`)
       const orderText = await page.evaluate(() => { const c = sv.modernOrders[0]; return [c.recipe.string, c.cook.string, c.banned.string] })
       const pos = await page.evaluate(() => ({ ...sv.movement.pos }))
@@ -83,6 +85,7 @@ fs.mkdirSync(out, { recursive: true })
       await settle(); await zone('customer-card-1')
       assert.equal(await page.evaluate(() => sv.floaters.lastText), customerLines.wait_nudge)
       assert.equal(await page.evaluate(() => sv.modernOrders[0].story.string), `“${customerLines.wait_nudge}”`)
+      assert.equal(await page.evaluate(() => sv.modernOrders[0].heading.string), `${lines[cardIndex].identity} · 催餐`)
       assert.deepEqual(await page.evaluate(() => { const c = sv.modernOrders[0]; return [c.recipe.string, c.cook.string, c.banned.string] }), orderText, 'Story changes must preserve recipe, doneness and banned ingredients')
       await shot('customer-wait')
       await page.evaluate(() => { sv.shift.flow.customers[0].active = false; sv.shift.flow.activeCount = 0; sv.uiPoll = 0 })
@@ -98,11 +101,11 @@ fs.mkdirSync(out, { recursive: true })
         sv.enabled = false
         sv.reviewsOpen = true
         sv.board.show(4.6, [
-          { name: '熬夜程序员', stars: 5, avatar: 2, text: '编译通过，今天终于有个版本没翻车。' },
-          { name: '练习生', stars: 4, avatar: 0, text: '这口有点东西，给老板投一票！' },
-          { name: '班主任', stars: 2, avatar: 1, text: '说好不拖堂，怎么饭还在留堂？' },
-          { name: '外星游客', stars: 5, avatar: 3, text: '地球餐饮可以，已加入银河回购清单。' },
-          { name: '代驾师傅', stars: 5, avatar: 4, text: '血条回满，今晚继续接单。' },
+          { name: '小满', stars: 5, avatar: 2, text: '快乐加载完成，这口有东西。' },
+          { name: '阿星', stars: 4, avatar: 0, text: '规矩立住，不烧心，这顿接住了。' },
+          { name: '阿圆', stars: 2, avatar: 1, text: '等了半天，我先缓缓。' },
+          { name: '大橘', stars: 5, avatar: 3, text: '来都来了，果然没白来。' },
+          { name: '小七', stars: 5, avatar: 4, text: '饭搭子配合满分，下次还来。' },
         ])
         sv.board.syncOffers([{ text: '面包+肉饼+芝士 · 全熟 · 薯条+饮料', sec: 29 }, { text: '面包+肉饼+番茄 · 五分熟 · 不要洋葱', sec: 16 }])
       })

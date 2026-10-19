@@ -70,7 +70,7 @@ describe('contextual banter', () => {
     expect(banterBubble(line).split('\n').every(row => row.length <= 13)).toBe(true)
     expect(banterBubble(line).replace('\n', '')).toBe(line)
     expect(banterBubble('锅都没你嘴硬')).toBe('锅都没你嘴硬')
-    const long = '上回吃得挺好！试镜进候补了，今天还要继续认真排练，先吃饱再努力。'
+    const long = '上回吃得挺好！今天又来你这儿，饭搭子还想继续认真把这一顿吃明白。'
     expect(banterBubble(long).split('\n').every(row => Array.from(row).length <= 13)).toBe(true)
     expect(banterBubble(long).replace(/\n/g, '')).toBe(long)
     expect(banterBubble(banterBubble(long))).toBe(banterBubble(long))

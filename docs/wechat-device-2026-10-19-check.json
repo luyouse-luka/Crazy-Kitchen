@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-19",
+  "buildDirectory": "game/build/kitchen-chaos-nickname-wechat-20261019",
+  "buildLog": "game/temp/nickname-wechat-build.log",
+  "buildFinished": true,
+  "cocosVersion": "3.8.8",
+  "cocosExitCode": 36,
+  "package": {
+    "main": {
+      "bytes": 2253543,
+      "files": 45
+    },
+    "subpackages": [
+      {
+        "name": "internal",
+        "root": "subpackages/internal",
+        "bytes": 405194,
+        "files": 20
+      },
+      {
+        "name": "main",
+        "root": "subpackages/main",
+        "bytes": 6127687,
+        "files": 105
+      }
+    ],
+    "totalBytes": 8786424,
+    "mainLimit": 4194304,
+    "safeLimit": 3984384,
+    "totalLimit": 31457280,
+    "withinBudget": true,
+    "withinSafetyMargin": true,
+    "orientation": "landscapeRight",
+    "launchScene": "db://assets/main.scene",
+    "remoteBundles": [],
+    "debug": false
+  },
+  "archiveFilesVerified": 170,
+  "devtoolsVersion": "2.02.2608070",
+  "devtoolsLaunched": true,
+  "devtoolsImport": "blocked_service_port_disabled",
+  "realDeviceTested": false,
+  "sha256": {
+    "game/temp/build-nickname-wechat.json": "f7e3db86a6fbee4241840dcd5fd4bdac3a4cf9371cf86cdf232c655f417c42f3",
+    "game/build/kitchen-chaos-nickname-wechat-20261019/project.config.json": "90b88d4736a52b815d31cf5ad066ffd6e2fab4d98e28747fedf84957cfe4cf0c",
+    "game/build/kitchen-chaos-nickname-wechat-20261019/game.js": "88c6f53cdf73b8783b0ec3cdba25d17823e113be28743657bd869c7459661a21",
+    "game/build/kitchen-chaos-nickname-wechat-20261019/subpackages/main/game.js": "fdec01177d406690130e1aed9311f94376821d503a6a4e41fd06e362d466c771",
+    "game/build/packages/kitchen-chaos-nickname-wechat-20261019.zip": "68dbc1279b03d74b1d438d0f3cffcf3e7de6152428f64ff8f1e2e5c440887917"
+  },
+  "importInvestigation": {
+    "loadedProject": "D:/github/Crazy-Kitchen/game/build/wechatgame",
+    "loadedProjectName": "NewProject",
+    "oldProjectHasNextDayButton": false,
+    "desktopExtract": "C:/Users/12255/Desktop/kitchen-chaos-nickname-wechat-20261019",
+    "desktopFilesCompared": 170,
+    "desktopDifferentFiles": 0,
+    "manualArchive": "game/build/packages/KitchenChaos-20261019-manual-import.zip",
+    "manualArchiveSha256": "923e4ee9dee0fcb7a87baad5f3766fa63a7a2e332fe3192fe4545c20a3e19ef2",
+    "manualArchiveGameFilesUnchanged": true,
+    "devtoolsNewPackageRuntimeVerified": false
+  }
+}

@@ -3,8 +3,19 @@ import { addReview, averageStars, createReviewLog, customerCardIndex, serveRevie
 import { argueTap, ARGUE_TAPS, createVent, rantStars, startRant, throwAt, vent } from '../game/assets/logic/vent'
 import { CARD_LINES } from '../game/assets/scripts/cardLines'
 import cards from '../pipeline/handwritten/cards.json'
+import { BANTER } from '../game/assets/logic/banterLines'
+import { REGULAR } from '../game/assets/logic/regular'
+import { witnessResponse } from '../game/assets/logic/recap'
 
 describe('serveReview', () => {
+  it('ships the requested meme in an authored customer greeting and keeps card beats readable', () => {
+    expect(CARD_LINES.some(c => /规矩立住.*不烧心/.test(c.greet))).toBe(true)
+    for (const c of CARD_LINES) {
+      expect(Array.from(c.greet).length).toBeLessThanOrEqual(12)
+      expect(Array.from(c.wait_nudge).length).toBeLessThanOrEqual(15)
+    }
+    expect(new Set(CARD_LINES.map(c => c.greet)).size).toBe(CARD_LINES.length)
+  })
   it('对且快 5 星，慢了递减；超时 2 星；上错 1 星', () => {
     expect([0.9, 0.5, 0.3, 0.1].map((k) => serveReview(true, false, k).stars)).toEqual([5, 4, 4, 3])
     expect(serveReview(true, true, 0)).toEqual({ kind: 'complain', stars: 2 })
@@ -61,6 +72,17 @@ describe('跨天顾客卡轮换', () => {
 })
 
 describe('cardLines.ts 与手写卡同步', () => {
+  it('uses distinct short nicknames and keeps occupations out of all shipped customer dialogue', () => {
+    const occupations = /练习生|相声|捧哏|班主任|学生|饲养员|教练|唐朝|场务|代驾|机器人|博主|老师|交换生|分拣|程序员|跳水|留学生|幸存者|骑手|举重|馆长|管理员|管家|击剑|书生|外星|的哥|民宿|试镜|候补|排练|母星/
+    expect(new Set(CARD_LINES.map(c => c.identity)).size).toBe(50)
+    for (const c of CARD_LINES) expect([...c.identity].length).toBeLessThanOrEqual(4)
+    expect(JSON.stringify(cards)).not.toMatch(occupations)
+    expect(JSON.stringify(BANTER)).not.toMatch(occupations)
+    expect(JSON.stringify(REGULAR)).not.toMatch(occupations)
+    for (const kind of ['burnt', 'stained', 'crash', 'vent'] as const) {
+      for (let i = 0; i < 50; i++) expect(witnessResponse(kind, i)).not.toMatch(occupations)
+    }
+  })
   it('改了 cards.json 没跑 pnpm cards:export 就红', () => {
     expect(CARD_LINES.length).toBe(cards.length)
     cards.forEach((c, i) => {

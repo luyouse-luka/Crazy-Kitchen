@@ -1,0 +1,905 @@
+{
+  "date": "2026-10-19",
+  "baseline": "c98ed2b plus uncommitted throw presentation work",
+  "url": "http://127.0.0.1:4200/",
+  "tests": {
+    "command": "pnpm check",
+    "exitCode": 0,
+    "files": 52,
+    "passed": 690,
+    "types": true,
+    "noEngineDependency": true,
+    "scene": true,
+    "cards": {
+      "passed": 50,
+      "rejected": 0
+    }
+  },
+  "build": {
+    "engine": "Cocos Creator 3.8.8",
+    "exitCode": 36,
+    "finalLog": "build Task (continuous-days-web) Finished",
+    "actualBrowserVerified": true
+  },
+  "content": {
+    "cards": 50,
+    "rewrittenFields": [
+      "greet",
+      "wait_nudge",
+      "praise",
+      "complain"
+    ],
+    "rulesAndIdentitiesUnchanged": true,
+    "greetLimit": 12,
+    "maxGreet": 11,
+    "waitLimit": 15,
+    "maxWait": 12,
+    "banterBefore": 474,
+    "banterAfter": 576,
+    "banterAdded": 102
+  },
+  "progression": {
+    "checks": [
+      "Three actual input-driven diner handoffs use the recurring identity, chapter-specific dialogue, factual verdict, final review and saved chapter",
+      "Repeated closing does not duplicate coins or advance story; correct and missing-cheese outcomes have matching reviews and recaps",
+      "Result summary and all three side cards fit five window sizes, including resizing an open result",
+      "Zero-star closing offers only next-day/shop, saves day four, and never exposes replay; next-day, rest and reload preserve story memory",
+      "Reloaded previous bad service selects the authored bad-memory greeting",
+      "A witnessed dirty plate uses the selected role voice, reduces real patience, adds no rating and quotes the same line in the highlight",
+      "Actual long press provoking an ordered diner uses the chef-provocation reason pool instead of claiming no order was taken"
+    ],
+    "setup": "Diagnostic one-diner shifts, supplied meals and incident fixtures; menu, ordering, card click, delivery to diner, result buttons and provocation use real mouse input. Not human playthrough or device validation.",
+    "visits": [
+      {
+        "day": 1,
+        "nextDay": 2,
+        "stars": 3,
+        "buttons": [
+          {
+            "name": "Btn_NextDay",
+            "text": "下一天"
+          },
+          {
+            "name": "Btn_Shop",
+            "text": "商店"
+          }
+        ],
+        "zones": [
+          "next",
+          "shop",
+          "result-outside"
+        ],
+        "greet": "试镜先等等，规矩立住，不烧心。",
+        "memory": {
+          "chapter": 1,
+          "lastDay": 1,
+          "outcome": "good"
+        }
+      },
+      {
+        "day": 2,
+        "nextDay": 3,
+        "stars": 3,
+        "buttons": [
+          {
+            "name": "Btn_NextDay",
+            "text": "下一天"
+          },
+          {
+            "name": "Btn_Shop",
+            "text": "商店"
+          }
+        ],
+        "zones": [
+          "next",
+          "shop",
+          "result-outside"
+        ],
+        "greet": "上回吃得挺好！试镜进候补了，主打一个不服输。",
+        "memory": {
+          "chapter": 2,
+          "lastDay": 2,
+          "outcome": "good"
+        }
+      },
+      {
+        "day": 3,
+        "nextDay": 4,
+        "stars": 0,
+        "buttons": [
+          {
+            "name": "Btn_NextDay",
+            "text": "下一天"
+          },
+          {
+            "name": "Btn_Shop",
+            "text": "商店"
+          }
+        ],
+        "zones": [
+          "next",
+          "shop",
+          "result-outside"
+        ],
+        "greet": "上回吃得挺好！今晚登台三分钟，中心位包我的。",
+        "memory": {
+          "chapter": 3,
+          "lastDay": 3,
+          "outcome": "bad"
+        }
+      }
+    ],
+    "bounds": [
+      {
+        "width": 1280,
+        "height": 720,
+        "cards": [
+          {
+            "name": "Panel",
+            "x": 162,
+            "y": 80,
+            "w": 640,
+            "h": 560,
+            "vw": 1280,
+            "vh": 720,
+            "labels": [
+              {
+                "text": "第 3 天  打烊",
+                "width": 500,
+                "height": 56
+              },
+              {
+                "text": "堂食  来客 1 · 好评 0 · 好评率 0%\n超时免单 0 · 错单 1 · 摔盘 0\n离店  未接单 0 · 等太久 0\n外卖  送达 0 · 错单 0 · 超时 0 · 拒单 0\n餐费 ¥0 + 小费 ¥0 = 收入 ¥0\n错单／超时餐点不收款；及时送齐有更多小费\n任务 0/3 · 奖励 ¥0\n今天收工，明天继续营业\n当前存款 ¥90",
+                "width": 590,
+                "height": 320
+              },
+              {
+                "text": "下一天",
+                "width": 152,
+                "height": 60
+              },
+              {
+                "text": "商店",
+                "width": 152,
+                "height": 60
+              }
+            ]
+          },
+          {
+            "name": "UI_Highlight",
+            "x": 818,
+            "y": 465,
+            "w": 300,
+            "h": 170,
+            "vw": 1280,
+            "vh": 720,
+            "labels": [
+              {
+                "text": "🎬 今日名场面",
+                "width": 276,
+                "height": 28
+              },
+              {
+                "text": "今日接待记录",
+                "width": 272,
+                "height": 26
+              },
+              {
+                "text": "准时正确 0 位 · 错单 1 位\n没有记录到可展示的事故或对骂。",
+                "width": 272,
+                "height": 88
+              }
+            ]
+          },
+          {
+            "name": "UI_Recap",
+            "x": 818,
+            "y": 275,
+            "w": 300,
+            "h": 170,
+            "vw": 1280,
+            "vh": 720,
+            "labels": [
+              {
+                "text": "明天试一件事",
+                "width": 276,
+                "height": 28
+              },
+              {
+                "text": "错单 1 单",
+                "width": 272,
+                "height": 26
+              },
+              {
+                "text": "最近一单：缺芝士。\n明天先核对配料、忌口与熟度；双肉要检查两块。",
+                "width": 272,
+                "height": 88
+              }
+            ]
+          },
+          {
+            "name": "UI_Regular",
+            "x": 818,
+            "y": 85,
+            "w": 300,
+            "h": 170,
+            "vw": 1280,
+            "vh": 720,
+            "labels": [
+              {
+                "text": "熟客手记",
+                "width": 276,
+                "height": 28
+              },
+              {
+                "text": "阿星·练习生 · 3/3 三分钟的舞台",
+                "width": 272,
+                "height": 26
+              },
+              {
+                "text": "阿星拿到了三分钟的舞台，准备去演出。\n这次没吃痛快，他会记得这次接待。\n这段小故事已完结，之后照常接待新客。",
+                "width": 272,
+                "height": 88
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "width": 1024,
+        "height": 768,
+        "cards": [
+          {
+            "name": "Panel",
+            "x": 162,
+            "y": 200,
+            "w": 640,
+            "h": 560,
+            "vw": 1280,
+            "vh": 960,
+            "labels": [
+              {
+                "text": "第 3 天  打烊",
+                "width": 500,
+                "height": 56
+              },
+              {
+                "text": "堂食  来客 1 · 好评 0 · 好评率 0%\n超时免单 0 · 错单 1 · 摔盘 0\n离店  未接单 0 · 等太久 0\n外卖  送达 0 · 错单 0 · 超时 0 · 拒单 0\n餐费 ¥0 + 小费 ¥0 = 收入 ¥0\n错单／超时餐点不收款；及时送齐有更多小费\n任务 0/3 · 奖励 ¥0\n今天收工，明天继续营业\n当前存款 ¥90",
+                "width": 590,
+                "height": 320
+              },
+              {
+                "text": "下一天",
+                "width": 152,
+                "height": 60
+              },
+              {
+                "text": "商店",
+                "width": 152,
+                "height": 60
+              }
+            ]
+          },
+          {
+            "name": "UI_Highlight",
+            "x": 818,
+            "y": 585,
+            "w": 300,
+            "h": 170,
+            "vw": 1280,
+            "vh": 960,
+            "labels": [
+              {
+                "text": "🎬 今日名场面",
+                "width": 276,
+                "height": 28
+              },
+              {
+                "text": "今日接待记录",
+                "width": 272,
+                "height": 26
+              },
+              {
+                "text": "准时正确 0 位 · 错单 1 位\n没有记录到可展示的事故或对骂。",
+                "width": 272,
+                "height": 88
+              }
+            ]
+          },
+          {
+            "name": "UI_Recap",
+            "x": 818,
+            "y": 395,
+            "w": 300,
+            "h": 170,
+            "vw": 1280,
+            "vh": 960,
+            "labels": [
+              {
+                "text": "明天试一件事",
+                "width": 276,
+                "height": 28
+              },
+              {
+                "text": "错单 1 单",
+                "width": 272,
+                "height": 26
+              },
+              {
+                "text": "最近一单：缺芝士。\n明天先核对配料、忌口与熟度；双肉要检查两块。",
+                "width": 272,
+                "height": 88
+              }
+            ]
+          },
+          {
+            "name": "UI_Regular",
+            "x": 818,
+            "y": 205,
+            "w": 300,
+            "h": 170,
+            "vw": 1280,
+            "vh": 960,
+            "labels": [
+              {
+                "text": "熟客手记",
+                "width": 276,
+                "height": 28
+              },
+              {
+                "text": "阿星·练习生 · 3/3 三分钟的舞台",
+                "width": 272,
+                "height": 26
+              },
+              {
+                "text": "阿星拿到了三分钟的舞台，准备去演出。\n这次没吃痛快，他会记得这次接待。\n这段小故事已完结，之后照常接待新客。",
+                "width": 272,
+                "height": 88
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "width": 780,
+        "height": 360,
+        "cards": [
+          {
+            "name": "Panel",
+            "x": 302,
+            "y": 80,
+            "w": 640,
+            "h": 560,
+            "vw": 1560,
+            "vh": 720,
+            "labels": [
+              {
+                "text": "第 3 天  打烊",
+                "width": 500,
+                "height": 56
+              },
+              {
+                "text": "堂食  来客 1 · 好评 0 · 好评率 0%\n超时免单 0 · 错单 1 · 摔盘 0\n离店  未接单 0 · 等太久 0\n外卖  送达 0 · 错单 0 · 超时 0 · 拒单 0\n餐费 ¥0 + 小费 ¥0 = 收入 ¥0\n错单／超时餐点不收款；及时送齐有更多小费\n任务 0/3 · 奖励 ¥0\n今天收工，明天继续营业\n当前存款 ¥90",
+                "width": 590,
+                "height": 320
+              },
+              {
+                "text": "下一天",
+                "width": 152,
+                "height": 60
+              },
+              {
+                "text": "商店",
+                "width": 152,
+                "height": 60
+              }
+            ]
+          },
+          {
+            "name": "UI_Highlight",
+            "x": 958,
+            "y": 465,
+            "w": 300,
+            "h": 170,
+            "vw": 1560,
+            "vh": 720,
+            "labels": [
+              {
+                "text": "🎬 今日名场面",
+                "width": 276,
+                "height": 28
+              },
+              {
+                "text": "今日接待记录",
+                "width": 272,
+                "height": 26
+              },
+              {
+                "text": "准时正确 0 位 · 错单 1 位\n没有记录到可展示的事故或对骂。",
+                "width": 272,
+                "height": 88
+              }
+            ]
+          },
+          {
+            "name": "UI_Recap",
+            "x": 958,
+            "y": 275,
+            "w": 300,
+            "h": 170,
+            "vw": 1560,
+            "vh": 720,
+            "labels": [
+              {
+                "text": "明天试一件事",
+                "width": 276,
+                "height": 28
+              },
+              {
+                "text": "错单 1 单",
+                "width": 272,
+                "height": 26
+              },
+              {
+                "text": "最近一单：缺芝士。\n明天先核对配料、忌口与熟度；双肉要检查两块。",
+                "width": 272,
+                "height": 88
+              }
+            ]
+          },
+          {
+            "name": "UI_Regular",
+            "x": 958,
+            "y": 85,
+            "w": 300,
+            "h": 170,
+            "vw": 1560,
+            "vh": 720,
+            "labels": [
+              {
+                "text": "熟客手记",
+                "width": 276,
+                "height": 28
+              },
+              {
+                "text": "阿星·练习生 · 3/3 三分钟的舞台",
+                "width": 272,
+                "height": 26
+              },
+              {
+                "text": "阿星拿到了三分钟的舞台，准备去演出。\n这次没吃痛快，他会记得这次接待。\n这段小故事已完结，之后照常接待新客。",
+                "width": 272,
+                "height": 88
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "width": 587,
+        "height": 652,
+        "cards": [
+          {
+            "name": "Panel",
+            "x": 162,
+            "y": 430.8688245315161,
+            "w": 640,
+            "h": 560,
+            "vw": 1280,
+            "vh": 1421.7376490630322,
+            "labels": [
+              {
+                "text": "第 3 天  打烊",
+                "width": 500,
+                "height": 56
+              },
+              {
+                "text": "堂食  来客 1 · 好评 0 · 好评率 0%\n超时免单 0 · 错单 1 · 摔盘 0\n离店  未接单 0 · 等太久 0\n外卖  送达 0 · 错单 0 · 超时 0 · 拒单 0\n餐费 ¥0 + 小费 ¥0 = 收入 ¥0\n错单／超时餐点不收款；及时送齐有更多小费\n任务 0/3 · 奖励 ¥0\n今天收工，明天继续营业\n当前存款 ¥90",
+                "width": 590,
+                "height": 320
+              },
+              {
+                "text": "下一天",
+                "width": 152,
+                "height": 60
+              },
+              {
+                "text": "商店",
+                "width": 152,
+                "height": 60
+              }
+            ]
+          },
+          {
+            "name": "UI_Highlight",
+            "x": 818,
+            "y": 815.8688245315161,
+            "w": 300,
+            "h": 170,
+            "vw": 1280,
+            "vh": 1421.7376490630322,
+            "labels": [
+              {
+                "text": "🎬 今日名场面",
+                "width": 276,
+                "height": 28
+              },
+              {
+                "text": "今日接待记录",
+                "width": 272,
+                "height": 26
+              },
+              {
+                "text": "准时正确 0 位 · 错单 1 位\n没有记录到可展示的事故或对骂。",
+                "width": 272,
+                "height": 88
+              }
+            ]
+          },
+          {
+            "name": "UI_Recap",
+            "x": 818,
+            "y": 625.8688245315161,
+            "w": 300,
+            "h": 170,
+            "vw": 1280,
+            "vh": 1421.7376490630322,
+            "labels": [
+              {
+                "text": "明天试一件事",
+                "width": 276,
+                "height": 28
+              },
+              {
+                "text": "错单 1 单",
+                "width": 272,
+                "height": 26
+              },
+              {
+                "text": "最近一单：缺芝士。\n明天先核对配料、忌口与熟度；双肉要检查两块。",
+                "width": 272,
+                "height": 88
+              }
+            ]
+          },
+          {
+            "name": "UI_Regular",
+            "x": 818,
+            "y": 435.8688245315161,
+            "w": 300,
+            "h": 170,
+            "vw": 1280,
+            "vh": 1421.7376490630322,
+            "labels": [
+              {
+                "text": "熟客手记",
+                "width": 276,
+                "height": 28
+              },
+              {
+                "text": "阿星·练习生 · 3/3 三分钟的舞台",
+                "width": 272,
+                "height": 26
+              },
+              {
+                "text": "阿星拿到了三分钟的舞台，准备去演出。\n这次没吃痛快，他会记得这次接待。\n这段小故事已完结，之后照常接待新客。",
+                "width": 272,
+                "height": 88
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "width": 1560,
+        "height": 720,
+        "cards": [
+          {
+            "name": "Panel",
+            "x": 302,
+            "y": 80,
+            "w": 640,
+            "h": 560,
+            "vw": 1560,
+            "vh": 720,
+            "labels": [
+              {
+                "text": "第 3 天  打烊",
+                "width": 500,
+                "height": 56
+              },
+              {
+                "text": "堂食  来客 1 · 好评 0 · 好评率 0%\n超时免单 0 · 错单 1 · 摔盘 0\n离店  未接单 0 · 等太久 0\n外卖  送达 0 · 错单 0 · 超时 0 · 拒单 0\n餐费 ¥0 + 小费 ¥0 = 收入 ¥0\n错单／超时餐点不收款；及时送齐有更多小费\n任务 0/3 · 奖励 ¥0\n今天收工，明天继续营业\n当前存款 ¥90",
+                "width": 590,
+                "height": 320
+              },
+              {
+                "text": "下一天",
+                "width": 152,
+                "height": 60
+              },
+              {
+                "text": "商店",
+                "width": 152,
+                "height": 60
+              }
+            ]
+          },
+          {
+            "name": "UI_Highlight",
+            "x": 958,
+            "y": 465,
+            "w": 300,
+            "h": 170,
+            "vw": 1560,
+            "vh": 720,
+            "labels": [
+              {
+                "text": "🎬 今日名场面",
+                "width": 276,
+                "height": 28
+              },
+              {
+                "text": "今日接待记录",
+                "width": 272,
+                "height": 26
+              },
+              {
+                "text": "准时正确 0 位 · 错单 1 位\n没有记录到可展示的事故或对骂。",
+                "width": 272,
+                "height": 88
+              }
+            ]
+          },
+          {
+            "name": "UI_Recap",
+            "x": 958,
+            "y": 275,
+            "w": 300,
+            "h": 170,
+            "vw": 1560,
+            "vh": 720,
+            "labels": [
+              {
+                "text": "明天试一件事",
+                "width": 276,
+                "height": 28
+              },
+              {
+                "text": "错单 1 单",
+                "width": 272,
+                "height": 26
+              },
+              {
+                "text": "最近一单：缺芝士。\n明天先核对配料、忌口与熟度；双肉要检查两块。",
+                "width": 272,
+                "height": 88
+              }
+            ]
+          },
+          {
+            "name": "UI_Regular",
+            "x": 958,
+            "y": 85,
+            "w": 300,
+            "h": 170,
+            "vw": 1560,
+            "vh": 720,
+            "labels": [
+              {
+                "text": "熟客手记",
+                "width": 276,
+                "height": 28
+              },
+              {
+                "text": "阿星·练习生 · 3/3 三分钟的舞台",
+                "width": 272,
+                "height": 26
+              },
+              {
+                "text": "阿星拿到了三分钟的舞台，准备去演出。\n这次没吃痛快，他会记得这次接待。\n这段小故事已完结，之后照常接待新客。",
+                "width": 272,
+                "height": 88
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "errors": []
+  },
+  "ui": {
+    "setup": "Presentation states use diagnostic fixtures; purchases and pagination use actual pointer events.",
+    "checks": [
+      {
+        "width": 1280,
+        "height": 720,
+        "shopBounds": {
+          "x": 280,
+          "y": 47,
+          "w": 720,
+          "h": 626,
+          "vw": 1280,
+          "vh": 720
+        },
+        "shopRows": 7,
+        "bought": {
+          "coins": 350,
+          "enabled": false
+        },
+        "dish": {
+          "text": "",
+          "count": "2",
+          "visible": true,
+          "stage": "dirty"
+        },
+        "foodGlyphs": 9,
+        "customer": {
+          "identity": "相声演员",
+          "arrival": "包袱放下，饭得接住。",
+          "waiting": "出餐主打一个铺垫。",
+          "orderText": [
+            "面包 · 肉饼 · 芝士",
+            "五分",
+            "不要 洋葱"
+          ]
+        },
+        "touchPurchaseAndResize": true
+      },
+      {
+        "width": 1024,
+        "height": 768,
+        "shopBounds": {
+          "x": 280,
+          "y": 59,
+          "w": 720,
+          "h": 842,
+          "vw": 1280,
+          "vh": 960
+        },
+        "shopRows": 7,
+        "bought": {
+          "coins": 350,
+          "enabled": false
+        },
+        "dish": {
+          "text": "",
+          "count": "2",
+          "visible": true,
+          "stage": "dirty"
+        },
+        "foodGlyphs": 9,
+        "customer": {
+          "identity": "相声演员",
+          "arrival": "包袱放下，饭得接住。",
+          "waiting": "出餐主打一个铺垫。",
+          "orderText": [
+            "面包 · 肉饼 · 芝士",
+            "五分",
+            "不要 洋葱"
+          ]
+        },
+        "touchPurchaseAndResize": false
+      },
+      {
+        "width": 1560,
+        "height": 720,
+        "shopBounds": {
+          "x": 420,
+          "y": 47,
+          "w": 720,
+          "h": 626,
+          "vw": 1560,
+          "vh": 720
+        },
+        "shopRows": 7,
+        "bought": {
+          "coins": 350,
+          "enabled": false
+        },
+        "dish": {
+          "text": "",
+          "count": "2",
+          "visible": true,
+          "stage": "dirty"
+        },
+        "foodGlyphs": 9,
+        "customer": {
+          "identity": "相声演员",
+          "arrival": "包袱放下，饭得接住。",
+          "waiting": "出餐主打一个铺垫。",
+          "orderText": [
+            "面包 · 肉饼 · 芝士",
+            "五分",
+            "不要 洋葱"
+          ]
+        },
+        "touchPurchaseAndResize": false
+      },
+      {
+        "width": 780,
+        "height": 360,
+        "shopBounds": {
+          "x": 420,
+          "y": 47,
+          "w": 720,
+          "h": 626,
+          "vw": 1560,
+          "vh": 720
+        },
+        "shopRows": 7,
+        "bought": {
+          "coins": 350,
+          "enabled": false
+        },
+        "dish": {
+          "text": "",
+          "count": "2",
+          "visible": true,
+          "stage": "dirty"
+        },
+        "foodGlyphs": 9,
+        "customer": {
+          "identity": "相声演员",
+          "arrival": "包袱放下，饭得接住。",
+          "waiting": "出餐主打一个铺垫。",
+          "orderText": [
+            "面包 · 肉饼 · 芝士",
+            "五分",
+            "不要 洋葱"
+          ]
+        },
+        "touchPurchaseAndResize": false
+      },
+      {
+        "width": 587,
+        "height": 652,
+        "shopBounds": {
+          "x": 280,
+          "y": 235.8688245315161,
+          "w": 720,
+          "h": 950,
+          "vw": 1280,
+          "vh": 1421.7376490630322
+        },
+        "shopRows": 7,
+        "bought": {
+          "coins": 350,
+          "enabled": false
+        },
+        "dish": {
+          "text": "",
+          "count": "2",
+          "visible": true,
+          "stage": "dirty"
+        },
+        "foodGlyphs": 9,
+        "customer": {
+          "identity": "相声演员",
+          "arrival": "包袱放下，饭得接住。",
+          "waiting": "出餐主打一个铺垫。",
+          "orderText": [
+            "面包 · 肉饼 · 芝士",
+            "五分",
+            "不要 洋葱"
+          ]
+        },
+        "touchPurchaseAndResize": false
+      }
+    ],
+    "errors": []
+  },
+  "sha256": {
+    "game/assets/logic/progress.ts": "830469c222baef0c93cabf1f1cb1c4da15554fdadf8896554ba36e069097acf1",
+    "game/assets/logic/regular.ts": "f945263f38712d44d6111fb8d31853fde16242aab2795d1f6dd8e7a460bb7b6a",
+    "game/assets/main.scene": "eadfc3e111355ba6895145313ba71712c67373ca6e09809791c7f3c542faf521",
+    "game/assets/scripts/StationView.ts": "8d8a6351264ac7a25c40e9ea66fa7cd8aef9cd4bc82f26ca371d2518f59cd76e",
+    "game/assets/scripts/cardLines.ts": "0805fc29ce77d46e897d4d260aa810ebabeff9fdb50aea8c8772e642f1aedf71",
+    "game/assets/logic/banterLines.ts": "44550535de2dc5647270a83fa5832f7d436de3307ea62ab023516a63f87a8711",
+    "pipeline/handwritten/cards.json": "d51ec482965987f097b14ec717a379f6d689837ca965614b10ba64f7f990fde9",
+    "pipeline/handwritten/banter.json": "f1945deef18c0e6b820f4f5e5e5f7d74c3f56c779863a5678e046d7a9a94acf6",
+    "tools/scene-spec.ts": "63c86cd0b7810ded8078528a6169941a28856c65701dd90059398b851340e50e",
+    "tools/verify-p1.cjs": "70d5695ad3d5cce126e4325d58b160b037c6c00e746fb9d5b3dc03075f57eea9",
+    "game/build/continuous-days-web/assets/main/index.js": "6cc6f35c873542bd60fa034d882e87505d6bddf3b5e61238d5aab56d138af0ce"
+  }
+}

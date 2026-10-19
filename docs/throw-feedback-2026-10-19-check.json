@@ -1,0 +1,411 @@
+{
+  "date": "2026-10-19",
+  "baseline": "c98ed2b",
+  "url": "http://127.0.0.1:4199/",
+  "validation": {
+    "command": "pnpm check",
+    "exitCode": 0,
+    "tests": 686,
+    "files": 52,
+    "types": true,
+    "noEngineDependency": true
+  },
+  "build": {
+    "engine": "Cocos Creator 3.8.8",
+    "processExitCode": 36,
+    "finalLog": "build Task (throw-feedback-web) Finished",
+    "runtimeVerified": true
+  },
+  "input": "Real mouse joystick and auxiliary/action buttons; background cancellation and extra-held geometry use explicitly marked event/presentation diagnostics.",
+  "throws": [
+    {
+      "name": "single-ingredient",
+      "singleHand": true,
+      "windupFrames": 18,
+      "releaseFrames": 16,
+      "rightArmVariationRad": 1.424185393614565,
+      "leftArmVariationRad": 0.033749012430929155,
+      "spineVariationRad": 0.20916003585422793,
+      "samples": [
+        {
+          "action": "windup",
+          "reach": 0.006065862736844275,
+          "progress": 0,
+          "singleHand": false,
+          "carry": "ingredient",
+          "items": 0,
+          "rightArm": [
+            -0.43286400794227703,
+            0.3536354448874882,
+            0.8155182875989061,
+            -0.1500021467322693
+          ],
+          "leftArm": [
+            -0.5348694879690826,
+            -0.11379485411091843,
+            -0.7699528345278661,
+            0.3288434357378609
+          ],
+          "spine": [
+            0.001964127402892622,
+            -1.4195176458328297e-7,
+            0.00022499316289989083,
+            0.9999979320049792
+          ],
+          "hand": {
+            "x": 2.8785826834239763,
+            "y": 0.49406556763621745,
+            "z": -0.2974543518372597
+          }
+        },
+        {
+          "action": "windup",
+          "reach": 0.9999348699253722,
+          "progress": 0,
+          "singleHand": false,
+          "carry": "ingredient",
+          "items": 0,
+          "rightArm": [
+            -0.4705391783235793,
+            0.17857933281552293,
+            0.6953974049826855,
+            0.5129568680280354
+          ],
+          "leftArm": [
+            -0.5346297816375075,
+            -0.11436812128047161,
+            -0.7702978992690397,
+            0.3282256731226643
+          ],
+          "spine": [
+            -0.10243488698662569,
+            -0.00001898324971596898,
+            0.00018060796119880656,
+            0.9947397038195125
+          ],
+          "hand": {
+            "x": 3.0533160030561337,
+            "y": 0.6169770917957041,
+            "z": -0.12527786989370768
+          }
+        },
+        {
+          "action": "throw",
+          "reach": 0.9829122187568486,
+          "progress": 0.07749999998403446,
+          "singleHand": true,
+          "carry": "none",
+          "items": 1,
+          "rightArm": [
+            -0.4634439894017273,
+            0.263560300749009,
+            0.7532577593764376,
+            0.3851731867495656
+          ],
+          "leftArm": [
+            -0.5351470718121575,
+            -0.11312899158842937,
+            -0.7695514056456159,
+            0.32956044340166946
+          ],
+          "spine": [
+            0.040391593556103195,
+            0.00001024839778915014,
+            0.00027520830983292617,
+            0.9991838413509551
+          ],
+          "hand": {
+            "x": 2.952953996370668,
+            "y": 0.6001351448958918,
+            "z": -0.22461967771615654
+          }
+        },
+        {
+          "action": "throw",
+          "reach": 0.43002624738952344,
+          "progress": 0.5467857142644268,
+          "singleHand": true,
+          "carry": "none",
+          "items": 1,
+          "rightArm": [
+            -0.4979598017420006,
+            0.26258869265052603,
+            0.8136191536731441,
+            0.145282782573595
+          ],
+          "leftArm": [
+            -0.5373542693830297,
+            -0.10774414243779884,
+            -0.7662838113586623,
+            0.33533672560618255
+          ],
+          "spine": [
+            0.07466590396605464,
+            0.00004574676354128074,
+            0.0006836065879825351,
+            0.997208350290858
+          ],
+          "hand": {
+            "x": 2.9382649106232095,
+            "y": 0.4891038303702966,
+            "z": -0.33205659482121813
+          }
+        },
+        {
+          "action": "throw",
+          "reach": 0.0030330721574343134,
+          "progress": 0.9678571428571431,
+          "singleHand": true,
+          "carry": "none",
+          "items": 1,
+          "rightArm": [
+            -0.5654526706519908,
+            0.035335188619094196,
+            0.7295076798384753,
+            0.38318822661034646
+          ],
+          "leftArm": [
+            -0.5390509304318627,
+            -0.1034895385077198,
+            -0.7636751685225718,
+            0.3398738852708303
+          ],
+          "spine": [
+            0.011732100360867553,
+            4.827924293910702e-8,
+            0.001011347252210621,
+            0.9999305730530778
+          ],
+          "hand": {
+            "x": 3.2148038867246993,
+            "y": 0.4328856726392502,
+            "z": -0.25398469667841106
+          }
+        }
+      ]
+    },
+    {
+      "name": "plated-burger",
+      "singleHand": false,
+      "windupFrames": 18,
+      "releaseFrames": 16,
+      "rightArmVariationRad": 1.86486581741882,
+      "leftArmVariationRad": 1.6359952627583079,
+      "spineVariationRad": 0.2276890623613918,
+      "samples": [
+        {
+          "action": "windup",
+          "reach": 0.014672157407407406,
+          "progress": 1,
+          "singleHand": true,
+          "carry": "plate",
+          "items": 0,
+          "rightArm": [
+            -0.5727238284183828,
+            0.35673227680374336,
+            0.7082480757328959,
+            -0.2076394844472744
+          ],
+          "leftArm": [
+            0.567559292109276,
+            0.35188676735478686,
+            0.7102992658201486,
+            0.22254686545506752
+          ],
+          "spine": [
+            -0.0015140294788313806,
+            0.0000011385054114368136,
+            -0.0007452154013488387,
+            0.9999984902410717
+          ],
+          "hand": {
+            "x": 2.168502843384866,
+            "y": 0.48810401930104547,
+            "z": 0.27755217557257117
+          }
+        },
+        {
+          "action": "windup",
+          "reach": 0.9999730540000891,
+          "progress": 1,
+          "singleHand": true,
+          "carry": "plate",
+          "items": 0,
+          "rightArm": [
+            -0.45477447473905513,
+            0.09699061122348679,
+            0.6122241954981369,
+            0.6394955264348698
+          ],
+          "leftArm": [
+            0.4610058292055506,
+            0.19547698190819407,
+            0.6693044747476936,
+            -0.5489024525753778
+          ],
+          "spine": [
+            -0.09672420078529763,
+            -0.00007094305683850199,
+            0.0006749962275483848,
+            0.9953109752514837
+          ],
+          "hand": {
+            "x": 1.9565726364913563,
+            "y": 0.6153142545998072,
+            "z": 0.19243129440597126
+          }
+        },
+        {
+          "action": "throw",
+          "reach": 0.9939216792961126,
+          "progress": 0.04571428573025124,
+          "singleHand": false,
+          "carry": "none",
+          "items": 1,
+          "rightArm": [
+            -0.4626826600289119,
+            0.22176904208149187,
+            0.7186603333955669,
+            0.4693299137685657
+          ],
+          "leftArm": [
+            0.4454573571652493,
+            0.3060541360734456,
+            0.7501658160785161,
+            -0.38098537933292737
+          ],
+          "spine": [
+            0.03141575513484668,
+            0.000017554225140505968,
+            0.0007853874223753843,
+            0.9995060828780687
+          ],
+          "hand": {
+            "x": 2.0713625673221436,
+            "y": 0.6107497665417038,
+            "z": 0.16380763751572097
+          }
+        },
+        {
+          "action": "throw",
+          "reach": 0.47269065697089074,
+          "progress": 0.5182142857196076,
+          "singleHand": false,
+          "carry": "none",
+          "items": 1,
+          "rightArm": [
+            -0.4859349758534617,
+            0.28952741289359996,
+            0.8153328598459803,
+            0.12358558650361876
+          ],
+          "leftArm": [
+            0.4543359541530911,
+            0.31578092175041234,
+            0.8308308235130311,
+            -0.05984474211312366
+          ],
+          "spine": [
+            0.08670367815544104,
+            0.00008131180876966796,
+            0.001094869596200518,
+            0.996233522157125
+          ],
+          "hand": {
+            "x": 2.1888505770906375,
+            "y": 0.4970893486899837,
+            "z": 0.2784362940252859
+          }
+        },
+        {
+          "action": "throw",
+          "reach": 0.010611060495626767,
+          "progress": 0.9392857142857143,
+          "singleHand": false,
+          "carry": "none",
+          "items": 1,
+          "rightArm": [
+            -0.5658383350870946,
+            0.036332256660118474,
+            0.7302753693238354,
+            0.3810574976006528
+          ],
+          "leftArm": [
+            0.5391247031067619,
+            0.10531723075487763,
+            0.7652914523458307,
+            -0.3355321508286271
+          ],
+          "spine": [
+            0.013226036138313297,
+            3.5680819481835605e-7,
+            0.001117466544982379,
+            0.9999118718542895
+          ],
+          "hand": {
+            "x": 1.881537375010897,
+            "y": 0.43207034159998636,
+            "z": 0.3045776656956454
+          }
+        }
+      ]
+    }
+  ],
+  "gameplay": {
+    "windupCancel": true,
+    "backgroundEventCancelDiagnostic": true,
+    "singleItem": true,
+    "served": 1,
+    "wrong": 0,
+    "wash": true,
+    "dropPickThrow": true,
+    "viewports": [
+      {
+        "width": 1024,
+        "height": 768,
+        "visibleText": []
+      },
+      {
+        "width": 1280,
+        "height": 720,
+        "visibleText": []
+      },
+      {
+        "width": 1560,
+        "height": 720,
+        "visibleText": []
+      },
+      {
+        "width": 780,
+        "height": 360,
+        "visibleText": []
+      }
+    ],
+    "moveCount": 17,
+    "movesComplete": true,
+    "errors": [],
+    "failedRequests": []
+  },
+  "p1": {
+    "setup": "Diagnostic one-diner shifts, supplied meals and incident fixtures; menu, ordering, card click, delivery to diner, result buttons and provocation use real mouse input. Not human playthrough or device validation.",
+    "checks": [
+      "Three actual input-driven diner handoffs use the recurring identity, chapter-specific dialogue, factual verdict, final review and saved chapter",
+      "Repeated closing does not duplicate coins or advance story; correct and missing-cheese outcomes have matching reviews and recaps",
+      "Result summary and all three side cards fit five window sizes, including resizing an open result",
+      "Replay, rest and reload preserve the saved memory; completed story does not restart",
+      "Reloaded previous bad service selects the authored bad-memory greeting",
+      "A witnessed dirty plate uses the selected role voice, reduces real patience, adds no rating and quotes the same line in the highlight",
+      "Actual long press provoking an ordered diner uses the chef-provocation reason pool instead of claiming no order was taken"
+    ],
+    "visitCount": 3,
+    "errors": []
+  },
+  "sha256": {
+    "game/assets/scripts/ChefMotion.ts": "54ae23544974acf0e377da66016c4ca918dc7f18af09bc5ce6e784689e1c87e2",
+    "game/assets/scripts/ChefActions.ts": "213085a9e639a02a0856eb09e191c90f11781b5f294a8fd49df28453b17beb9f",
+    "game/assets/scripts/StationView.ts": "301d8da16c497df033a8ed70a1a3854a8264ab732f0ad1c9b69816f0023fddf3",
+    "tests/chef-motion.test.ts": "444c9ee30ba6baf1d2946d9372dd749c80b7c75a197b6e44e9f858fda91082d2",
+    "tools/verify-player-feedback.cjs": "8129cb71fe81b22d168dfe985d0d0f0c3f2ab003baba54765d07771952eebe51",
+    "game/build/throw-feedback-web/assets/main/index.js": "26ea4526dfbc109f1c2d9a1d1f03f297f2694f094ee8f55705804ba6891482be"
+  }
+}

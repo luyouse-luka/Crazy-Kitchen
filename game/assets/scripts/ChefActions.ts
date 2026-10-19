@@ -130,8 +130,15 @@ export class ChefActions extends Component {
     if (!this.model || !this.kitchen || !this.running) { this.restore(); this.lastBend = 0; this.hideItems(); if (this.sponge) this.sponge.active = false; return }
     for (const s of this.saved) Quat.copy(s.rotation, s.node.rotation)
     const motion = this.motion, carry = this.kitchen.carry
+    const throwing = motion.action === 'windup' || motion.action === 'throw'
+    const singleHand = motion.action === 'throw' ? motion.throwOneHanded : oneHandedCarry(carry)
     const weight = motion.action === 'scrub' ? 1 : Math.max(motion.carryWeight, motion.reach)
-    if (motion.target && motion.reach > 0) {
+    if (throwing) {
+      const angle = motion.action === 'windup' ? -12 * motion.reach : 18 * Math.sin(Math.PI * motion.throwProgress) * motion.reach
+      Quat.fromEuler(this.lean, angle, 0, 0)
+      Quat.multiply(this.rotation, this.spine.rotation, this.lean)
+      this.spine.setRotation(this.rotation)
+    } else if (motion.target && motion.reach > 0) {
       const p = this.chest.worldPosition
       const distance = Math.hypot(motion.target.x - p.x, motion.target.z - p.z)
       const angle = Math.min(30, Math.max(0, (distance - .3) * 65)) * motion.reach
@@ -149,7 +156,14 @@ export class ChefActions extends Component {
       const separated = carry.kind === 'ingredient' && carry.second !== null
       const width = carry.kind === 'plate' || carry.kind === 'stack' || carry.kind === 'crate' ? .19 : separated ? .15 : .12
       this.target.set(chest.x + cz * arm.side * width + sx * .36, y, chest.z - sx * arm.side * width + cz * .36)
-      if (motion.target && motion.reach > 0) {
+      if (throwing) {
+        const p = motion.action === 'windup' ? 0 : Math.min(1, motion.throwProgress / .35)
+        const swing = p * p * (3 - 2 * p)
+        const forward = (-.24 + .5 * swing) * motion.reach
+        this.target.x += sx * forward
+        this.target.z += cz * forward
+        this.target.y += (.18 - .12 * swing) * motion.reach
+      } else if (motion.target && motion.reach > 0) {
         const t = motion.target
         const scrub = motion.action === 'scrub'
         const scrubX = scrub && i === 0 ? Math.sin(motion.clock * 24) * .075 : 0
@@ -159,7 +173,7 @@ export class ChefActions extends Component {
       }
       arm.pole.set(cz * arm.side, -.6, -sx * arm.side)
       const result = solveElbow(arm.upper.worldPosition, this.target, arm.upperLength, arm.lowerLength, arm.pole, arm.solution)
-      const armWeight = oneHandedCarry(carry) && i === 1 && motion.action !== 'scrub' ? 0 : weight
+      const armWeight = singleHand && i === 1 && motion.action !== 'scrub' ? 0 : weight
       this.aim(arm.upper, arm.lower, result.elbow, armWeight)
       this.aim(arm.lower, arm.hand, result.hand, armWeight)
       // Preserve animated wrist twist; attachment uses the actual palm after IK.

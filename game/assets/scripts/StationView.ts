@@ -118,7 +118,7 @@ import { FirstOrderUi } from './ui/FirstOrderUi'
 import { InventorySkin, OrderCardView } from './ui/KitchenPanels'
 import { actionPresentation } from './ui/UiModel'
 import { ChefActions } from './ChefActions'
-import { approachFacingYaw } from './ChefMotion'
+import { approachFacingYaw, oneHandedCarry } from './ChefMotion'
 import { BurgerStack } from './BurgerStack'
 import { LooseItemsView } from './LooseItemsView'
 import { buttonFeedback, drawButton, drawPanel, UI_THEME, uiColor, uiSurface } from './ui/UiTheme'
@@ -177,7 +177,7 @@ const NODES = {
   result: 'Canvas/UI_Result',
   resultTitle: 'Canvas/UI_Result/Panel/Title',
   resultBody: 'Canvas/UI_Result/Panel/Stats',
-  again: 'Canvas/UI_Result/Panel/Btn_Again',
+  next: 'Canvas/UI_Result/Panel/Btn_NextDay',
   rack: 'Kitchen/Blockers/Block_DishRack',
   shelf: 'Kitchen/Blockers/Block_Plate',
   fryer: 'Kitchen/Blockers/Block_Fryer',
@@ -276,7 +276,7 @@ const RIDER_GAP = 0.8
 /** 外卖顾客的编号从这里起，和堂食错开（评价按编号取顾客卡） */
 const DELIVERY_ID_BASE = 1000
 const PLATFORM_AVATAR = 5
-/** Result panel buttons side by side (again / next / shop): each this wide, centres this far apart */
+/** Result buttons share one row and capture geometry. */
 const RESULT_BTN_W = 160
 const RESULT_BTN_GAP = 176
 
@@ -573,7 +573,7 @@ export class StationView extends Component {
   private uiPoll = 0
   private playerAnim: SkeletalAnimation | null = null
   private chefActions: ChefActions | null = null
-  private chefFrame = { running: false, moving: false, carrying: false, scrubbing: false, holding: false, sinkInReach: false }
+  private chefFrame = { running: false, moving: false, carrying: false, scrubbing: false, holding: false, sinkInReach: false, throwCharge: 0 }
   private playerModel: Node | null = null
   private playerWalking = false
   private renderedYaw = 0
@@ -588,9 +588,8 @@ export class StationView extends Component {
   private resultNode!: Node
   private resultTitle!: Label
   private resultBody!: Label
-  private againNode!: Node
   private resultOpen = false
-  private nextNode: Node | null = null
+  private nextNode!: Node
   private shopNode: Node | null = null
   /** One list panel for the shop, the counter menu and decorating; `menuKind` says which it shows */
   private menu!: ListPanel
@@ -613,9 +612,8 @@ export class StationView extends Component {
   private seenSpills = 0
   private fryerRing!: Ring
   private progress!: Progress
-  /** 正在打的是第几天（重打旧的一天时小于 progress.day） */
+  /** Active shift day; progress.day advances when it closes. */
   private day = 1
-  private passed = false
   private sfx!: Sfx
   private floaters!: Floaters
   private shakeLeft = 0
@@ -679,14 +677,14 @@ export class StationView extends Component {
     const customersRoot = this.need(NODES.customers)
     const customerFloor = this.need(NODES.customerFloor)
     const result = this.need(NODES.result)
-    const again = this.need(NODES.again)
+    const next = this.need(NODES.next)
     const timeLabel = this.label(NODES.time)
     const scoreLabel = this.label(NODES.score)
     const resultTitle = this.label(NODES.resultTitle)
     const resultBody = this.label(NODES.resultBody)
     if (
       !kitchenRoot || !camera || !player || !joystick || !discardBtn || !panel ||
-      !ordersRoot || !customersRoot || !customerFloor || !result || !again || !timeLabel || !scoreLabel || !resultTitle || !resultBody
+      !ordersRoot || !customersRoot || !customerFloor || !result || !next || !timeLabel || !scoreLabel || !resultTitle || !resultBody
     ) {
       this.enabled = false
       return
@@ -696,7 +694,7 @@ export class StationView extends Component {
     this.highlightCard = new HighlightCard(result)
     this.recapCard = new HighlightCard(result, '明天试一件事', 'UI_Recap')
     this.regularCard = new HighlightCard(result, '熟客手记', 'UI_Regular')
-    this.againNode = again
+    this.nextNode = next
     this.resultTitle = resultTitle
     this.resultBody = resultBody
     this.cameraYaw = (camera.eulerAngles.y * Math.PI) / 180
@@ -900,7 +898,7 @@ export class StationView extends Component {
     // Capacities come from the save, which is read only after the kitchen exists
     resetKitchen(this.kitchen)
     this.day = this.progress.day
-    // 每次进游戏换一批单；同一次游戏里重打同一天出的是同一批（seed 不变）
+    // Orders use one session seed, independent of cosmetic dialogue.
     const seed = (Date.now() & 0x7fffffff) || 1
     this.deliverySeed = (seed ^ 0x5bd1e995) >>> 0 || 1
     this.desk = createDesk(
@@ -1078,22 +1076,22 @@ export class StationView extends Component {
     this.slotCounts.push(slot.getChildByName('Count')!.getComponent(Label)!)
   }
 
-  /** Next-day and shop buttons, cloned from Btn_Again so they match whatever the scene styles it as */
   private buildResultButtons(): void {
-    const again = this.againNode
-    const t = again.getComponent(UITransform)
+    const next = this.nextNode
+    const t = next.getComponent(UITransform)
     if (t) t.width = RESULT_BTN_W
     const clone = (name: string, text: string): Node => {
-      const n = instantiate(again)
+      const n = instantiate(next)
       n.name = name
-      again.parent!.addChild(n)
+      next.parent!.addChild(n)
       const l = n.getChildByName('Label')?.getComponent(Label)
       if (l) l.string = text
       return n
     }
-    this.nextNode = clone('Btn_Next', '下一天')
+    const nextLabel = next.getChildByName('Label')?.getComponent(Label)
+    if (nextLabel) nextLabel.string = '下一天'
     this.shopNode = clone('Btn_Shop', '商店')
-    const panel = again.parent!
+    const panel = next.parent!
     panel.getComponent(UITransform)!.setContentSize(640, 560)
     panel.setPosition(-158, 0, 0)
     drawPanel(uiSurface(panel), 640, 560)
@@ -1102,7 +1100,7 @@ export class StationView extends Component {
     this.resultBody.node.setPosition(0, 20, 0); this.resultBody.color = uiColor(UI_THEME.text)
     this.resultBody.fontSize = 24; this.resultBody.lineHeight = 34; this.resultBody.enableOutline = false
     this.resultBody.node.getComponent(UITransform)!.setContentSize(590, 320)
-    for (const n of [again, this.nextNode, this.shopNode]) {
+    for (const n of [next, this.shopNode]) {
       n.getComponent(UITransform)!.setContentSize(RESULT_BTN_W, 88)
       n.setPosition(0, -214, 0)
       drawButton(uiSurface(n), 0, 0, RESULT_BTN_W, 88, n === this.nextNode)
@@ -1502,8 +1500,7 @@ export class StationView extends Component {
     if (this.resultOpen) {
       // 打烊后世界停住，只剩结算面板上的按钮
       if (this.menuKind) this.tickMenu()
-      else if (this.router.zone('again')?.tapped) this.restart(this.day)
-      else if (this.passed && this.router.zone('next')?.tapped) this.restart(this.day + 1)
+      else if (this.router.zone('next')?.tapped) this.restart(this.progress.day)
       else if (this.router.zone('shop')?.tapped) this.openMenu('shop')
     } else {
       this.syncKeyStick()
@@ -1673,10 +1670,13 @@ export class StationView extends Component {
     const aux = this.router.zone('discard')
     if (aux?.tapped || aux?.holdStarted) {
       if (canSetLooseItem(this.kitchen)) {
+        const singleHand = oneHandedCarry(this.kitchen.carry)
         const result = putLooseItem(this.looseItems, this.kitchen, this.movement.pos, this.renderedYaw, aux.holdStarted, this.looseWorld)
         if (result === 'ok') {
           const item = this.looseItems.items[this.looseItems.items.length - 1]!
-          this.chefActions?.notify('put-plate', new Vec3(item.x, aux.holdStarted ? 1.05 : .15, item.z)); this.sfx.play('drop')
+          if (aux.holdStarted) this.chefActions?.motion.releaseThrow(singleHand)
+          else this.chefActions?.notify('put-plate', new Vec3(item.x, .15, item.z))
+          this.sfx.play('drop')
         }
         this.looseFeedback(result)
       } else if (aux.holdStarted) this.act(discard(this.kitchen))
@@ -1986,7 +1986,7 @@ export class StationView extends Component {
             ? 'discard'
             : 'none'
     const cards = this.modernOrders.filter(c => c.node.active)
-    const key = `${mode}|${this.reviewsOpen ? this.offerMask : ''}|${this.panelStation?.kind}|${this.passed}|${this.menuKind}:${this.menuRows.length}|${this.screenW}x${this.screenH}|${this.firstOrderUi?.zoneRevision}|${cards.map(c => `${c.customerId}:${c.node.position.x},${c.node.position.y},${c.node.scale.x}`).join(';')}`
+    const key = `${mode}|${this.reviewsOpen ? this.offerMask : ''}|${this.panelStation?.kind}|${this.menuKind}:${this.menuRows.length}|${this.screenW}x${this.screenH}|${this.firstOrderUi?.zoneRevision}|${cards.map(c => `${c.customerId}:${c.node.position.x},${c.node.position.y},${c.node.scale.x}`).join(';')}`
     if (key === this.zonesKey) return
     this.zonesKey = key
 
@@ -2002,7 +2002,7 @@ export class StationView extends Component {
       }
       zones.push({ id: 'menu-outside', x: 0, y: 0, w: this.screenW, h: this.screenH })
     } else if (this.resultOpen) {
-      const btns: [string, Node | null][] = [['again', this.againNode], ['next', this.passed ? this.nextNode : null], ['shop', this.shopNode]]
+      const btns: [string, Node | null][] = [['next', this.nextNode], ['shop', this.shopNode]]
       for (const [id, n] of btns) {
         const t = n?.getComponent(UITransform)
         const p = n?.parent
@@ -3094,7 +3094,7 @@ export class StationView extends Component {
 
     const r = shiftResult(this.shift)
     const stars = starsForShift(r)
-    this.passed = finishDay(this.progress, this.day, stars)
+    finishDay(this.progress, this.day, stars)
     const takings = ledgerTotal(this.ledger)
     const states = this.syncTasks(true)
     const done = states.filter((x) => x === 'done').length
@@ -3111,7 +3111,7 @@ export class StationView extends Component {
       `餐费 ¥${this.ledger.sales} + 小费 ¥${this.ledger.tips} = 收入 ¥${takings}\n` +
       '错单／超时餐点不收款；及时送齐有更多小费\n' +
       `任务 ${done}/${states.length} · 奖励 ¥${reward}` + (done === states.length ? '（含全部完成奖励）' : '') +
-      (stars === 0 ? '\n拿到一颗星，即可进入下一天' : '') +
+      '\n今天收工，明天继续营业' +
       (saved ? '' : '\n存档失败，请保留当前页面后重试')
     this.syncResultMoney()
     const recap = dayRecap({ shift: r, wrongDelivery: this.desk.wrong, lateDelivery: this.desk.late,
@@ -3121,27 +3121,24 @@ export class StationView extends Component {
     const visit = this.regularVisit
     const chapter = visit ? regularLines(visit) : null
     this.regularCard.show(chapter && this.regularOutcome ? `${REGULAR.identity} · ${visit!.chapter}/3 ${chapter.title}` : '今天没有新的熟客章节',
-      chapter && this.regularOutcome ? `${chapter.recap}\n${this.regularOutcome === 'good' ? '这次准时吃到了合要求的餐点。' : '这次没吃痛快，他会记得这次接待。'}\n${chapter.next}` : '章节只在实际接待并打烊后记录；重玩同一天与休息不会跳章。')
-    const again = this.againNode
-    const againLabel = again.getChildByName('Label')?.getComponent(Label)
-    if (againLabel) againLabel.string = this.passed ? '重打这一天' : '再来一局'
-    if (this.nextNode) this.nextNode.active = this.passed
-    const row = [again, this.passed ? this.nextNode : null, this.shopNode].filter((n): n is Node => !!n)
-    for (let i = 0; i < row.length; i++) row[i]!.setPosition((i - (row.length - 1) / 2) * RESULT_BTN_GAP, again.position.y, 0)
+      chapter && this.regularOutcome ? `${chapter.recap}\n${this.regularOutcome === 'good' ? '这次准时吃到了合要求的餐点。' : '这次没吃痛快，他会记得这次接待。'}\n${chapter.next}` : '章节只在实际接待并打烊后记录；休息不会推进故事。')
+    const next = this.nextNode
+    const row = [next, this.shopNode].filter((n): n is Node => !!n)
+    for (let i = 0; i < row.length; i++) row[i]!.setPosition((i - (row.length - 1) / 2) * RESULT_BTN_GAP, next.position.y, 0)
     const h = this.highlight
     this.highlightCard.show(h ? h.title : '今日接待记录', h ? h.quote : `准时正确 ${r.served} 位 · 错单 ${r.wrong} 位\n没有记录到可展示的事故或对骂。`)
-    const panel = again.parent
+    const panel = next.parent
     const pw = panel?.getComponent(UITransform)?.width ?? 520
     const sideX = (panel?.position.x ?? 0) + pw / 2 + 16 + this.highlightCard.width / 2
     this.highlightCard.node.setPosition(sideX, 190, 0)
     this.recapCard.node.setPosition(sideX, 0, 0)
     this.regularCard.node.setPosition(sideX, -190, 0)
     this.resultNode.active = true
-    if (again.parent) popIn(again.parent)
+    if (next.parent) popIn(next.parent)
     this.sfx.play('result')
     this.zonesKey = ''
     this.refreshZones()
-    console.log(`[StationView] 打烊 — day=${this.day} ${JSON.stringify(r)} stars=${stars} passed=${this.passed}`)
+    console.log(`[StationView] 打烊 — day=${this.day} ${JSON.stringify(r)} stars=${stars}`)
   }
 
   private syncResultMoney(): void {
@@ -3349,7 +3346,7 @@ export class StationView extends Component {
     return this.taskState
   }
 
-  /** Start `day` over: the same day replays the same orders (seed unchanged), a new day tightens the flow */
+  /** Initialize the operating day with the current upgrades and session seed. */
   private restart(day: number): void {
     this.closePanel()
     this.fridgeDoor?.reset()
@@ -3357,7 +3354,6 @@ export class StationView extends Component {
     this.uiRun++; this.uiPoll = 0
     this.sfx.play('tap')
     this.day = day
-    this.passed = false
     this.resultOpen = false
     this.resultNode.active = false
     if (this.menuKind) this.closeMenu()
@@ -3443,6 +3439,9 @@ export class StationView extends Component {
     frame.scrubbing = this.scrubbing && this.kitchen.sink.stage === 'soaked'
     frame.holding = this.router.action.holding && !this.panelOpen && !this.reviewsOpen && !this.menuKind
     frame.sinkInReach = stationInReach(this.kitchen, this.movement.pos)?.kind === 'sink'
+    const aux = this.router.zone('discard')
+    frame.throwCharge = aux?.down && !aux.holding && canSetLooseItem(this.kitchen) && !this.panelOpen && !this.reviewsOpen && !this.menuKind
+      ? aux.heldSeconds / DEFAULT_ACTION.holdSeconds : 0
     this.chefActions?.sync(this.kitchen, frame, game.deltaTime, this.workstationEffects?.actionTarget('sink') ?? null)
     this.looseView?.sync(this.looseItems, this.groundItem(), game.deltaTime)
     this.syncBubbles()

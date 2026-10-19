@@ -4,7 +4,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'C:/Users/12255/.c
 async function main() {
   const out = process.argv[3] || 'game/temp/player-feedback-verification'; fs.mkdirSync(out, {recursive:true})
   const browser = await chromium.launch({headless:true,channel:'msedge'}), page = await browser.newPage({viewport:{width:1280,height:720}})
-  const errors=[],failed=[],moves=[],icons=[]
+  const errors=[],failed=[],moves=[],icons=[],throws=[]
   page.on('pageerror',e=>errors.push(String(e)));page.on('console',m=>{if(['warning','error'].includes(m.type()))errors.push(m.text())});page.on('requestfailed',r=>failed.push(r.url()))
   const snap=()=>page.evaluate(()=>({carry:{...sv.kitchen.carry},stock:[...sv.kitchen.stock],plates:sv.kitchen.plates,dirty:sv.kitchen.dirty,pos:{...sv.movement.pos},phase:sv.phase,items:JSON.parse(JSON.stringify(sv.looseItems.items))}))
   async function zone(id) {
@@ -69,6 +69,48 @@ async function main() {
     const data=await page.evaluate(()=>({key:sv.controls.actionShown,visibleText:cc.find('Canvas/UI_ActionButton').getComponentsInChildren(E.Label).filter(l=>l.enabledInHierarchy&&l.string).map(l=>l.string)}))
     assert.equal(data.key.split('|')[4],expected,`Expected icon ${expected}: ${data.key}`);assert.deepEqual(data.visibleText,[]);icons.push(data)
   }
+  async function recordThrow(name, singleHand) {
+    const before = await snap()
+    await page.evaluate(() => {
+      const all = n => [n, ...n.children.flatMap(all)], nodes = all(sv.playerModel)
+      const bone = name => nodes.find(n => n.name === name)
+      const q = name => { const r = bone(name).rotation; return [r.x, r.y, r.z, r.w] }
+      window.throwFrames = []
+      window.throwSample = () => {
+        const m = sv.chefActions.motion
+        throwFrames.push({ action: m.action, reach: m.reach, progress: m.throwProgress, singleHand: m.throwOneHanded,
+          carry: sv.kitchen.carry.kind, items: sv.looseItems.items.length, aux: { ...sv.router.zone('discard') }, charge: sv.chefFrame.throwCharge,
+          zones: sv.zonesKey, rightArm: q('K_upperarm.r'), leftArm: q('K_upperarm.l'),
+          spine: q('K_spine'), hand: { ...sv.chefActions.handAnchors[0] } })
+      }
+      E.director.on(E.Director.EVENT_AFTER_DRAW, throwSample)
+    })
+    let frames
+    try {
+      await aux(35, async () => {
+        await page.waitForFunction(count => sv.looseItems.items.length === count + 1, before.items.length, { timeout: 2000 })
+        await page.screenshot({ path: path.join(out, `${name}-throw.png`) })
+      })
+      await page.waitForTimeout(320)
+    } finally {
+      await page.evaluate(() => E.director.off(E.Director.EVENT_AFTER_DRAW, throwSample))
+      frames = await page.evaluate(() => throwFrames)
+      throws.push({ name, singleHand, frames })
+    }
+    const windup = frames.filter(f => f.action === 'windup'), release = frames.filter(f => f.action === 'throw')
+    assert(windup.length >= 2, 'A real auxiliary hold must visibly wind up')
+    assert(windup.every(f => f.carry === before.carry.kind && f.items === before.items.length), 'Windup must keep food in hand')
+    assert(release.length >= 2, 'A successful throw must play a follow-through')
+    assert(release.every(f => f.carry === 'none' && f.singleHand === singleHand), 'Release must retain the original hand count')
+    assert(variation([...windup, ...release], 'rightArm') > .08, 'Actual carrying-arm bones must move')
+    assert(variation([...windup, ...release], 'spine') > .04, 'The torso must join the throw')
+    if (!singleHand) assert(variation([...windup, ...release], 'leftArm') > .08, 'Both arms must move with a plated meal')
+    assert.equal(await page.evaluate(() => sv.chefActions.motion.action), null)
+    const after = await snap()
+    assert.equal(after.items.length, before.items.length + 1)
+    assert.deepEqual(after.items.at(-1).payload.carry, before.carry)
+    assert.deepEqual(after.stock, before.stock); assert.equal(after.plates, before.plates); assert.equal(after.dirty, before.dirty)
+  }
   try {
     await page.goto(process.argv[2]||'http://127.0.0.1:4193')
     await page.waitForFunction(()=>window.cc?.find('Canvas')?.getComponent('StationView')?.movement,null,{timeout:60000})
@@ -93,7 +135,15 @@ async function main() {
     await walk(3,0);await aux();await rememberIcon('pick')
     assert(await page.evaluate(()=>sv.controls.secondaryGlyph.enabledInHierarchy&&sv.controls.secondaryHoldGlyph.enabledInHierarchy),'The ground cleanup hold must have a visible icon')
     await page.screenshot({path:path.join(out,'ground-icons.png')});await action();assert.deepEqual((await snap()).carry,single.carry)
-    await aux(350);await page.waitForFunction(()=>sv.looseItems.items.length===1&&!sv.looseItems.items[0].flying)
+    const beforeCancel = await snap()
+    await aux(100, async () => { await page.mouse.move(30, 30) })
+    assert.deepEqual((await snap()).carry, beforeCancel.carry); assert.equal((await snap()).items.length, 0)
+    assert.equal(await page.evaluate(() => sv.chefActions.motion.action), null)
+    await aux(100, async () => { await page.evaluate(() => E.game.emit(E.Game.EVENT_HIDE)) })
+    await page.evaluate(() => E.game.emit(E.Game.EVENT_SHOW))
+    assert.deepEqual((await snap()).carry, beforeCancel.carry); assert.equal((await snap()).items.length, 0)
+    assert.equal(await page.evaluate(() => sv.chefActions.motion.action), null)
+    await recordThrow('single-ingredient', true);await page.waitForFunction(()=>sv.looseItems.items.length===1&&!sv.looseItems.items[0].flying)
     const landing=(await snap()).items[0];await walk(landing.x,landing.z);await action(450);assert.equal((await snap()).items.length,0)
     await walk(-3.4,2.1);await rememberIcon('door');await action();await zone('row0')
     await page.waitForFunction(()=>sv.shift.flow.customers.some(c=>c.active&&!c.ordered&&c.orderWait>=sv.shift.flow.flow.takeOrder.walkInSec),null,{timeout:35000})
@@ -103,7 +153,13 @@ async function main() {
     await page.waitForFunction(level=>sv.kitchen.grill[0].elapsed>=sv.kitchen.cfg.cook[{rare:'rareAt',medium:'mediumAt',well:'wellAt'}[level]],spec.doneness)
     await rememberIcon('pan-out');await action();await walk(-1.5,-1.55);await rememberIcon('assemble');await action()
     for(const i of spec.required.filter(i=>i!=='patty')){await fetch(i);assert.equal((await snap()).carry.second,null);await walk(-1.5,-1.55);await action()}
-    await rememberIcon('burger');await action();await walk(-1,2.1);await rememberIcon('serve');await action()
+    await rememberIcon('burger');await action();await walk(2,0)
+    const platedBurger = await snap()
+    await recordThrow('plated-burger', false)
+    await page.waitForFunction(()=>!sv.looseItems.items[0].flying)
+    const burgerLanding=(await snap()).items[0];await walk(burgerLanding.x,burgerLanding.z);await action()
+    assert.deepEqual((await snap()).burger,platedBurger.burger)
+    await walk(-1,2.1);await rememberIcon('serve');await action()
     assert.equal(await page.evaluate(()=>sv.shift.served),1);assert.equal(await page.evaluate(()=>sv.shift.wrong),0)
     await walk(6.4,.5);await rememberIcon('wash');await page.waitForFunction(()=>sv.kitchen.dirty>0);await action();await page.waitForFunction(()=>sv.kitchen.sink.stage==='soaked');await rememberIcon('wash')
     await page.screenshot({path:path.join(out,'wash-icon.png')})
@@ -126,9 +182,9 @@ async function main() {
       assert.deepEqual(visibleText,[]);await page.screenshot({path:path.join(out,`view-${width}x${height}.png`)});viewports.push({width,height,visibleText})
     }
     assert.deepEqual(errors,[]);assert.deepEqual(failed,[])
-    fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({emptyWalk,carryingWalk,turning,turnSteps,icons,singleItem:true,dropPickThrow:true,served:1,wrong:0,wash:true,extrasDiagnostics:extras,viewports,moves,errors,failed},null,2))
+    fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({emptyWalk,carryingWalk,turning,turnSteps,icons,throws,windupCancel:true,backgroundEventCancelDiagnostic:true,singleItem:true,dropPickThrow:true,served:1,wrong:0,wash:true,extrasDiagnostics:extras,viewports,moves,errors,failed},null,2))
     console.log('PASS live leg/arm animation, smooth turns, no overhead food, single-item ownership, contextual icons, drop-pick-throw and real meal/wash')
-  } catch(error){await page.screenshot({path:path.join(out,'failure.png')}).catch(()=>{});fs.writeFileSync(path.join(out,'failure.json'),JSON.stringify({state:await snap().catch(()=>null),errors,failed,error:String(error)},null,2));throw error}
+  } catch(error){await page.screenshot({path:path.join(out,'failure.png')}).catch(()=>{});fs.writeFileSync(path.join(out,'failure.json'),JSON.stringify({state:await snap().catch(()=>null),throws,errors,failed,error:String(error)},null,2));throw error}
   finally{await browser.close()}
 }
 main().catch(e=>{console.error(e);process.exitCode=1})

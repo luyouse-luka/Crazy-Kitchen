@@ -14286,7 +14286,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "Btn_Again",
+    "_name": "Btn_NextDay",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": {
@@ -14426,7 +14426,7 @@
       "b": 24,
       "a": 255
     },
-    "_string": "再来一局",
+    "_string": "下一天",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 0,

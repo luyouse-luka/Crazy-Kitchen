@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bank, dayFlow, finishDay, newProgress, parseProgress, PASS_STARS, serializeProgress } from '../game/assets/logic/progress'
+import { bank, dayFlow, finishDay, newProgress, parseProgress, serializeProgress } from '../game/assets/logic/progress'
 import { difficultyForDay, LAST_DAY } from '../game/assets/logic/difficulty'
 import { newDecor } from '../game/assets/logic/decor'
 
@@ -37,15 +37,17 @@ describe('progress · 存档', () => {
 })
 
 describe('progress · 推进', () => {
-  it(`${PASS_STARS} 星过线解锁下一天，没过线停在原地`, () => {
+  it.each([0, 1, 3])('closing with %s stars advances to the next day and survives reload', stars => {
     const p = newProgress()
-    expect(finishDay(p, 1, 0)).toBe(false)
-    expect(p.day).toBe(1)
-    expect(finishDay(p, 1, PASS_STARS)).toBe(true)
+    finishDay(p, 1, stars)
+    expect(p.day).toBe(2)
+    expect(parseProgress(serializeProgress(p)).day).toBe(2)
+    expect(p.best).toEqual([stars])
+    finishDay(p, 1, stars)
     expect(p.day).toBe(2)
   })
 
-  it('重打旧的一天只刷新最好成绩，不会把进度往回拉', () => {
+  it('a duplicate older settlement never moves saved progress backwards', () => {
     const p = { ...newProgress(), day: 5, best: [1, 1, 1, 1], coins: 0, owned: [], decor: newDecor() }
     finishDay(p, 2, 3)
     expect(p.day).toBe(5)
@@ -56,7 +58,7 @@ describe('progress · 推进', () => {
 
   it('难度表的最后一天之后照样往下打，客流停在最难那档', () => {
     const p = { ...newProgress(), day: LAST_DAY, best: [], coins: 0, owned: [], decor: newDecor() }
-    expect(finishDay(p, LAST_DAY, 3)).toBe(true)
+    finishDay(p, LAST_DAY, 3)
     expect(p.day).toBe(LAST_DAY + 1)
     expect(dayFlow(LAST_DAY + 30, 30)).toEqual(dayFlow(LAST_DAY, 30))
   })

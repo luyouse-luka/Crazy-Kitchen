@@ -1,5 +1,5 @@
 /**
- * 天数推进与存档：一天 = 一局（接待完 N 位顾客打烊），拿到 PASS_STARS 颗星才解锁下一天。零 Cocos 依赖（铁律①）。
+ * Each completed shift advances the calendar; stars describe service, never gate the next day.
  * Days never run out: past LAST_DAY the difficulty table stays at its top row.
  *
  * 读写存储由组件做（sys.localStorage），这里只管格式。读进来的串可能是旧版本、被截断或被手改过 ——
@@ -18,13 +18,10 @@ export const SAVE_KEY = 'kc.progress'
 /** v1 had no coins; it still loads, with coins 0 */
 const VERSION = 3
 
-/** ⏳ 占位：一星就放行，等真人数据再定 */
-export const PASS_STARS = 1
-
 export interface Progress {
   regular: RegularMemory
   layout: LayoutConfig
-  /** 解锁到第几天（下次开游戏打这一天） */
+  /** The next operating day, also used when loading a save. */
   day: number
   /** best[d - 1] = 第 d 天拿过的最好星数 */
   best: number[]
@@ -76,16 +73,13 @@ export function persistProgress(p: Progress, write: (key: string, value: string)
   try { write(SAVE_KEY, serializeProgress(p)); return true } catch { return false }
 }
 
-/** 打完第 day 天：记最好成绩，过线就解锁下一天。返回这一局是否过线 */
-export function finishDay(p: Progress, day: number, stars: number): boolean {
+export function finishDay(p: Progress, day: number, stars: number): void {
   while (p.best.length < day) p.best.push(0)
   p.best[day - 1] = Math.max(p.best[day - 1]!, stars)
-  if (stars < PASS_STARS) return false
   p.day = Math.max(p.day, day + 1)
-  return true
 }
 
-/** Put the day's takings in the bank. Earned whether or not the day passed */
+/** Put the day's takings in the bank. */
 export function bank(p: Progress, amount: number): void {
   p.coins += Math.max(0, Math.floor(amount))
 }

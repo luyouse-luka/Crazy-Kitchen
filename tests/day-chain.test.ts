@@ -270,15 +270,15 @@ describe('一天的完整链路（真实规则 + 脚本厨师）', () => {
     expect(collectStats(r, w.k, w.desk, w.ledger).fries).toBeGreaterThan(0)
   })
 
-  it('什么都不做：没人接单的全走光，照样打烊，0 星不放行', () => {
+  it('an unattended zero-star day closes and advances without forcing a replay', () => {
     const w = makeWorld(1, 7)
     while (!closed(w)) tick(w)
     const r = shiftResult(w.shift)
     expect(r.walkedOut).toBe(CUSTOMERS)
     expect(starsForShift(r)).toBe(0)
     const p = newProgress()
-    expect(finishDay(p, 1, 0)).toBe(false)
-    expect(p.day).toBe(1)
+    finishDay(p, 1, 0)
+    expect(p.day).toBe(2)
     // Tasks: every "reach N" fails, every "never do X" holds
     const s = collectStats(r, w.k, w.desk, w.ledger)
     const ids: TaskId[] = ['good', 'delivered', 'income', 'fries', 'no-wrong', 'no-burnt', 'no-broken']
@@ -340,7 +340,7 @@ describe('一天的完整链路（真实规则 + 脚本厨师）', () => {
     expect(closed(w)).toBe(true)
   })
 
-  it('20 天连打：每天的结果写进存档再读回来，过线就推进一天', () => {
+  it('20 operating days persist in sequence, including a day after zero stars', () => {
     let saved = serializeProgress(newProgress())
     let day = 1
     const stars: number[] = []
@@ -351,12 +351,11 @@ describe('一天的完整链路（真实规则 + 脚本厨师）', () => {
       playDay(w, false)
       const s = starsForShift(shiftResult(w.shift))
       stars.push(s)
-      const passed = finishDay(p, day, s)
+      finishDay(p, day, s)
       saved = serializeProgress(p)
-      if (!passed) break
       day = Math.min(LAST_DAY, day + 1)
     }
-    // The chef is no speed-runner, but day 1 must be winnable or the chain dead-ends at the first result screen
+    // The first-day strategy must remain viable even though stars no longer gate progress.
     expect(stars[0]).toBeGreaterThan(0)
     expect(parseProgress(saved).best.slice(0, stars.length)).toEqual(stars)
     console.log(`[day-chain] stars by day: ${stars.join(' ')}`)

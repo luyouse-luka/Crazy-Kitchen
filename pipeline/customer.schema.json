@@ -52,6 +52,7 @@
     },
 
     "identity": {
+      "description": "显示昵称，不使用职业、年代或物种身份；旧字段名保留以兼容数据。",
       "type": "string",
       "minLength": 1,
       "maxLength": 10

@@ -3,12 +3,12 @@ export interface RegularMemory { chapter: number; lastDay: number; outcome: Visi
 export interface RegularVisit { chapter: number; day: number; previous: VisitOutcome | null }
 
 export const REGULAR = {
-  identity: '阿星·练习生',
+  identity: '阿星',
   cardIndex: 0,
   chapters: [
-    { title: '第一次试镜', unlockDay: 1, greet: '第一次试镜，来吃个汉堡壮胆。', wait_nudge: '试镜还没开始，我的肚子先抢麦了。', praise: '这顿吃踏实了，上台就当台下全是汉堡！', complain: '试镜已经够紧张了，这顿又让我破防。', recap: '阿星带着试镜号码牌离开了。', next: '下一个新营业日，听听试镜的后续。' },
-    { title: '候补也要练', unlockDay: 2, greet: '试镜进候补了，继续练！', wait_nudge: '排练能候补，吃饭也要候补吗？', praise: '吃饱继续练，候补也得有主角的饭量！', complain: '舞台还在候补，这顿饭也没吃痛快。', recap: '阿星还在候补名单里，决定继续排练。', next: '下一个新营业日，听听他的登台消息。' },
-    { title: '三分钟的舞台', unlockDay: 3, greet: '今晚终于上台，能演三分钟！', wait_nudge: '台词背熟了，胃还在给我打节拍。', praise: '这顿是登台前的底气，谢了老板！', complain: '登台前这顿没吃顺，先去稳稳心态。', recap: '阿星拿到了三分钟的舞台，准备去演出。', next: '这段小故事已完结，之后照常接待新客。' },
+    { title: '第一次来', unlockDay: 1, greet: '规矩立住，不烧心。', wait_nudge: '期待还在，胃先急了。', praise: '第一次来就被这口拿捏了，今天的快乐有着落。', complain: '第一次来没吃痛快。这顿我先不硬夸，下次再看看。', recap: '阿星第一次来店，记住了这次接待。', next: '下一个营业日，再听听阿星的近况。' },
+    { title: '又见面了', unlockDay: 2, greet: '今天不纠结了，还来你这儿。', wait_nudge: '又见面了，饭别跟我捉迷藏。', praise: '这次的情绪价值给足了，来都来了，果然没白来。', complain: '又见面了，还是没吃顺。这波我得先缓缓。', recap: '阿星再次来店，给这顿饭又一次期待。', next: '下一个营业日，再见面时聊聊这顿饭。' },
+    { title: '老位置见', unlockDay: 3, greet: '老位置给我留着，饭搭子包的。', wait_nudge: '老熟人也会饿，先把饭接住。', praise: '这单接得漂亮，饭搭子这关系，稳稳拿捏。', complain: '熟归熟，这顿没吃顺还是得说。我先不替胃圆场了。', recap: '第三次见面，阿星把这里叫作老地方。', next: '这段来店小故事已完结，之后照常接待新客。' },
   ],
 } as const
 
